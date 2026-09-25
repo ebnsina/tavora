@@ -85,6 +85,7 @@
 		max-width: 100%;
 		margin: -4px 0 20px;
 		overflow-x: auto;
+		border-bottom: 1px solid var(--line);
 		scrollbar-width: none;
 		overscroll-behavior-x: contain;
 	}
@@ -105,24 +106,30 @@
 		gap: 8px;
 		padding: 12px 14px;
 		border: 0;
-		/* The current tab's underline: a 2px bottom border whose ends curve up with the rounded corners. */
-		border-bottom: 2px solid transparent;
-		border-radius: 12px;
 		background: none;
 		color: var(--muted);
 		font: 600 0.9375rem var(--sans);
 		white-space: nowrap;
 		cursor: pointer;
-		transition:
-			color 0.2s,
-			border-color 0.2s;
+		transition: color 0.2s;
 	}
 	button:hover,
 	button[aria-selected='true'] {
 		color: var(--ink);
 	}
-	button[aria-selected='true'] {
-		border-bottom-color: var(--brand);
+	button[aria-selected='true']::after {
+		content: '';
+		position: absolute;
+		inset: auto 8px -1px;
+		height: 2px;
+		border-radius: 2px;
+		background: var(--brand);
+		animation: line 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+	}
+	@keyframes line {
+		from {
+			scale: 0 1;
+		}
 	}
 	button:focus-visible {
 		outline: 2px solid var(--brand);
@@ -180,22 +187,14 @@
 				background 0.2s,
 				color 0.2s;
 		}
-		button,
-		button[aria-selected='true'] {
-			border-bottom: 0;
-		}
 		button[aria-selected='true'] {
 			background: var(--soft);
 		}
 		button[aria-selected='true']::after {
-			content: '';
-			position: absolute;
-			bottom: 5px;
+			inset: auto auto 5px;
 			width: 18px;
 			height: 4px;
-			border-radius: 2px;
-			background: var(--brand);
-			animation: pill 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+			animation-name: pill;
 		}
 		.dot {
 			position: absolute;
