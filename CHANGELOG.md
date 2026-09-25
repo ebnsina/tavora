@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Phones
-- Dashboard tab bar redesigned: a floating rounded bar with grey icons and labels; the current tab sits on a soft tile with a small red pill under it.
+- Dashboard and website tab bars redesigned: a floating rounded bar with grey icons and labels; the current tab sits on a soft tile with a small red pill under it.
 - Website on phones: the spinning name rings, stickers, food photo circles, review cards and the corner-shop building are sized to fit the screen; nothing is clipped or piled on top of each other.
 - Website footer: the giant name is now a faded background shape.
 

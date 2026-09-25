@@ -1226,33 +1226,54 @@
 			padding: 0 12px;
 		}
 		footer {
-			padding-bottom: 88px;
+			padding-bottom: 104px;
 		}
+		/* Same floating tab bar as the dashboard: grey icons with labels, Order now on the soft tile. */
 		.mbar {
-			display: grid;
-			grid-template-columns: 1fr 1.4fr 1fr;
-			align-items: center;
 			position: fixed;
-			inset: auto 12px 12px;
+			inset: auto 12px calc(12px + env(safe-area-inset-bottom));
 			z-index: 12;
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 4px;
 			padding: 6px;
-			background: var(--black);
-			border-radius: 18px;
+			border-radius: 22px;
+			background: #fffdf6;
+			box-shadow:
+				0 0 0 1px var(--line),
+				0 12px 32px -8px rgb(40 20 0 / 0.25);
 		}
 		.mbar a {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			gap: 2px;
-			padding: 8px 0;
-			color: var(--cream);
+			position: relative;
+			display: grid;
+			justify-items: center;
+			gap: 3px;
+			padding: 9px 0 13px;
+			border-radius: 16px;
+			color: var(--muted);
+			font: 600 0.75rem var(--sans);
 			text-decoration: none;
-			font-size: 0.8125rem;
-			font-weight: 700;
-			text-transform: uppercase;
-			border-radius: 12px;
+			transition:
+				background 0.2s,
+				color 0.2s;
+		}
+		.mbar a:active {
+			background: var(--soft);
 		}
 		.mbar .main {
+			background: var(--soft);
+			color: var(--ink);
+		}
+		.mbar .main :global(svg) {
+			color: var(--brand);
+		}
+		.mbar .main::after {
+			content: '';
+			position: absolute;
+			bottom: 5px;
+			width: 18px;
+			height: 4px;
+			border-radius: 2px;
 			background: var(--brand);
 		}
 		.cartbar {
