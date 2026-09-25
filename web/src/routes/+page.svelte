@@ -1204,9 +1204,11 @@
 		width: 100%;
 		height: auto;
 		margin-top: 48px;
+		/* Quiet: dim, and fading out towards the bottom edge. */
+		mask-image: linear-gradient(to bottom, #000 10%, transparent 95%);
 	}
 	.giant text {
-		fill: var(--cream);
+		fill: rgb(255 249 231 / 0.1);
 		font: 800 300px var(--display);
 		font-stretch: 85%;
 	}
