@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Dashboard
+- Overview page: greeting, date range (today, 7, 30, 90 days or custom), revenue, orders, average order and cancellations against the previous period, revenue-by-day chart, best sellers, delivery vs pickup, open orders and next bookings.
+- Grouped sidebar, account menu, and page headers with the main actions on the right.
+- Brand-styled checkboxes, radio buttons, switches, selects, and custom date and time pickers.
+- Website text editor split into tabs, one per homepage section.
+- Orders open on active orders by default.
+- Links that leave the dashboard show an outward arrow.
 - Owner dashboard at `/admin` with email and password sign-in.
 - Orders board: new orders highlighted, one-tap status steps, auto-refresh.
 - Table bookings: confirm, decline or cancel requests.

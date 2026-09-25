@@ -11,7 +11,7 @@ Restaurant website with ordering (cash on delivery) and table booking. API first
 createdb tavora
 cd api && cp .env.example .env && set -a && . ./.env && set +a
 go run . create-admin you@example.com "Your Name"   # asks for a password (10+ characters)
-go run . seed-demo                                  # optional: sample orders and bookings, all marked "(demo)"
+go run . seed-demo                                  # optional: 30 days of sample orders and bookings, all marked "(demo)"
 go run .                                            # :8080
 cd web && cp .env.example .env && pnpm install && pnpm dev   # :5173, dashboard at /admin
 ```
@@ -20,6 +20,7 @@ Tests: `cd api && go test ./...`
 
 ## Dashboard (`/admin`)
 
+- **Overview:** revenue, orders and best sellers for any date range, compared with the previous period.
 - **Orders:** new orders highlighted, one-tap next step (accept → cooking → ready → on the way → done), refreshes every 30 s.
 - **Table bookings:** confirm, decline or cancel; call or WhatsApp the guest.
 - **Menu:** categories and dishes, photos, labels, prices, sold-out switch.

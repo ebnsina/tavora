@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
+	crand "crypto/rand"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 
 func newUUID() pgtype.UUID {
 	var u pgtype.UUID
-	rand.Read(u.Bytes[:])
+	crand.Read(u.Bytes[:])
 	u.Bytes[6] = u.Bytes[6]&0x0f | 0x40
 	u.Bytes[8] = u.Bytes[8]&0x3f | 0x80
 	u.Valid = true
@@ -121,7 +122,80 @@ func seedDemo(ctx context.Context, pool *pgxpool.Pool, q *store.Queries) error {
 				return err
 			}
 		}
-		fmt.Fprintln(os.Stderr, "Added 5 demo orders and 3 demo table requests")
+		n, err := seedHistory(ctx, tx, tq, menu, info)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(os.Stderr, "Added 5 live demo orders, %d past demo orders and 3 demo table requests\n", n)
 		return nil
 	})
+}
+
+// seedHistory fills the last 30 days with completed demo orders so the overview charts have something to show.
+// A fixed seed keeps the numbers the same on every run.
+func seedHistory(ctx context.Context, tx pgx.Tx, tq *store.Queries, menu []store.ListMenuRow, info store.Restaurant) (int, error) {
+	rng := rand.New(rand.NewPCG(7, 42))
+	names := []string{"Arif", "Sumaiya", "Tanvir", "Nadia", "Rakib", "Shirin", "Fahim", "Lamia", "Hasib", "Priya"}
+	today := time.Now().In(bdTime)
+	count := 0
+	for back := 30; back >= 1; back-- {
+		day := time.Date(today.Year(), today.Month(), today.Day()-back, 0, 0, 0, 0, bdTime)
+		// Busier on Thursday and Friday evenings, like most restaurants.
+		orders := 8 + rng.IntN(8)
+		if wd := day.Weekday(); wd == time.Thursday || wd == time.Friday {
+			orders += 6
+		}
+		for range orders {
+			at := day.Add(time.Duration(12*60+rng.IntN(11*60)) * time.Minute)
+			mode := store.OrderMode("delivery")
+			if rng.IntN(3) == 0 {
+				mode = "pickup"
+			}
+			picked := map[int64]int32{}
+			for range 1 + rng.IntN(3) {
+				m := menu[rng.IntN(len(menu))]
+				picked[m.ID] += int32(1 + rng.IntN(2))
+			}
+			var sub int64
+			byID := map[int64]store.ListMenuRow{}
+			for _, m := range menu {
+				byID[m.ID] = m
+			}
+			for id, q := range picked {
+				sub += byID[id].Price * int64(q)
+			}
+			fee := int64(0)
+			var addr *string
+			if mode == "delivery" {
+				a := "Demo address, Rajshahi"
+				addr = &a
+				if sub < info.FreeDeliveryOver {
+					fee = info.DeliveryFee
+				}
+			}
+			status := store.OrderStatus("completed")
+			if rng.IntN(20) == 0 {
+				status = "cancelled"
+			}
+			id := newUUID()
+			name := names[rng.IntN(len(names))] + " (demo)"
+			if _, err := tq.InsertOrder(ctx, store.InsertOrderParams{
+				ID: id, Mode: mode, CustomerName: name, Phone: "01711111111", Address: addr,
+				Subtotal: sub, DeliveryFee: fee, Total: sub + fee,
+			}); err != nil {
+				return 0, err
+			}
+			for mid, q := range picked {
+				m := byID[mid]
+				if err := tq.InsertOrderItem(ctx, store.InsertOrderItemParams{OrderID: id, MenuItemID: m.ID, Name: m.Name, UnitPrice: m.Price, Qty: q}); err != nil {
+					return 0, err
+				}
+			}
+			if _, err := tx.Exec(ctx, "update orders set status = $2, created_at = $3 where id = $1", id, status, at); err != nil {
+				return 0, err
+			}
+			count++
+		}
+	}
+	return count, nil
 }

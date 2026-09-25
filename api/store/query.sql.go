@@ -129,6 +129,49 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 	return err
 }
 
+const dailySales = `-- name: DailySales :many
+
+select (created_at at time zone 'Asia/Dhaka')::date as day,
+	count(*) filter (where status <> 'cancelled') as orders,
+	coalesce(sum(total) filter (where status <> 'cancelled'), 0)::bigint as revenue
+from orders
+where created_at >= $1 and created_at < $2
+group by 1
+order by 1
+`
+
+type DailySalesParams struct {
+	Since pgtype.Timestamptz
+	Until pgtype.Timestamptz
+}
+
+type DailySalesRow struct {
+	Day     pgtype.Date
+	Orders  int64
+	Revenue int64
+}
+
+// ---- Overview (days are Bangladesh calendar days)
+func (q *Queries) DailySales(ctx context.Context, arg DailySalesParams) ([]DailySalesRow, error) {
+	rows, err := q.db.Query(ctx, dailySales, arg.Since, arg.Until)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DailySalesRow
+	for rows.Next() {
+		var i DailySalesRow
+		if err := rows.Scan(&i.Day, &i.Orders, &i.Revenue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const deleteCategory = `-- name: DeleteCategory :execrows
 delete from categories where id = $1
 `
@@ -616,12 +659,18 @@ func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]O
 const listOrders = `-- name: ListOrders :many
 select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at from orders
 where ($1::order_status is null or status = $1)
+	and (not $2::bool or status not in ('completed', 'cancelled'))
 order by created_at desc
 limit 200
 `
 
-func (q *Queries) ListOrders(ctx context.Context, status *OrderStatus) ([]Order, error) {
-	rows, err := q.db.Query(ctx, listOrders, status)
+type ListOrdersParams struct {
+	Status     *OrderStatus
+	ActiveOnly bool
+}
+
+func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order, error) {
+	rows, err := q.db.Query(ctx, listOrders, arg.Status, arg.ActiveOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -663,6 +712,150 @@ limit 200
 
 func (q *Queries) ListReservations(ctx context.Context) ([]Reservation, error) {
 	rows, err := q.db.Query(ctx, listReservations)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Reservation
+	for rows.Next() {
+		var i Reservation
+		if err := rows.Scan(
+			&i.ID,
+			&i.CustomerName,
+			&i.Phone,
+			&i.Guests,
+			&i.StartsAt,
+			&i.Note,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const openOrderCounts = `-- name: OpenOrderCounts :many
+select status, count(*) as n from orders
+where status not in ('completed', 'cancelled')
+group by status
+`
+
+type OpenOrderCountsRow struct {
+	Status OrderStatus
+	N      int64
+}
+
+func (q *Queries) OpenOrderCounts(ctx context.Context) ([]OpenOrderCountsRow, error) {
+	rows, err := q.db.Query(ctx, openOrderCounts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []OpenOrderCountsRow
+	for rows.Next() {
+		var i OpenOrderCountsRow
+		if err := rows.Scan(&i.Status, &i.N); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const periodTotals = `-- name: PeriodTotals :one
+select count(*) filter (where status <> 'cancelled') as orders,
+	coalesce(sum(total) filter (where status <> 'cancelled'), 0)::bigint as revenue,
+	count(*) filter (where status = 'cancelled') as cancelled,
+	count(*) filter (where status <> 'cancelled' and mode = 'delivery') as delivery,
+	count(*) filter (where status <> 'cancelled' and mode = 'pickup') as pickup
+from orders
+where created_at >= $1 and created_at < $2
+`
+
+type PeriodTotalsParams struct {
+	Since pgtype.Timestamptz
+	Until pgtype.Timestamptz
+}
+
+type PeriodTotalsRow struct {
+	Orders    int64
+	Revenue   int64
+	Cancelled int64
+	Delivery  int64
+	Pickup    int64
+}
+
+func (q *Queries) PeriodTotals(ctx context.Context, arg PeriodTotalsParams) (PeriodTotalsRow, error) {
+	row := q.db.QueryRow(ctx, periodTotals, arg.Since, arg.Until)
+	var i PeriodTotalsRow
+	err := row.Scan(
+		&i.Orders,
+		&i.Revenue,
+		&i.Cancelled,
+		&i.Delivery,
+		&i.Pickup,
+	)
+	return i, err
+}
+
+const topItems = `-- name: TopItems :many
+select oi.name, sum(oi.qty)::bigint as qty, sum(oi.qty * oi.unit_price)::bigint as revenue
+from order_items oi
+join orders o on o.id = oi.order_id
+where o.created_at >= $1 and o.created_at < $2 and o.status <> 'cancelled'
+group by oi.name
+order by qty desc, revenue desc
+limit 5
+`
+
+type TopItemsParams struct {
+	Since pgtype.Timestamptz
+	Until pgtype.Timestamptz
+}
+
+type TopItemsRow struct {
+	Name    string
+	Qty     int64
+	Revenue int64
+}
+
+func (q *Queries) TopItems(ctx context.Context, arg TopItemsParams) ([]TopItemsRow, error) {
+	rows, err := q.db.Query(ctx, topItems, arg.Since, arg.Until)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TopItemsRow
+	for rows.Next() {
+		var i TopItemsRow
+		if err := rows.Scan(&i.Name, &i.Qty, &i.Revenue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const upcomingBookings = `-- name: UpcomingBookings :many
+select id, customer_name, phone, guests, starts_at, note, status, created_at from reservations
+where starts_at >= now() and status in ('requested', 'confirmed')
+order by starts_at
+limit 5
+`
+
+func (q *Queries) UpcomingBookings(ctx context.Context) ([]Reservation, error) {
+	rows, err := q.db.Query(ctx, upcomingBookings)
 	if err != nil {
 		return nil, err
 	}

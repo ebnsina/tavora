@@ -3,6 +3,7 @@
 	import { asset, type SiteContent, type TickerIcon } from '$lib/api';
 	import { foodIcons } from '$lib/icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import PageHeader from '$lib/admin/PageHeader.svelte';
 
 	let { data, form } = $props();
 
@@ -18,6 +19,29 @@
 	const fields = $derived((form && 'fields' in form ? form.fields : {}) as Record<string, string>);
 	const icons = Object.keys(foodIcons) as TickerIcon[];
 
+	// One tab per homepage section; `keys` are the error paths that belong to it.
+	const tabs = [
+		{ id: 'top', label: 'Top of the page', keys: ['hero', 'marquee', 'slogans'] },
+		{ id: 'story', label: 'Our story', keys: ['story'] },
+		{
+			id: 'headings',
+			label: 'Section headings',
+			keys: ['menu', 'booking', 'tawa', 'reviews.title']
+		},
+		{ id: 'reviews', label: 'Reviews', keys: ['reviews.items'] },
+		{ id: 'ticker', label: 'Food ticker', keys: ['ticker'] },
+		{ id: 'call', label: 'Call-to-order building', keys: ['call'] },
+		{ id: 'links', label: 'Links and sharing', keys: ['social', 'seo'] }
+	];
+	let tab = $state('top');
+	const hasError = (keys: string[]) =>
+		Object.keys(fields).some((f) => keys.some((k) => f.startsWith(k)));
+	// After a failed save, jump to the first tab that needs fixing.
+	$effect(() => {
+		const bad = tabs.find((t) => hasError(t.keys));
+		if (bad) tab = bad.id;
+	});
+
 	function pick(key: string, e: Event) {
 		const f = (e.currentTarget as HTMLInputElement).files?.[0];
 		previews[key] = f ? URL.createObjectURL(f) : '';
@@ -28,10 +52,22 @@
 	{#if fields[path]}<span class="field-error">{fields[path]}</span>{/if}
 {/snippet}
 
-<h1>Website text</h1>
-<p class="intro">Everything visitors read on the homepage. Changes go live as soon as you save.</p>
+<PageHeader
+	title="Website text"
+	sub="Everything visitors read on the homepage. Changes go live as soon as you save."
+>
+	{#snippet actions()}
+		{#if form?.error}<p class="flash bad" role="alert">{form.error}</p>{/if}
+		{#if form?.ok}<p class="flash" role="status">{form.ok}</p>{/if}
+		<button class="btn primary" type="submit" form="content-form" disabled={busy}>
+			{busy ? 'Saving…' : 'Save changes'}
+		</button>
+	{/snippet}
+</PageHeader>
 
 <form
+	id="content-form"
+	class="tabbed"
 	method="POST"
 	enctype="multipart/form-data"
 	use:enhance={() => {
@@ -45,8 +81,30 @@
 >
 	<input type="hidden" name="data" value={JSON.stringify(site)} />
 
-	<div class="stack">
-		<section class="card stack">
+	<div class="tablist" role="tablist" aria-orientation="vertical" aria-label="Sections">
+		{#each tabs as t (t.id)}
+			<button
+				type="button"
+				role="tab"
+				id="tab-{t.id}"
+				aria-selected={tab === t.id}
+				aria-controls="panel-{t.id}"
+				onclick={() => (tab = t.id)}
+			>
+				{t.label}
+				{#if hasError(t.keys)}<span class="err-dot" aria-label="has mistakes"></span>{/if}
+			</button>
+		{/each}
+	</div>
+
+	<div class="panels">
+		<div
+			class="card stack"
+			role="tabpanel"
+			id="panel-top"
+			aria-labelledby="tab-top"
+			hidden={tab !== 'top'}
+		>
 			<h2>Top of the page</h2>
 			<label
 				>Tagline under the name <input bind:value={site.hero.tagline} maxlength="60" />{@render err(
@@ -72,9 +130,15 @@
 					</label>
 				{/each}
 			</div>
-		</section>
+		</div>
 
-		<section class="card stack">
+		<div
+			class="card stack"
+			role="tabpanel"
+			id="panel-story"
+			aria-labelledby="tab-story"
+			hidden={tab !== 'story'}
+		>
 			<h2>Our story</h2>
 			<label
 				>Heading <input bind:value={site.story.title} maxlength="60" />{@render err(
@@ -126,9 +190,15 @@
 					/>
 				</label>
 			</div>
-		</section>
+		</div>
 
-		<section class="card stack">
+		<div
+			class="card stack"
+			role="tabpanel"
+			id="panel-headings"
+			aria-labelledby="tab-headings"
+			hidden={tab !== 'headings'}
+		>
 			<h2>Section headings</h2>
 			<div class="grid2">
 				<label
@@ -163,9 +233,15 @@
 					)}</label
 				>
 			</div>
-		</section>
+		</div>
 
-		<section class="card stack">
+		<div
+			class="card stack"
+			role="tabpanel"
+			id="panel-reviews"
+			aria-labelledby="tab-reviews"
+			hidden={tab !== 'reviews'}
+		>
 			<h2>Reviews</h2>
 			<p class="hint">Only use real reviews from real customers, with their permission.</p>
 			{#each site.reviews.items as _, i (i)}
@@ -194,9 +270,15 @@
 					Add a review
 				</button>
 			{/if}
-		</section>
+		</div>
 
-		<section class="card stack">
+		<div
+			class="card stack"
+			role="tabpanel"
+			id="panel-ticker"
+			aria-labelledby="tab-ticker"
+			hidden={tab !== 'ticker'}
+		>
 			<h2>Food ticker</h2>
 			{@render err('ticker')}
 			{#each site.ticker as t, i (i)}
@@ -229,9 +311,15 @@
 					Add a word
 				</button>
 			{/if}
-		</section>
+		</div>
 
-		<section class="card stack">
+		<div
+			class="card stack"
+			role="tabpanel"
+			id="panel-call"
+			aria-labelledby="tab-call"
+			hidden={tab !== 'call'}
+		>
 			<h2>Call-to-order building</h2>
 			<div class="grid2">
 				<label
@@ -267,9 +355,15 @@
 					)}</label
 				>
 			</div>
-		</section>
+		</div>
 
-		<section class="card stack">
+		<div
+			class="card stack"
+			role="tabpanel"
+			id="panel-links"
+			aria-labelledby="tab-links"
+			hidden={tab !== 'links'}
+		>
 			<h2>Links and sharing</h2>
 			<div class="grid2">
 				<label
@@ -311,22 +405,66 @@
 					/>
 				</label>
 			</div>
-		</section>
-	</div>
-
-	<div class="savebar">
-		{#if form?.error}<p class="flash bad" role="alert">{form.error}</p>{/if}
-		{#if form?.ok}<p class="flash" role="status">{form.ok}</p>{/if}
-		<button class="btn primary" type="submit" disabled={busy}
-			>{busy ? 'Saving…' : 'Save changes'}</button
-		>
+		</div>
 	</div>
 </form>
 
 <style>
-	.intro {
-		margin: -8px 0 20px;
-		color: var(--muted);
+	.tabbed {
+		display: grid;
+		gap: 16px;
+		align-items: start;
+	}
+	.tablist {
+		display: flex;
+		gap: 4px;
+		overflow-x: auto;
+		padding: 6px;
+		border-radius: 14px;
+		background: var(--cream);
+	}
+	.tablist button {
+		position: relative;
+		flex: none;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 10px 14px;
+		border: 0;
+		border-radius: 10px;
+		background: none;
+		color: var(--ink);
+		font: 600 0.9375rem var(--sans);
+		text-align: left;
+		cursor: pointer;
+	}
+	.tablist button:hover {
+		background: var(--soft);
+	}
+	.tablist button[aria-selected='true'] {
+		background: var(--black);
+		color: var(--cream);
+	}
+	.tablist button:focus-visible {
+		outline: 3px solid var(--mustard);
+		outline-offset: -3px;
+	}
+	.err-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--brand);
+	}
+	@media (min-width: 900px) {
+		.tabbed {
+			grid-template-columns: 230px 1fr;
+		}
+		.tablist {
+			position: sticky;
+			top: 110px;
+			flex-direction: column;
+		}
 	}
 	.grid3 {
 		display: grid;
@@ -380,21 +518,6 @@
 		width: 160px;
 		height: 90px;
 		border-radius: 10px;
-	}
-	.savebar {
-		position: sticky;
-		bottom: 0;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: flex-end;
-		gap: 12px;
-		margin-top: 20px;
-		padding: 14px 0;
-		background: var(--soft);
-	}
-	.savebar .flash {
-		margin: 0;
 	}
 	@media (min-width: 720px) {
 		.grid3 {

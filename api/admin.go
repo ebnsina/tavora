@@ -414,8 +414,10 @@ func (s *server) deleteItem(w http.ResponseWriter, r *http.Request) {
 // ---- orders and reservations
 
 func (s *server) listOrders(w http.ResponseWriter, r *http.Request) {
+	// status=active means everything the kitchen still has to act on.
 	var status *store.OrderStatus
-	if v := r.URL.Query().Get("status"); v != "" {
+	v := r.URL.Query().Get("status")
+	if v != "" && v != "active" {
 		st := store.OrderStatus(v)
 		if !st.Valid() {
 			fail(w, r, invalid(map[string]string{"status": "unknown status"}))
@@ -423,7 +425,7 @@ func (s *server) listOrders(w http.ResponseWriter, r *http.Request) {
 		}
 		status = &st
 	}
-	orders, err := s.q.ListOrders(r.Context(), status)
+	orders, err := s.q.ListOrders(r.Context(), store.ListOrdersParams{Status: status, ActiveOnly: v == "active"})
 	if err != nil {
 		fail(w, r, err)
 		return

@@ -113,6 +113,7 @@ delete from menu_items where id = $1;
 -- name: ListOrders :many
 select * from orders
 where (sqlc.narg('status')::order_status is null or status = sqlc.narg('status'))
+	and (not @active_only::bool or status not in ('completed', 'cancelled'))
 order by created_at desc
 limit 200;
 
@@ -130,3 +131,43 @@ limit 200;
 
 -- name: UpdateReservationStatus :execrows
 update reservations set status = $2 where id = $1;
+
+-- ---- Overview (days are Bangladesh calendar days)
+
+-- name: DailySales :many
+select (created_at at time zone 'Asia/Dhaka')::date as day,
+	count(*) filter (where status <> 'cancelled') as orders,
+	coalesce(sum(total) filter (where status <> 'cancelled'), 0)::bigint as revenue
+from orders
+where created_at >= @since and created_at < @until
+group by 1
+order by 1;
+
+-- name: PeriodTotals :one
+select count(*) filter (where status <> 'cancelled') as orders,
+	coalesce(sum(total) filter (where status <> 'cancelled'), 0)::bigint as revenue,
+	count(*) filter (where status = 'cancelled') as cancelled,
+	count(*) filter (where status <> 'cancelled' and mode = 'delivery') as delivery,
+	count(*) filter (where status <> 'cancelled' and mode = 'pickup') as pickup
+from orders
+where created_at >= @since and created_at < @until;
+
+-- name: TopItems :many
+select oi.name, sum(oi.qty)::bigint as qty, sum(oi.qty * oi.unit_price)::bigint as revenue
+from order_items oi
+join orders o on o.id = oi.order_id
+where o.created_at >= @since and o.created_at < @until and o.status <> 'cancelled'
+group by oi.name
+order by qty desc, revenue desc
+limit 5;
+
+-- name: OpenOrderCounts :many
+select status, count(*) as n from orders
+where status not in ('completed', 'cancelled')
+group by status;
+
+-- name: UpcomingBookings :many
+select * from reservations
+where starts_at >= now() and status in ('requested', 'confirmed')
+order by starts_at
+limit 5;

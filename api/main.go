@@ -99,6 +99,7 @@ func main() {
 	mux.HandleFunc("POST /v1/admin/items", admin(s.createItem))
 	mux.HandleFunc("PUT /v1/admin/items/{id}", admin(s.updateItem))
 	mux.HandleFunc("DELETE /v1/admin/items/{id}", admin(s.deleteItem))
+	mux.HandleFunc("GET /v1/admin/stats", admin(s.stats))
 	mux.HandleFunc("GET /v1/admin/orders", admin(s.listOrders))
 	mux.HandleFunc("PATCH /v1/admin/orders/{id}", admin(s.patchOrder))
 	mux.HandleFunc("GET /v1/admin/reservations", admin(s.listReservations))

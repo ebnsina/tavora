@@ -1,21 +1,52 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { asset, price } from '$lib/api';
+	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import DishForm from './DishForm.svelte';
 
 	let { data, form } = $props();
 
 	// Which dish is open for editing, or `new:<categoryId>` for the add form.
 	let open = $state<string | null>(null);
+	let addingCategory = $state(false);
 	const cats = $derived(data.categories.map((c) => ({ id: c.id, name: c.name })));
 </script>
 
-<h1>Menu</h1>
+<PageHeader
+	title="Menu"
+	sub="{data.categories.reduce((n, c) => n + c.items.length, 0)} dishes in {data.categories
+		.length} categories"
+>
+	{#snippet actions()}
+		<button class="btn primary" type="button" onclick={() => (addingCategory = !addingCategory)}>
+			{addingCategory ? 'Close' : 'Add category'}
+		</button>
+	{/snippet}
+</PageHeader>
 
 {#if form?.error}<p class="flash bad" role="alert">{form.error}</p>{/if}
 {#if form?.ok}<p class="flash" role="status">{form.ok}</p>{/if}
 
 <div class="stack">
+	{#if addingCategory}
+		<form
+			method="POST"
+			action="?/addCategory"
+			use:enhance={() =>
+				async ({ result, update }) => {
+					await update();
+					if (result.type === 'success') addingCategory = false;
+				}}
+			class="card row"
+		>
+			<label class="grow">
+				New category
+				<!-- svelte-ignore a11y_autofocus -->
+				<input name="name" placeholder="e.g. Pizza" maxlength="40" required autofocus />
+			</label>
+			<button class="btn primary">Add category</button>
+		</form>
+	{/if}
 	{#each data.categories as c, ci (c.id)}
 		<section class="card">
 			<form method="POST" action="?/saveCategory" use:enhance class="cat-head">
@@ -100,14 +131,6 @@
 			{/if}
 		</section>
 	{/each}
-
-	<form method="POST" action="?/addCategory" use:enhance class="card row">
-		<label class="grow">
-			New category
-			<input name="name" placeholder="e.g. Pizza" maxlength="40" required />
-		</label>
-		<button class="btn primary">Add category</button>
-	</form>
 </div>
 
 <style>

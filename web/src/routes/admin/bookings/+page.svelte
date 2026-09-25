@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
+	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import { time, type Reservation } from '$lib/api';
 
 	let { data, form } = $props();
@@ -20,7 +23,7 @@
 	const wa = (phone: string) => `https://wa.me/88${phone}`;
 </script>
 
-<h1>Table bookings</h1>
+<PageHeader title="Table bookings" sub="Today onwards, plus anything still waiting for a reply" />
 {#if form?.error}<p class="flash bad" role="alert">{form.error}</p>{/if}
 
 {#if !data.bookings.length}
@@ -37,7 +40,11 @@
 					<strong>{b.name}</strong> · {b.guests}
 					{b.guests === 1 ? 'person' : 'people'}
 					<br /><a href="tel:{b.phone}">{b.phone}</a> ·
-					<a href={wa(b.phone)} target="_blank" rel="noopener">WhatsApp</a>
+					<a class="ext" href={wa(b.phone)} target="_blank" rel="noopener"
+						>WhatsApp <HugeiconsIcon icon={ArrowUpRight01Icon} size={14} /><span class="sr"
+							>(opens in a new tab)</span
+						></a
+					>
 					{#if b.note}<p class="note">{b.note}</p>{/if}
 				</div>
 				<div class="side">
@@ -62,6 +69,16 @@
 <style>
 	h2 {
 		margin-top: 24px;
+	}
+	h2:first-of-type {
+		margin-top: 0;
+	}
+	.sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
 	}
 	.list {
 		list-style: none;

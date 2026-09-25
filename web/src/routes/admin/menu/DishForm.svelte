@@ -101,7 +101,8 @@
 				</label>
 			{/each}
 			<label class="check">
-				<input type="checkbox" name="available" checked={item?.available ?? true} /> On the menu
+				<input class="switch" type="checkbox" name="available" checked={item?.available ?? true} /> On
+				the menu
 			</label>
 		</fieldset>
 	</div>
