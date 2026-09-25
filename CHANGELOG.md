@@ -9,7 +9,7 @@
 - Menu: "Delete" for an empty category sits in the category header next to "Rename".
 - Till: the in-bill count on a dish moves to the tile's bottom corner so it never covers a long name.
 - Kitchen screen: tickets look like paper dockets (order-type icon, torn divider, bold quantity chips), the timer pulses once a ticket is late, and every Done button lines up along the bottom.
-- Online orders: cards match the kitchen dockets (order-type icon tinted by status, torn dividers, quantity chips, order number in mono).
+- Online orders: cleaner order cards: order-type icon, order number in mono, status pill with a coloured dot, customer panel with initials, quiet item list, and a tinted footer for the total and actions.
 - Printed receipts, bills and the end-of-day sheet end with a small "Made with Tavora" line.
 
 ### Neutral dashboard

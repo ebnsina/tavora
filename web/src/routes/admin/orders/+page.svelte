@@ -55,6 +55,14 @@
 
 	const kinds = { delivery: Motorbike02Icon, pickup: ShoppingBag01Icon, dine_in: TableRoundIcon };
 
+	const initials = (name: string) =>
+		name
+			.split(/\s+/)
+			.filter((w) => /^\p{L}/u.test(w))
+			.slice(0, 2)
+			.map((w) => w[0].toUpperCase())
+			.join('');
+
 	const ago = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 	const since = (iso: string) => {
 		const mins = Math.round((new Date(iso).getTime() - Date.now()) / 60_000);
@@ -93,7 +101,7 @@
 			{@const step = next(o)}
 			<li class="card order" class:fresh={o.status === 'new'}>
 				<header class="head">
-					<span class="kind {o.status}"><HugeiconsIcon icon={kinds[o.mode]} size={22} /></span>
+					<span class="kind"><HugeiconsIcon icon={kinds[o.mode]} size={20} /></span>
 					<div class="id">
 						<a class="num" href="/admin/orders/{o.id}">TV-{o.number}</a>
 						<p class="meta">
@@ -106,23 +114,23 @@
 				</header>
 
 				<div class="who">
-					<strong>{o.name}</strong>
-					{#if o.phone}<a class="sub" href="tel:{o.phone}"
-							><HugeiconsIcon icon={Call02Icon} size={14} /> {o.phone}</a
-						>{/if}
-					{#if o.address}<p class="sub">
-							<HugeiconsIcon icon={Location01Icon} size={14} />
-							{o.address}
-						</p>{/if}
+					<span class="avatar" aria-hidden="true">{initials(o.name)}</span>
+					<div>
+						<strong>{o.name}</strong>
+						{#if o.phone}<a class="sub" href="tel:{o.phone}"
+								><HugeiconsIcon icon={Call02Icon} size={14} /> {o.phone}</a
+							>{/if}
+						{#if o.address}<p class="sub">
+								<HugeiconsIcon icon={Location01Icon} size={14} />
+								{o.address}
+							</p>{/if}
+					</div>
 				</div>
-
-				<!-- Torn-docket dividers, matching the kitchen screen. -->
-				<div class="tear" aria-hidden="true"></div>
 
 				<ul class="lines">
 					{#each o.items as l (l.id)}
 						<li>
-							<span class="qty">{l.qty}</span><span class="name">{l.name}</span><span
+							<span class="qty">{l.qty}×</span><span class="name">{l.name}</span><span class="amt"
 								>{price(l.amount)}</span
 							>
 						</li>
@@ -130,8 +138,7 @@
 				</ul>
 				{#if o.note}<p class="note">{o.note}</p>{/if}
 
-				<!-- Footer sits at the bottom of every card: total, then one row of actions. -->
-				<div class="tear foot-tear" aria-hidden="true"></div>
+				<!-- A tinted footer pinned to the bottom: total, then one row of actions. -->
 				<footer class="foot">
 					<p class="total"><span>Cash total</span><strong>{price(o.total)}</strong></p>
 					<form method="POST" action="?/status" use:enhance class="acts">
@@ -168,55 +175,45 @@
 		padding: 0;
 		list-style: none;
 	}
-	.order {
+	/* Sections carry their own padding so the footer can run edge to edge. */
+	.orders .order {
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
+		padding: 0;
+		overflow: hidden;
+		box-shadow:
+			0 0 0 1px var(--line),
+			0 1px 2px rgb(15 23 42 / 0.04);
 	}
-	/* New orders: a thin tinted outline around the whole card, plus the badge. */
 	.fresh {
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 45%, transparent);
+		box-shadow:
+			0 0 0 1px color-mix(in srgb, var(--brand) 45%, transparent),
+			0 4px 16px -6px color-mix(in srgb, var(--brand) 30%, transparent);
 	}
 	.head {
 		display: flex;
 		align-items: center;
 		gap: 12px;
-	}
-	.id {
-		flex: 1;
-		min-width: 0;
+		padding: 16px 18px 14px;
 	}
 	.kind {
 		display: grid;
 		flex: none;
 		place-items: center;
-		width: 44px;
-		height: 44px;
-		border-radius: 14px;
+		width: 40px;
+		height: 40px;
+		border-radius: 12px;
 		background: var(--soft);
-		color: var(--muted);
+		color: var(--ink);
 	}
-	.kind.new {
-		background: var(--accent-soft);
-		color: var(--brand);
-	}
-	.kind.accepted,
-	.kind.preparing {
-		background: #fff1c2;
-		color: #7a5a00;
-	}
-	.kind.ready,
-	.kind.completed {
-		background: #e3f6ec;
-		color: #1f7a45;
-	}
-	.kind.out_for_delivery {
-		background: #e3ecfb;
-		color: #1d4ed8;
+	.id {
+		flex: 1;
+		min-width: 0;
 	}
 	.num {
 		color: var(--ink);
-		font: 700 1.125rem var(--code);
+		font: 600 1rem var(--code);
+		letter-spacing: -0.01em;
 		text-decoration: none;
 	}
 	.num:hover {
@@ -227,40 +224,77 @@
 		color: var(--muted);
 		font-size: 0.8125rem;
 	}
-	/* Status: a soft tint of its colour, never a loud block. */
+	/* Status: a soft pill with a dot in its colour. */
 	.badge {
+		display: inline-flex;
 		flex: none;
-		align-self: flex-start;
-		padding: 3px 10px;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 10px;
 		border-radius: 999px;
 		background: var(--soft);
 		color: var(--muted);
 		font-size: 0.75rem;
-		font-weight: 700;
+		font-weight: 600;
+	}
+	.badge::before {
+		content: '';
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: currentColor;
 	}
 	.badge.new {
 		background: var(--accent-soft);
 		color: var(--brand);
 	}
+	.badge.accepted,
 	.badge.preparing {
-		background: #fff1c2;
-		color: #7a5a00;
+		background: #fef6dc;
+		color: #8a6400;
 	}
 	.badge.ready,
 	.badge.completed {
-		background: #e3f6ec;
+		background: #e7f6ee;
 		color: #1f7a45;
 	}
 	.badge.out_for_delivery {
-		background: #e3ecfb;
+		background: #e8effc;
 		color: #1d4ed8;
 	}
 	.who {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		margin: 0 18px;
+		padding: 12px;
+		border-radius: 12px;
+		background: #f8fafc;
+	}
+	.who > div {
 		display: grid;
-		gap: 4px;
+		gap: 3px;
+		min-width: 0;
+	}
+	.avatar {
+		display: grid;
+		flex: none;
+		place-items: center;
+		width: 34px;
+		height: 34px;
+		border-radius: 50%;
+		background: var(--accent-soft);
+		color: var(--brand);
+		font-size: 0.75rem;
+		font-weight: 700;
 	}
 	.who strong {
 		font-weight: 600;
+		line-height: 34px;
+	}
+	.who strong:not(:only-child) {
+		line-height: 1.3;
+		padding-top: 1px;
 	}
 	.sub {
 		display: flex;
@@ -268,80 +302,56 @@
 		gap: 6px;
 		margin: 0;
 		color: var(--muted);
-		font-size: 0.875rem;
+		font-size: 0.8125rem;
 		text-decoration: none;
 	}
 	.sub :global(svg) {
 		flex: none;
-		margin-top: 3px;
+		margin-top: 2px;
 	}
 	a.sub:hover {
 		color: var(--ink);
 	}
 	.lines {
 		display: grid;
-		gap: 6px;
+		gap: 10px;
 		margin: 0;
-		padding: 0;
+		padding: 16px 18px;
 		list-style: none;
 		font-size: 0.9375rem;
 		font-variant-numeric: tabular-nums;
 	}
 	.lines li {
 		display: grid;
-		grid-template-columns: auto 1fr auto;
-		align-items: center;
-		gap: 10px;
+		grid-template-columns: 32px 1fr auto;
+		align-items: baseline;
+		gap: 8px;
 	}
 	.qty {
-		display: grid;
-		place-items: center;
-		min-width: 26px;
-		height: 26px;
-		padding: 0 5px;
-		border-radius: 8px;
-		background: var(--black);
-		color: var(--mustard);
-		font-size: 0.875rem;
-		font-weight: 800;
+		color: var(--muted);
+		font: 500 0.8125rem var(--code);
 	}
 	.name {
-		font-weight: 600;
+		color: var(--ink);
 	}
-	/* Dashed line with half-circle bites at the card's edges (card padding is 20px). */
-	.tear {
-		position: relative;
-		border-top: 2px dashed var(--line);
-	}
-	.tear::before,
-	.tear::after {
-		content: '';
-		position: absolute;
-		top: -10px;
-		width: 18px;
-		height: 18px;
-		border-radius: 50%;
-		background: var(--soft);
-	}
-	.tear::before {
-		left: -29px;
-	}
-	.tear::after {
-		right: -29px;
-	}
-	.foot-tear {
-		margin-top: auto;
+	.amt {
+		color: var(--muted);
 	}
 	.note {
-		margin: 0;
+		margin: 0 18px 16px;
 		padding: 8px 12px;
-		border-radius: 8px;
-		background: #fff6d6;
+		border-radius: 10px;
+		background: #fef6dc;
+		color: #6b4e00;
 		font-size: 0.875rem;
 	}
 	.foot {
 		display: grid;
 		gap: 12px;
+		margin-top: auto;
+		padding: 14px 18px 16px;
+		border-top: 1px solid var(--line);
+		background: #f8fafc;
 	}
 	.total {
 		display: flex;
@@ -356,6 +366,7 @@
 	.total strong {
 		font-size: 1.25rem;
 		font-weight: 700;
+		letter-spacing: -0.01em;
 		font-variant-numeric: tabular-nums;
 	}
 	.acts {
