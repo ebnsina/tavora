@@ -101,6 +101,7 @@ func main() {
 	mux.HandleFunc("DELETE /v1/admin/items/{id}", admin(s.deleteItem))
 	mux.HandleFunc("GET /v1/admin/stats", admin(s.stats))
 	mux.HandleFunc("GET /v1/admin/orders", admin(s.listOrders))
+	mux.HandleFunc("GET /v1/admin/orders/{id}", admin(s.getPosOrder))
 	mux.HandleFunc("PATCH /v1/admin/orders/{id}", admin(s.patchOrder))
 	mux.HandleFunc("GET /v1/admin/reservations", admin(s.listReservations))
 	mux.HandleFunc("PATCH /v1/admin/reservations/{id}", admin(s.patchReservation))

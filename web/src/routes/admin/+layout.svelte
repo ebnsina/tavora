@@ -22,7 +22,6 @@
 			label: 'Today',
 			links: [
 				{ href: '/admin', label: 'Overview', icon: DashboardSquare01Icon },
-				{ href: '/admin/pos', label: 'Point of sale', icon: Cashier02Icon },
 				{ href: '/admin/orders', label: 'Online orders', icon: ShoppingBag01Icon },
 				{ href: '/admin/bookings', label: 'Table bookings', icon: Calendar03Icon }
 			]
@@ -67,6 +66,9 @@
 	<div class="shell">
 		<aside>
 			<a class="logo" href="/admin">Tavora<span>Dashboard</span></a>
+			<a class="pos-link" href="/admin/pos">
+				<HugeiconsIcon icon={Cashier02Icon} size={20} />Point of sale
+			</a>
 			<nav aria-label="Dashboard">
 				{#each groups as g (g.label)}
 					<p class="group">{g.label}</p>
@@ -150,6 +152,21 @@
 	nav {
 		display: grid;
 		gap: 2px;
+	}
+	.pos-link {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin: 4px 0 8px;
+		padding: 12px 14px;
+		border-radius: 12px;
+		background: var(--mustard);
+		color: var(--black);
+		font-weight: 700;
+		text-decoration: none;
+	}
+	.pos-link:hover {
+		background: color-mix(in srgb, var(--mustard) 85%, white);
 	}
 	.group {
 		margin: 14px 0 6px;

@@ -17,7 +17,15 @@
 		cancelled: 'Cancelled',
 		active: 'Active'
 	};
-	const filters = ['active', 'new', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled'];
+	const filters = [
+		'active',
+		'new',
+		'preparing',
+		'ready',
+		'out_for_delivery',
+		'completed',
+		'cancelled'
+	];
 
 	// The one sensible next step for each order; pickups skip "on the way".
 	function next(o: Order): [string, string] | null {
@@ -53,10 +61,7 @@
 	{#snippet actions()}
 		<nav class="tabs" aria-label="Filter orders">
 			{#each filters as f (f)}
-				<a
-					href="?status={f}"
-					aria-current={data.status === f ? 'page' : undefined}
-				>
+				<a href="?status={f}" aria-current={data.status === f ? 'page' : undefined}>
 					{labels[f]}
 				</a>
 			{/each}
@@ -74,9 +79,11 @@
 			{@const step = next(o)}
 			<li class="card" class:fresh={o.status === 'new'}>
 				<div class="top">
-					<strong class="num">TV-{o.number}</strong>
+					<a class="num" href="/admin/orders/{o.id}">TV-{o.number}</a>
 					<span class="badge {o.status}">{labels[o.status]}</span>
-					<span class="mode">{{ delivery: 'Delivery', pickup: 'Pickup', dine_in: 'Dine-in' }[o.mode]}</span>
+					<span class="mode"
+						>{{ delivery: 'Delivery', pickup: 'Pickup', dine_in: 'Dine-in' }[o.mode]}</span
+					>
 					<span class="when">{since(o.created_at)}</span>
 				</div>
 				<p class="who">
@@ -145,7 +152,12 @@
 		gap: 8px;
 	}
 	.num {
+		color: inherit;
 		font: 800 1.25rem var(--display);
+		text-decoration: none;
+	}
+	.num:hover {
+		text-decoration: underline;
 	}
 	.badge {
 		padding: 3px 10px;

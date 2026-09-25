@@ -104,7 +104,7 @@
 	];
 </script>
 
-<PageHeader title="{greeting}, {first}" sub="Here’s how the restaurant is doing · {rangeLabel}">
+<PageHeader title="{greeting}, {first}" aside={rangeLabel}>
 	{#snippet actions()}
 		<nav class="seg" aria-label="Date range">
 			{#each presets as [v, label] (v)}

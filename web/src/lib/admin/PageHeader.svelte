@@ -1,7 +1,12 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	let { title, sub, actions }: { title: string; sub?: string; actions?: Snippet } = $props();
+	let {
+		title,
+		sub,
+		aside,
+		actions
+	}: { title: string; sub?: string; aside?: string; actions?: Snippet } = $props();
 </script>
 
 <!-- Sticky page title with the page's main actions on the right, so they stay in reach while scrolling. -->
@@ -10,6 +15,7 @@
 		<h1>{title}</h1>
 		{#if sub}<p>{sub}</p>{/if}
 	</div>
+	{#if aside}<p class="aside">{aside}</p>{/if}
 	{#if actions}<div class="actions">{@render actions()}</div>{/if}
 </header>
 
@@ -36,6 +42,10 @@
 		margin: 4px 0 0;
 		color: var(--muted);
 		font-size: 0.9375rem;
+	}
+	.aside {
+		margin: 0 0 0 auto;
+		font-weight: 600;
 	}
 	.actions {
 		display: flex;
