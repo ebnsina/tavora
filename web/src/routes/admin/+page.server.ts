@@ -17,6 +17,7 @@ type Period = {
 	cancelled: number;
 	delivery: number;
 	pickup: number;
+	dine_in: number;
 };
 
 const bdDate = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });

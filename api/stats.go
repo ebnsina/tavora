@@ -101,7 +101,7 @@ func (s *server) stats(w http.ResponseWriter, r *http.Request) {
 		bookings[i] = reservationView(b)
 	}
 	period := func(p store.PeriodTotalsRow) map[string]any {
-		return map[string]any{"orders": p.Orders, "revenue": p.Revenue, "cancelled": p.Cancelled, "delivery": p.Delivery, "pickup": p.Pickup}
+		return map[string]any{"orders": p.Orders, "revenue": p.Revenue, "cancelled": p.Cancelled, "delivery": p.Delivery, "pickup": p.Pickup, "dine_in": p.DineIn}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"from": from.Format("2006-01-02"), "to": to.Format("2006-01-02"),

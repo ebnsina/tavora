@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Point of sale
+- Floor screen with every table and its open bill, time seated and dishes not yet sent to the kitchen.
+- Ticket screen: tap-to-add menu with search and categories, running bill, discount, void.
+- Send to kitchen sends only what the kitchen doesn't have yet and prints a kitchen ticket; sent dishes can't be quietly reduced.
+- Payments by cash (with change), card, bKash or Nagad (with transaction ID), split into several payments, with tips.
+- Kitchen display with timers that turn yellow at 10 and red at 20 minutes; accepted online orders show up there too.
+- 80 mm printouts for kitchen tickets and customer bills.
+- Tables page in the dashboard; the overview splits orders into delivery, pickup and dine-in.
+
 ### Dashboard
 - Overview page: greeting, date range (today, 7, 30, 90 days or custom), revenue, orders, average order and cancellations against the previous period, revenue-by-day chart, best sellers, delivery vs pickup, open orders and next bookings.
 - Grouped sidebar, account menu, and page headers with the main actions on the right.

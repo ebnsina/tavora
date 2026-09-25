@@ -3,6 +3,8 @@
 	import {
 		ArrowDown01Icon,
 		ArrowUpRight01Icon,
+		Cashier02Icon,
+		TableRoundIcon,
 		Calendar03Icon,
 		DashboardSquare01Icon,
 		Logout01Icon,
@@ -20,7 +22,8 @@
 			label: 'Today',
 			links: [
 				{ href: '/admin', label: 'Overview', icon: DashboardSquare01Icon },
-				{ href: '/admin/orders', label: 'Orders', icon: ShoppingBag01Icon },
+				{ href: '/admin/pos', label: 'Point of sale', icon: Cashier02Icon },
+				{ href: '/admin/orders', label: 'Online orders', icon: ShoppingBag01Icon },
 				{ href: '/admin/bookings', label: 'Table bookings', icon: Calendar03Icon }
 			]
 		},
@@ -28,6 +31,7 @@
 			label: 'Restaurant',
 			links: [
 				{ href: '/admin/menu', label: 'Menu', icon: Menu01Icon },
+				{ href: '/admin/tables', label: 'Tables', icon: TableRoundIcon },
 				{ href: '/admin/settings', label: 'Hours & details', icon: Settings02Icon }
 			]
 		},

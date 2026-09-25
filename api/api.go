@@ -264,7 +264,7 @@ func (s *server) createOrder(w http.ResponseWriter, r *http.Request) {
 	err = pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
 		n, err := q.InsertOrder(ctx, store.InsertOrderParams{
-			ID: id, Mode: store.OrderMode(req.Mode), CustomerName: name, Phone: phone,
+			ID: id, Mode: store.OrderMode(req.Mode), CustomerName: name, Phone: &phone,
 			Address: address, Note: note, Subtotal: sub, DeliveryFee: fee, Total: sub + fee,
 		})
 		if err != nil || n == 0 {
@@ -308,12 +308,13 @@ type lineJSON struct {
 	UnitPrice int64  `json:"unit_price"`
 	Qty       int32  `json:"qty"`
 	Amount    int64  `json:"amount"`
+	Sent      int32  `json:"sent"`
 }
 
 func orderView(o store.Order, rows []store.OrderItem) map[string]any {
 	lines := make([]lineJSON, len(rows))
 	for i, l := range rows {
-		lines[i] = lineJSON{l.MenuItemID, l.Name, l.UnitPrice, l.Qty, l.UnitPrice * int64(l.Qty)}
+		lines[i] = lineJSON{l.MenuItemID, l.Name, l.UnitPrice, l.Qty, l.UnitPrice * int64(l.Qty), l.SentQty}
 	}
 	return map[string]any{
 		"id": o.ID.String(), "number": o.Number, "mode": o.Mode, "status": o.Status, "payment": o.Payment,

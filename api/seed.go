@@ -75,7 +75,7 @@ func seedDemo(ctx context.Context, pool *pgxpool.Pool, q *store.Queries) error {
 			}
 			id := newUUID()
 			if _, err := tq.InsertOrder(ctx, store.InsertOrderParams{
-				ID: id, Mode: o.mode, CustomerName: o.name, Phone: o.phone, Address: addr,
+				ID: id, Mode: o.mode, CustomerName: o.name, Phone: &o.phone, Address: addr,
 				Subtotal: sub, DeliveryFee: fee, Total: sub + fee,
 			}); err != nil {
 				return err
@@ -133,6 +133,8 @@ func seedDemo(ctx context.Context, pool *pgxpool.Pool, q *store.Queries) error {
 
 // seedHistory fills the last 30 days with completed demo orders so the overview charts have something to show.
 // A fixed seed keeps the numbers the same on every run.
+var demoPhone = "01711111111"
+
 func seedHistory(ctx context.Context, tx pgx.Tx, tq *store.Queries, menu []store.ListMenuRow, info store.Restaurant) (int, error) {
 	rng := rand.New(rand.NewPCG(7, 42))
 	names := []string{"Arif", "Sumaiya", "Tanvir", "Nadia", "Rakib", "Shirin", "Fahim", "Lamia", "Hasib", "Priya"}
@@ -180,7 +182,7 @@ func seedHistory(ctx context.Context, tx pgx.Tx, tq *store.Queries, menu []store
 			id := newUUID()
 			name := names[rng.IntN(len(names))] + " (demo)"
 			if _, err := tq.InsertOrder(ctx, store.InsertOrderParams{
-				ID: id, Mode: mode, CustomerName: name, Phone: "01711111111", Address: addr,
+				ID: id, Mode: mode, CustomerName: name, Phone: &demoPhone, Address: addr,
 				Subtotal: sub, DeliveryFee: fee, Total: sub + fee,
 			}); err != nil {
 				return 0, err

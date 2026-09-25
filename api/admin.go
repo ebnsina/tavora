@@ -464,6 +464,9 @@ func (s *server) patchOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	n, err := s.q.UpdateOrderStatus(r.Context(), store.UpdateOrderStatusParams{ID: id, Status: store.OrderStatus(req.Status)})
+	if err == nil && n > 0 && req.Status == "accepted" {
+		err = sendOnlineToKitchen(r.Context(), s.q, id)
+	}
 	switch {
 	case err != nil:
 		fail(w, r, err)

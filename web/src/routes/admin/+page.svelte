@@ -85,11 +85,15 @@
 		out_for_delivery: 'On the way'
 	};
 	const openTotal = $derived(Object.values(s.open).reduce((a, b) => a + b, 0));
+	// How orders arrived; colours validated for colour-blind readers in this order.
 	const split = $derived.by(() => {
-		const total = s.totals.delivery + s.totals.pickup;
-		return total
-			? { delivery: s.totals.delivery / total, pickup: s.totals.pickup / total, total }
-			: null;
+		const parts = [
+			{ key: 'delivery', label: 'Delivery', n: s.totals.delivery },
+			{ key: 'pickup', label: 'Pickup / takeaway', n: s.totals.pickup },
+			{ key: 'dine_in', label: 'Dine-in', n: s.totals.dine_in }
+		];
+		const total = parts.reduce((a, p) => a + p.n, 0);
+		return total ? { total, parts: parts.map((p) => ({ ...p, share: p.n / total })) } : null;
 	});
 	const topMax = $derived(Math.max(1, ...s.top_items.map((t) => t.qty)));
 	const presets = [
@@ -217,29 +221,27 @@
 
 		<section class="card">
 			<div class="card-head">
-				<h2>Delivery or pickup</h2>
+				<h2>How orders came in</h2>
 				<span class="hint">{split ? `${split.total} orders` : ''}</span>
 			</div>
 			{#if split}
 				<div
 					class="split"
 					role="img"
-					aria-label="{Math.round(split.delivery * 100)}% delivery, {Math.round(
-						split.pickup * 100
-					)}% pickup"
+					aria-label={split.parts.map((p) => `${Math.round(p.share * 100)}% ${p.label}`).join(', ')}
 				>
-					<span class="seg-d" style="flex: {split.delivery}"></span>
-					<span class="seg-p" style="flex: {split.pickup}"></span>
+					{#each split.parts as p (p.key)}
+						{#if p.n}<span class="seg {p.key}" style="flex: {p.share}"></span>{/if}
+					{/each}
 				</div>
 				<ul class="legend">
-					<li>
-						<span class="dot d"></span>Delivery <strong>{Math.round(split.delivery * 100)}%</strong>
-						· {s.totals.delivery}
-					</li>
-					<li>
-						<span class="dot p"></span>Pickup <strong>{Math.round(split.pickup * 100)}%</strong> · {s
-							.totals.pickup}
-					</li>
+					{#each split.parts as p (p.key)}
+						<li>
+							<span class="dot {p.key}"></span>{p.label}
+							<strong>{Math.round(p.share * 100)}%</strong>
+							· {p.n}
+						</li>
+					{/each}
 				</ul>
 			{:else}
 				<p class="empty">No orders in this period yet.</p>
@@ -448,19 +450,20 @@
 		height: 20px;
 		margin-bottom: 14px;
 	}
-	.split span:first-child {
+	.split .seg:first-child {
 		border-radius: 6px 0 0 6px;
 	}
-	.split span:last-child {
+	.split .seg:last-child {
 		border-radius: 0 6px 6px 0;
 	}
-	.seg-d,
-	.dot.d {
+	.delivery {
 		background: var(--brand);
 	}
-	.seg-p,
-	.dot.p {
+	.pickup {
 		background: #2b6cb0;
+	}
+	.dine_in {
+		background: #b07d00;
 	}
 	.legend {
 		list-style: none;

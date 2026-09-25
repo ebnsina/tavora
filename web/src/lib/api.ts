@@ -29,10 +29,10 @@ export type Restaurant = {
 export type Order = {
 	id: string;
 	number: number;
-	mode: 'delivery' | 'pickup';
+	mode: 'delivery' | 'pickup' | 'dine_in';
 	status: string;
 	name: string;
-	phone: string;
+	phone: string | null;
 	address: string | null;
 	note: string | null;
 	items: { id: number; name: string; unit_price: number; qty: number; amount: number }[];

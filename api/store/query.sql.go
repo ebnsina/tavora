@@ -11,6 +11,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const closeOrder = `-- name: CloseOrder :exec
+update orders set status = $1, paid_at = case when $1 = 'completed'::order_status then now() else paid_at end
+where id = $2
+`
+
+type CloseOrderParams struct {
+	Status OrderStatus
+	ID     pgtype.UUID
+}
+
+func (q *Queries) CloseOrder(ctx context.Context, arg CloseOrderParams) error {
+	_, err := q.db.Exec(ctx, closeOrder, arg.Status, arg.ID)
+	return err
+}
+
 const countCategoryItems = `-- name: CountCategoryItems :one
 select count(*) from menu_items where category_id = $1
 `
@@ -28,6 +43,17 @@ select count(*) from order_items where menu_item_id = $1
 
 func (q *Queries) CountItemOrders(ctx context.Context, menuItemID int64) (int64, error) {
 	row := q.db.QueryRow(ctx, countItemOrders, menuItemID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countKitchenTickets = `-- name: CountKitchenTickets :one
+select count(*) from kitchen_tickets where order_id = $1
+`
+
+func (q *Queries) CountKitchenTickets(ctx context.Context, orderID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countKitchenTickets, orderID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -129,11 +155,36 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 	return err
 }
 
+const createTable = `-- name: CreateTable :one
+insert into dining_tables (name, seats, area, position)
+values ($1, $2, $3, (select coalesce(max(position), 0) + 1 from dining_tables))
+returning id, name, seats, area, position
+`
+
+type CreateTableParams struct {
+	Name  string
+	Seats int16
+	Area  string
+}
+
+func (q *Queries) CreateTable(ctx context.Context, arg CreateTableParams) (DiningTable, error) {
+	row := q.db.QueryRow(ctx, createTable, arg.Name, arg.Seats, arg.Area)
+	var i DiningTable
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Seats,
+		&i.Area,
+		&i.Position,
+	)
+	return i, err
+}
+
 const dailySales = `-- name: DailySales :many
 
 select (created_at at time zone 'Asia/Dhaka')::date as day,
-	count(*) filter (where status <> 'cancelled') as orders,
-	coalesce(sum(total) filter (where status <> 'cancelled'), 0)::bigint as revenue
+	count(*) filter (where status not in ('cancelled', 'open')) as orders,
+	coalesce(sum(total) filter (where status not in ('cancelled', 'open')), 0)::bigint as revenue
 from orders
 where created_at >= $1 and created_at < $2
 group by 1
@@ -214,6 +265,15 @@ func (q *Queries) DeleteOpeningHours(ctx context.Context) error {
 	return err
 }
 
+const deleteOrderItems = `-- name: DeleteOrderItems :exec
+delete from order_items where order_id = $1
+`
+
+func (q *Queries) DeleteOrderItems(ctx context.Context, orderID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteOrderItems, orderID)
+	return err
+}
+
 const deleteSession = `-- name: DeleteSession :exec
 delete from sessions where token_hash = $1
 `
@@ -221,6 +281,19 @@ delete from sessions where token_hash = $1
 func (q *Queries) DeleteSession(ctx context.Context, tokenHash []byte) error {
 	_, err := q.db.Exec(ctx, deleteSession, tokenHash)
 	return err
+}
+
+const deleteTable = `-- name: DeleteTable :execrows
+delete from dining_tables t where t.id = $1
+	and not exists (select 1 from orders o where o.table_id = t.id)
+`
+
+func (q *Queries) DeleteTable(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteTable, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getAdminByEmail = `-- name: GetAdminByEmail :one
@@ -286,7 +359,7 @@ func (q *Queries) GetOpeningHours(ctx context.Context, weekday int16) (OpeningHo
 }
 
 const getOrder = `-- name: GetOrder :one
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at from orders where id = $1
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at from orders where id = $1
 `
 
 func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
@@ -306,6 +379,39 @@ func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
 		&i.DeliveryFee,
 		&i.Total,
 		&i.CreatedAt,
+		&i.Source,
+		&i.TableID,
+		&i.Discount,
+		&i.PaidAt,
+	)
+	return i, err
+}
+
+const getOrderForUpdate = `-- name: GetOrderForUpdate :one
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at from orders where id = $1 for update
+`
+
+func (q *Queries) GetOrderForUpdate(ctx context.Context, id pgtype.UUID) (Order, error) {
+	row := q.db.QueryRow(ctx, getOrderForUpdate, id)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.Number,
+		&i.Mode,
+		&i.Status,
+		&i.Payment,
+		&i.CustomerName,
+		&i.Phone,
+		&i.Address,
+		&i.Note,
+		&i.Subtotal,
+		&i.DeliveryFee,
+		&i.Total,
+		&i.CreatedAt,
+		&i.Source,
+		&i.TableID,
+		&i.Discount,
+		&i.PaidAt,
 	)
 	return i, err
 }
@@ -386,6 +492,24 @@ func (q *Queries) GetSiteContent(ctx context.Context) ([]byte, error) {
 	return data, err
 }
 
+const insertKitchenTicket = `-- name: InsertKitchenTicket :execrows
+insert into kitchen_tickets (id, order_id, lines) values ($1, $2, $3) on conflict (id) do nothing
+`
+
+type InsertKitchenTicketParams struct {
+	ID      pgtype.UUID
+	OrderID pgtype.UUID
+	Lines   []byte
+}
+
+func (q *Queries) InsertKitchenTicket(ctx context.Context, arg InsertKitchenTicketParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertKitchenTicket, arg.ID, arg.OrderID, arg.Lines)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const insertOpeningHours = `-- name: InsertOpeningHours :exec
 insert into opening_hours (weekday, opens, closes) values ($1, $2, $3)
 `
@@ -411,7 +535,7 @@ type InsertOrderParams struct {
 	ID           pgtype.UUID
 	Mode         OrderMode
 	CustomerName string
-	Phone        string
+	Phone        *string
 	Address      *string
 	Note         *string
 	Subtotal     int64
@@ -460,6 +584,92 @@ func (q *Queries) InsertOrderItem(ctx context.Context, arg InsertOrderItemParams
 	return err
 }
 
+const insertPayment = `-- name: InsertPayment :execrows
+insert into payments (id, order_id, method, amount, tip, reference) values ($1, $2, $3, $4, $5, $6)
+on conflict (id) do nothing
+`
+
+type InsertPaymentParams struct {
+	ID        pgtype.UUID
+	OrderID   pgtype.UUID
+	Method    PayMethod
+	Amount    int64
+	Tip       int64
+	Reference *string
+}
+
+func (q *Queries) InsertPayment(ctx context.Context, arg InsertPaymentParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertPayment,
+		arg.ID,
+		arg.OrderID,
+		arg.Method,
+		arg.Amount,
+		arg.Tip,
+		arg.Reference,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const insertPosItem = `-- name: InsertPosItem :exec
+insert into order_items (order_id, menu_item_id, name, unit_price, qty, sent_qty) values ($1, $2, $3, $4, $5, $6)
+`
+
+type InsertPosItemParams struct {
+	OrderID    pgtype.UUID
+	MenuItemID int64
+	Name       string
+	UnitPrice  int64
+	Qty        int32
+	SentQty    int32
+}
+
+func (q *Queries) InsertPosItem(ctx context.Context, arg InsertPosItemParams) error {
+	_, err := q.db.Exec(ctx, insertPosItem,
+		arg.OrderID,
+		arg.MenuItemID,
+		arg.Name,
+		arg.UnitPrice,
+		arg.Qty,
+		arg.SentQty,
+	)
+	return err
+}
+
+const insertPosOrder = `-- name: InsertPosOrder :exec
+insert into orders (id, mode, status, source, table_id, customer_name, phone, note, subtotal, delivery_fee, discount, total)
+values ($1, $2, 'open', 'pos', $3, $4, $5, $6, $7, 0, $8, $9)
+`
+
+type InsertPosOrderParams struct {
+	ID           pgtype.UUID
+	Mode         OrderMode
+	TableID      *int64
+	CustomerName string
+	Phone        *string
+	Note         *string
+	Subtotal     int64
+	Discount     int64
+	Total        int64
+}
+
+func (q *Queries) InsertPosOrder(ctx context.Context, arg InsertPosOrderParams) error {
+	_, err := q.db.Exec(ctx, insertPosOrder,
+		arg.ID,
+		arg.Mode,
+		arg.TableID,
+		arg.CustomerName,
+		arg.Phone,
+		arg.Note,
+		arg.Subtotal,
+		arg.Discount,
+		arg.Total,
+	)
+	return err
+}
+
 const insertReservation = `-- name: InsertReservation :execrows
 insert into reservations (id, customer_name, phone, guests, starts_at, note)
 values ($1, $2, $3, $4, $5, $6)
@@ -488,6 +698,70 @@ func (q *Queries) InsertReservation(ctx context.Context, arg InsertReservationPa
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const kitchenBoard = `-- name: KitchenBoard :many
+select k.id, k.order_id, k.lines, k.created_at, k.done_at, o.number, o.mode, o.source, t.name as table_name, o.customer_name
+from kitchen_tickets k
+join orders o on o.id = k.order_id
+left join dining_tables t on t.id = o.table_id
+where k.done_at is null or k.done_at > now() - interval '30 minutes'
+order by k.done_at nulls first, k.created_at
+`
+
+type KitchenBoardRow struct {
+	ID           pgtype.UUID
+	OrderID      pgtype.UUID
+	Lines        []byte
+	CreatedAt    pgtype.Timestamptz
+	DoneAt       pgtype.Timestamptz
+	Number       int64
+	Mode         OrderMode
+	Source       string
+	TableName    *string
+	CustomerName string
+}
+
+func (q *Queries) KitchenBoard(ctx context.Context) ([]KitchenBoardRow, error) {
+	rows, err := q.db.Query(ctx, kitchenBoard)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []KitchenBoardRow
+	for rows.Next() {
+		var i KitchenBoardRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrderID,
+			&i.Lines,
+			&i.CreatedAt,
+			&i.DoneAt,
+			&i.Number,
+			&i.Mode,
+			&i.Source,
+			&i.TableName,
+			&i.CustomerName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const kitchenTicketExists = `-- name: KitchenTicketExists :one
+select exists (select 1 from kitchen_tickets where id = $1)
+`
+
+func (q *Queries) KitchenTicketExists(ctx context.Context, id pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, kitchenTicketExists, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const listCategories = `-- name: ListCategories :many
@@ -597,7 +871,7 @@ func (q *Queries) ListOpeningHours(ctx context.Context) ([]OpeningHour, error) {
 }
 
 const listOrderItems = `-- name: ListOrderItems :many
-select order_id, menu_item_id, name, unit_price, qty from order_items where order_id = $1 order by name
+select order_id, menu_item_id, name, unit_price, qty, sent_qty from order_items where order_id = $1 order by name
 `
 
 func (q *Queries) ListOrderItems(ctx context.Context, orderID pgtype.UUID) ([]OrderItem, error) {
@@ -615,6 +889,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, orderID pgtype.UUID) ([]Or
 			&i.Name,
 			&i.UnitPrice,
 			&i.Qty,
+			&i.SentQty,
 		); err != nil {
 			return nil, err
 		}
@@ -627,7 +902,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, orderID pgtype.UUID) ([]Or
 }
 
 const listOrderItemsFor = `-- name: ListOrderItemsFor :many
-select order_id, menu_item_id, name, unit_price, qty from order_items where order_id = any($1::uuid[]) order by name
+select order_id, menu_item_id, name, unit_price, qty, sent_qty from order_items where order_id = any($1::uuid[]) order by name
 `
 
 func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]OrderItem, error) {
@@ -645,6 +920,7 @@ func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]O
 			&i.Name,
 			&i.UnitPrice,
 			&i.Qty,
+			&i.SentQty,
 		); err != nil {
 			return nil, err
 		}
@@ -657,9 +933,9 @@ func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]O
 }
 
 const listOrders = `-- name: ListOrders :many
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at from orders
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at from orders
 where ($1::order_status is null or status = $1)
-	and (not $2::bool or status not in ('completed', 'cancelled'))
+	and (not $2::bool or status not in ('completed', 'cancelled', 'open'))
 order by created_at desc
 limit 200
 `
@@ -691,6 +967,42 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order
 			&i.Subtotal,
 			&i.DeliveryFee,
 			&i.Total,
+			&i.CreatedAt,
+			&i.Source,
+			&i.TableID,
+			&i.Discount,
+			&i.PaidAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPayments = `-- name: ListPayments :many
+select id, order_id, method, amount, tip, reference, created_at from payments where order_id = $1 order by created_at
+`
+
+func (q *Queries) ListPayments(ctx context.Context, orderID pgtype.UUID) ([]Payment, error) {
+	rows, err := q.db.Query(ctx, listPayments, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Payment
+	for rows.Next() {
+		var i Payment
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrderID,
+			&i.Method,
+			&i.Amount,
+			&i.Tip,
+			&i.Reference,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -739,9 +1051,50 @@ func (q *Queries) ListReservations(ctx context.Context) ([]Reservation, error) {
 	return items, nil
 }
 
+const listTables = `-- name: ListTables :many
+
+select id, name, seats, area, position from dining_tables order by position, name
+`
+
+// ---- POS
+func (q *Queries) ListTables(ctx context.Context) ([]DiningTable, error) {
+	rows, err := q.db.Query(ctx, listTables)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DiningTable
+	for rows.Next() {
+		var i DiningTable
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Seats,
+			&i.Area,
+			&i.Position,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markAllSent = `-- name: MarkAllSent :exec
+update order_items set sent_qty = qty where order_id = $1
+`
+
+func (q *Queries) MarkAllSent(ctx context.Context, orderID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, markAllSent, orderID)
+	return err
+}
+
 const openOrderCounts = `-- name: OpenOrderCounts :many
 select status, count(*) as n from orders
-where status not in ('completed', 'cancelled')
+where status not in ('completed', 'cancelled', 'open')
 group by status
 `
 
@@ -770,12 +1123,98 @@ func (q *Queries) OpenOrderCounts(ctx context.Context) ([]OpenOrderCountsRow, er
 	return items, nil
 }
 
+const openTickets = `-- name: OpenTickets :many
+select o.id, o.number, o.mode, o.status, o.payment, o.customer_name, o.phone, o.address, o.note, o.subtotal, o.delivery_fee, o.total, o.created_at, o.source, o.table_id, o.discount, o.paid_at, t.name as table_name,
+	(select coalesce(sum(qty - sent_qty), 0) from order_items where order_id = o.id)::bigint as unsent,
+	(select coalesce(sum(amount), 0) from payments where order_id = o.id)::bigint as paid
+from orders o
+left join dining_tables t on t.id = o.table_id
+where o.status = 'open'
+order by o.created_at
+`
+
+type OpenTicketsRow struct {
+	ID           pgtype.UUID
+	Number       int64
+	Mode         OrderMode
+	Status       OrderStatus
+	Payment      string
+	CustomerName string
+	Phone        *string
+	Address      *string
+	Note         *string
+	Subtotal     int64
+	DeliveryFee  int64
+	Total        int64
+	CreatedAt    pgtype.Timestamptz
+	Source       string
+	TableID      *int64
+	Discount     int64
+	PaidAt       pgtype.Timestamptz
+	TableName    *string
+	Unsent       int64
+	Paid         int64
+}
+
+func (q *Queries) OpenTickets(ctx context.Context) ([]OpenTicketsRow, error) {
+	rows, err := q.db.Query(ctx, openTickets)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []OpenTicketsRow
+	for rows.Next() {
+		var i OpenTicketsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Number,
+			&i.Mode,
+			&i.Status,
+			&i.Payment,
+			&i.CustomerName,
+			&i.Phone,
+			&i.Address,
+			&i.Note,
+			&i.Subtotal,
+			&i.DeliveryFee,
+			&i.Total,
+			&i.CreatedAt,
+			&i.Source,
+			&i.TableID,
+			&i.Discount,
+			&i.PaidAt,
+			&i.TableName,
+			&i.Unsent,
+			&i.Paid,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const paidTotal = `-- name: PaidTotal :one
+select coalesce(sum(amount), 0)::bigint from payments where order_id = $1
+`
+
+func (q *Queries) PaidTotal(ctx context.Context, orderID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, paidTotal, orderID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const periodTotals = `-- name: PeriodTotals :one
-select count(*) filter (where status <> 'cancelled') as orders,
-	coalesce(sum(total) filter (where status <> 'cancelled'), 0)::bigint as revenue,
+select count(*) filter (where status not in ('cancelled', 'open')) as orders,
+	coalesce(sum(total) filter (where status not in ('cancelled', 'open')), 0)::bigint as revenue,
 	count(*) filter (where status = 'cancelled') as cancelled,
-	count(*) filter (where status <> 'cancelled' and mode = 'delivery') as delivery,
-	count(*) filter (where status <> 'cancelled' and mode = 'pickup') as pickup
+	count(*) filter (where status not in ('cancelled', 'open') and mode = 'delivery') as delivery,
+	count(*) filter (where status not in ('cancelled', 'open') and mode = 'pickup') as pickup,
+	count(*) filter (where status not in ('cancelled', 'open') and mode = 'dine_in') as dine_in
 from orders
 where created_at >= $1 and created_at < $2
 `
@@ -791,6 +1230,7 @@ type PeriodTotalsRow struct {
 	Cancelled int64
 	Delivery  int64
 	Pickup    int64
+	DineIn    int64
 }
 
 func (q *Queries) PeriodTotals(ctx context.Context, arg PeriodTotalsParams) (PeriodTotalsRow, error) {
@@ -802,15 +1242,33 @@ func (q *Queries) PeriodTotals(ctx context.Context, arg PeriodTotalsParams) (Per
 		&i.Cancelled,
 		&i.Delivery,
 		&i.Pickup,
+		&i.DineIn,
 	)
 	return i, err
+}
+
+const setTicketDone = `-- name: SetTicketDone :execrows
+update kitchen_tickets set done_at = case when $1::bool then now() else null end where id = $2
+`
+
+type SetTicketDoneParams struct {
+	Done bool
+	ID   pgtype.UUID
+}
+
+func (q *Queries) SetTicketDone(ctx context.Context, arg SetTicketDoneParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setTicketDone, arg.Done, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const topItems = `-- name: TopItems :many
 select oi.name, sum(oi.qty)::bigint as qty, sum(oi.qty * oi.unit_price)::bigint as revenue
 from order_items oi
 join orders o on o.id = oi.order_id
-where o.created_at >= $1 and o.created_at < $2 and o.status <> 'cancelled'
+where o.created_at >= $1 and o.created_at < $2 and o.status not in ('cancelled', 'open')
 group by oi.name
 order by qty desc, revenue desc
 limit 5
@@ -944,20 +1402,54 @@ func (q *Queries) UpdateMenuItem(ctx context.Context, arg UpdateMenuItemParams) 
 }
 
 const updateOrderStatus = `-- name: UpdateOrderStatus :execrows
-update orders set status = $2 where id = $1
+update orders set status = $1 where id = $2 and source = 'online' and $1::order_status <> 'open'
 `
 
 type UpdateOrderStatusParams struct {
-	ID     pgtype.UUID
 	Status OrderStatus
+	ID     pgtype.UUID
 }
 
+// Online orders only; POS tickets change state through the POS endpoints.
 func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (int64, error) {
-	result, err := q.db.Exec(ctx, updateOrderStatus, arg.ID, arg.Status)
+	result, err := q.db.Exec(ctx, updateOrderStatus, arg.Status, arg.ID)
 	if err != nil {
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const updatePosOrder = `-- name: UpdatePosOrder :exec
+update orders set mode = $2, table_id = $3, customer_name = $4, phone = $5, note = $6,
+	subtotal = $7, discount = $8, total = $9
+where id = $1
+`
+
+type UpdatePosOrderParams struct {
+	ID           pgtype.UUID
+	Mode         OrderMode
+	TableID      *int64
+	CustomerName string
+	Phone        *string
+	Note         *string
+	Subtotal     int64
+	Discount     int64
+	Total        int64
+}
+
+func (q *Queries) UpdatePosOrder(ctx context.Context, arg UpdatePosOrderParams) error {
+	_, err := q.db.Exec(ctx, updatePosOrder,
+		arg.ID,
+		arg.Mode,
+		arg.TableID,
+		arg.CustomerName,
+		arg.Phone,
+		arg.Note,
+		arg.Subtotal,
+		arg.Discount,
+		arg.Total,
+	)
+	return err
 }
 
 const updateReservationStatus = `-- name: UpdateReservationStatus :execrows
@@ -1021,4 +1513,28 @@ update site_content set data = $1, updated_at = now() where id = 1
 func (q *Queries) UpdateSiteContent(ctx context.Context, data []byte) error {
 	_, err := q.db.Exec(ctx, updateSiteContent, data)
 	return err
+}
+
+const updateTable = `-- name: UpdateTable :execrows
+update dining_tables set name = $2, seats = $3, area = $4 where id = $1
+`
+
+type UpdateTableParams struct {
+	ID    int64
+	Name  string
+	Seats int16
+	Area  string
+}
+
+func (q *Queries) UpdateTable(ctx context.Context, arg UpdateTableParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateTable,
+		arg.ID,
+		arg.Name,
+		arg.Seats,
+		arg.Area,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

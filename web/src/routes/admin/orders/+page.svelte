@@ -76,11 +76,11 @@
 				<div class="top">
 					<strong class="num">TV-{o.number}</strong>
 					<span class="badge {o.status}">{labels[o.status]}</span>
-					<span class="mode">{o.mode === 'delivery' ? 'Delivery' : 'Pickup'}</span>
+					<span class="mode">{{ delivery: 'Delivery', pickup: 'Pickup', dine_in: 'Dine-in' }[o.mode]}</span>
 					<span class="when">{since(o.created_at)}</span>
 				</div>
 				<p class="who">
-					<strong>{o.name}</strong> · <a href="tel:{o.phone}">{o.phone}</a>
+					<strong>{o.name}</strong>{#if o.phone}&nbsp;· <a href="tel:{o.phone}">{o.phone}</a>{/if}
 					{#if o.address}<br /><span class="addr">{o.address}</span>{/if}
 				</p>
 				<ul class="lines">

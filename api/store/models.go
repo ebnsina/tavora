@@ -16,6 +16,7 @@ type OrderMode string
 const (
 	OrderModeDelivery OrderMode = "delivery"
 	OrderModePickup   OrderMode = "pickup"
+	OrderModeDineIn   OrderMode = "dine_in"
 )
 
 func (e *OrderMode) Scan(src interface{}) error {
@@ -56,7 +57,8 @@ func (ns NullOrderMode) Value() (driver.Value, error) {
 func (e OrderMode) Valid() bool {
 	switch e {
 	case OrderModeDelivery,
-		OrderModePickup:
+		OrderModePickup,
+		OrderModeDineIn:
 		return true
 	}
 	return false
@@ -65,6 +67,7 @@ func (e OrderMode) Valid() bool {
 type OrderStatus string
 
 const (
+	OrderStatusOpen           OrderStatus = "open"
 	OrderStatusNew            OrderStatus = "new"
 	OrderStatusAccepted       OrderStatus = "accepted"
 	OrderStatusPreparing      OrderStatus = "preparing"
@@ -111,13 +114,69 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 
 func (e OrderStatus) Valid() bool {
 	switch e {
-	case OrderStatusNew,
+	case OrderStatusOpen,
+		OrderStatusNew,
 		OrderStatusAccepted,
 		OrderStatusPreparing,
 		OrderStatusReady,
 		OrderStatusOutForDelivery,
 		OrderStatusCompleted,
 		OrderStatusCancelled:
+		return true
+	}
+	return false
+}
+
+type PayMethod string
+
+const (
+	PayMethodCash  PayMethod = "cash"
+	PayMethodCard  PayMethod = "card"
+	PayMethodBkash PayMethod = "bkash"
+	PayMethodNagad PayMethod = "nagad"
+)
+
+func (e *PayMethod) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PayMethod(s)
+	case string:
+		*e = PayMethod(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PayMethod: %T", src)
+	}
+	return nil
+}
+
+type NullPayMethod struct {
+	PayMethod PayMethod
+	Valid     bool // Valid is true if PayMethod is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPayMethod) Scan(value interface{}) error {
+	if value == nil {
+		ns.PayMethod, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PayMethod.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPayMethod) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PayMethod), nil
+}
+
+func (e PayMethod) Valid() bool {
+	switch e {
+	case PayMethodCash,
+		PayMethodCard,
+		PayMethodBkash,
+		PayMethodNagad:
 		return true
 	}
 	return false
@@ -136,6 +195,22 @@ type Category struct {
 	Slug     string
 	Name     string
 	Position int32
+}
+
+type DiningTable struct {
+	ID       int64
+	Name     string
+	Seats    int16
+	Area     string
+	Position int32
+}
+
+type KitchenTicket struct {
+	ID        pgtype.UUID
+	OrderID   pgtype.UUID
+	Lines     []byte
+	CreatedAt pgtype.Timestamptz
+	DoneAt    pgtype.Timestamptz
 }
 
 type MenuItem struct {
@@ -163,13 +238,17 @@ type Order struct {
 	Status       OrderStatus
 	Payment      string
 	CustomerName string
-	Phone        string
+	Phone        *string
 	Address      *string
 	Note         *string
 	Subtotal     int64
 	DeliveryFee  int64
 	Total        int64
 	CreatedAt    pgtype.Timestamptz
+	Source       string
+	TableID      *int64
+	Discount     int64
+	PaidAt       pgtype.Timestamptz
 }
 
 type OrderItem struct {
@@ -178,6 +257,17 @@ type OrderItem struct {
 	Name       string
 	UnitPrice  int64
 	Qty        int32
+	SentQty    int32
+}
+
+type Payment struct {
+	ID        pgtype.UUID
+	OrderID   pgtype.UUID
+	Method    PayMethod
+	Amount    int64
+	Tip       int64
+	Reference *string
+	CreatedAt pgtype.Timestamptz
 }
 
 type Reservation struct {
