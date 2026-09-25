@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fade } from 'svelte/transition';
+	import { ms } from '$lib/motion';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		ArrowDown01Icon,
@@ -119,6 +121,7 @@
 				class="scrim"
 				type="button"
 				aria-label="Close menu"
+				transition:fade={{ duration: ms(200) }}
 				onclick={() => (drawer = false)}
 			></button>{/if}
 		<aside class:open={drawer} aria-label="Dashboard menu">
@@ -843,7 +846,6 @@
 			display: block;
 			border: 0;
 			background: rgb(0 0 0 / 0.45);
-			animation: fade 0.2s both;
 		}
 		.menu-btn {
 			display: grid;
@@ -950,11 +952,6 @@
 			font-size: 0.625rem;
 			line-height: 16px;
 			text-align: center;
-		}
-	}
-	@keyframes fade {
-		from {
-			opacity: 0;
 		}
 	}
 	/* Form footers: actions on the right; a destructive link, if any, pushed to the left. */

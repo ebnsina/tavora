@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
+	import { ms, phone } from '$lib/motion';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		ArrowDown01Icon,
@@ -134,8 +136,17 @@
 	</button>
 
 	{#if open}
-		<button class="scrim" type="button" aria-label="Close" onclick={() => (open = false)}></button>
+		<button
+			class="scrim"
+			type="button"
+			aria-label="Close"
+			transition:fade={{ duration: ms(180) }}
+			onclick={() => (open = false)}
+		></button>
 		<div
+			transition:fly={phone()
+				? { y: 320, duration: ms(260), opacity: 1 }
+				: { y: -6, duration: ms(160) }}
 			class="panel"
 			class:single={mode === 'single'}
 			class:right={alignRight}
@@ -282,14 +293,6 @@
 		box-shadow:
 			0 0 0 1px var(--line),
 			0 24px 48px -16px rgb(15 23 42 / 0.3);
-		animation: pop 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-	}
-	@keyframes pop {
-		from {
-			opacity: 0;
-			translate: 0 -6px;
-			scale: 0.98;
-		}
 	}
 	.panel.right {
 		right: 0;
@@ -444,7 +447,6 @@
 			display: block;
 			border: 0;
 			background: rgb(0 0 0 / 0.45);
-			animation: pop 0.2s both;
 		}
 		.panel,
 		.panel.right {
@@ -454,15 +456,9 @@
 			grid-template-columns: 1fr;
 			border-radius: 20px 20px 0 0;
 			padding-bottom: env(safe-area-inset-bottom);
-			animation-name: sheet;
 		}
 		.panel.single {
 			grid-template-columns: 1fr;
-		}
-		@keyframes sheet {
-			from {
-				translate: 0 100%;
-			}
 		}
 		.presets {
 			display: flex;
@@ -484,11 +480,6 @@
 		}
 		.day {
 			height: 42px;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.panel {
-			animation: none;
 		}
 	}
 </style>

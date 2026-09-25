@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fly } from 'svelte/transition';
+	import { ms } from '$lib/motion';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowDown01Icon, FilterIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 
@@ -31,7 +33,7 @@
 		<span class="chev"><HugeiconsIcon icon={ArrowDown01Icon} size={16} /></span>
 	</button>
 	{#if open}
-		<div class="list" role="menu" aria-label={label}>
+		<div class="list" role="menu" aria-label={label} transition:fly={{ y: -6, duration: ms(160) }}>
 			{#each options as o (o.href)}
 				<a
 					role="menuitemradio"
@@ -103,13 +105,6 @@
 		box-shadow:
 			0 0 0 1px var(--line),
 			0 24px 48px -16px rgb(15 23 42 / 0.3);
-		animation: pop 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-	}
-	@keyframes pop {
-		from {
-			opacity: 0;
-			translate: 0 -6px;
-		}
 	}
 	.list a {
 		display: flex;
@@ -132,11 +127,6 @@
 		.list {
 			left: 0;
 			right: auto;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.list {
-			animation: none;
 		}
 	}
 </style>

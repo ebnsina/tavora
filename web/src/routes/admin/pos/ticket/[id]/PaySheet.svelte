@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
+	import { ms } from '$lib/motion';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Cancel01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 	import { price } from '$lib/api';
@@ -71,9 +73,16 @@
 <div
 	class="scrim"
 	role="presentation"
+	transition:fade={{ duration: ms(180) }}
 	onclick={(e) => e.target === e.currentTarget && t.status === 'open' && onclose()}
 >
-	<div class="sheet" role="dialog" aria-modal="true" aria-label="Take payment">
+	<div
+		class="sheet"
+		role="dialog"
+		aria-modal="true"
+		aria-label="Take payment"
+		in:fly={{ y: 24, duration: ms(240) }}
+	>
 		{#if t.status === 'completed'}
 			<div class="done">
 				<span class="tick"><HugeiconsIcon icon={Tick02Icon} size={48} /></span>
@@ -319,29 +328,5 @@
 		border-radius: 50%;
 		background: var(--green);
 		color: #fff;
-	}
-	.scrim {
-		animation: fade-in 0.2s ease both;
-	}
-	.sheet {
-		animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-	}
-	@keyframes fade-in {
-		from {
-			opacity: 0;
-		}
-	}
-	@keyframes sheet-in {
-		from {
-			opacity: 0;
-			translate: 0 24px;
-			scale: 0.98;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.scrim,
-		.sheet {
-			animation: none;
-		}
 	}
 </style>

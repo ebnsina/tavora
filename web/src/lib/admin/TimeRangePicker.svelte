@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { fly } from 'svelte/transition';
+	import { ms } from '$lib/motion';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowDown01Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 	import { time } from '$lib/api';
@@ -74,7 +76,12 @@
 	</button>
 
 	{#if open}
-		<div class="panel" role="dialog" aria-label={label}>
+		<div
+			class="panel"
+			role="dialog"
+			aria-label={label}
+			transition:fly={{ y: -6, duration: ms(160) }}
+		>
 			<div class="cols" bind:this={lists}>
 				{#each [['opens', 'Opens', opens], ['closes', 'Closes', closes]] as const as [key, title, current] (key)}
 					<div class="col" class:active={step === key}>
@@ -150,13 +157,6 @@
 		box-shadow:
 			0 0 0 1px var(--line),
 			0 24px 48px -16px rgb(15 23 42 / 0.3);
-		animation: pop 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-	}
-	@keyframes pop {
-		from {
-			opacity: 0;
-			translate: 0 -6px;
-		}
 	}
 	.cols {
 		display: grid;
@@ -217,10 +217,5 @@
 		margin: 8px 4px 0;
 		color: var(--muted);
 		font-size: 0.8125rem;
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.panel {
-			animation: none;
-		}
 	}
 </style>
