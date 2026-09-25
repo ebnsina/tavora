@@ -23,6 +23,7 @@ type server struct {
 	q         *store.Queries
 	uploadDir string
 	logins    *throttle
+	sms       smsSender
 }
 
 // apiError is the only error shape clients ever see; Code is stable, Message is for developers.
@@ -227,6 +228,12 @@ func (s *server) createOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cust, signedIn, err := s.customer(r)
+	if err != nil {
+		fail(w, r, err)
+		return
+	}
+
 	now := time.Now().In(bdTime)
 	today, err := s.q.GetOpeningHours(ctx, int16(now.Weekday()))
 	if errors.Is(err, pgx.ErrNoRows) || (err == nil && !isOpen(today, now.Hour()*60+now.Minute())) {
@@ -276,6 +283,15 @@ func (s *server) createOrder(w http.ResponseWriter, r *http.Request) {
 			return err // n == 0: a retry of an order we already saved
 		}
 		status = http.StatusCreated
+		if signedIn {
+			// The customer's last name and delivery address fill in their next checkout.
+			if err := q.SetOrderCustomer(ctx, store.SetOrderCustomerParams{ID: id, CustomerID: &cust.ID}); err != nil {
+				return err
+			}
+			if err := q.UpdateCustomerDetails(ctx, store.UpdateCustomerDetailsParams{ID: cust.ID, Name: name, Address: address}); err != nil {
+				return err
+			}
+		}
 		for _, l := range req.Items {
 			it := items[l.ID]
 			if err := q.InsertOrderItem(ctx, store.InsertOrderItemParams{
@@ -308,11 +324,11 @@ func (s *server) writeOrder(w http.ResponseWriter, r *http.Request, id pgtype.UU
 }
 
 type lineJSON struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	UnitPrice int64  `json:"unit_price"`
-	Qty       int32  `json:"qty"`
-	Amount    int64  `json:"amount"`
+	ID        int64   `json:"id"`
+	Name      string  `json:"name"`
+	UnitPrice int64   `json:"unit_price"`
+	Qty       int32   `json:"qty"`
+	Amount    int64   `json:"amount"`
 	Sent      int32   `json:"sent"`
 	Note      *string `json:"note"`
 }

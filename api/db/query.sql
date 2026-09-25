@@ -329,3 +329,43 @@ update kitchen_tickets set done_at = case when @done::bool then now() else null 
 
 -- name: KitchenTicketExists :one
 select exists (select 1 from kitchen_tickets where id = $1);
+
+-- name: UpsertOtp :exec
+insert into otp_codes (phone, code_hash, expires_at) values ($1, $2, $3)
+on conflict (phone) do update set code_hash = excluded.code_hash, expires_at = excluded.expires_at, attempts = 0;
+
+-- name: GetOtp :one
+select * from otp_codes where phone = $1;
+
+-- name: BumpOtpAttempts :exec
+update otp_codes set attempts = attempts + 1 where phone = $1;
+
+-- name: DeleteOtp :exec
+delete from otp_codes where phone = $1;
+
+-- name: UpsertCustomer :one
+insert into customers (phone) values ($1)
+on conflict (phone) do update set phone = excluded.phone
+returning *;
+
+-- name: CreateCustomerSession :exec
+insert into customer_sessions (token_hash, customer_id, expires_at) values ($1, $2, $3);
+
+-- name: GetSessionCustomer :one
+select c.* from customer_sessions s join customers c on c.id = s.customer_id
+where s.token_hash = $1 and s.expires_at > now();
+
+-- name: DeleteCustomerSession :exec
+delete from customer_sessions where token_hash = $1;
+
+-- name: DeleteExpiredCustomerSessions :exec
+delete from customer_sessions where expires_at <= now();
+
+-- name: SetOrderCustomer :exec
+update orders set customer_id = $2 where id = $1;
+
+-- name: UpdateCustomerDetails :exec
+update customers set name = $2, address = coalesce(sqlc.narg(address), address) where id = $1;
+
+-- name: ListCustomerOrders :many
+select * from orders where customer_id = $1 order by created_at desc limit 20;

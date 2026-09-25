@@ -60,6 +60,15 @@ func (q *Queries) Alerts(ctx context.Context) (AlertsRow, error) {
 	return i, err
 }
 
+const bumpOtpAttempts = `-- name: BumpOtpAttempts :exec
+update otp_codes set attempts = attempts + 1 where phone = $1
+`
+
+func (q *Queries) BumpOtpAttempts(ctx context.Context, phone string) error {
+	_, err := q.db.Exec(ctx, bumpOtpAttempts, phone)
+	return err
+}
+
 const closeOrder = `-- name: CloseOrder :exec
 update orders set status = $1, paid_at = case when $1 = 'completed'::order_status then now() else paid_at end,
 	voided_by = $2
@@ -148,6 +157,21 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		&i.Position,
 	)
 	return i, err
+}
+
+const createCustomerSession = `-- name: CreateCustomerSession :exec
+insert into customer_sessions (token_hash, customer_id, expires_at) values ($1, $2, $3)
+`
+
+type CreateCustomerSessionParams struct {
+	TokenHash  []byte
+	CustomerID int64
+	ExpiresAt  pgtype.Timestamptz
+}
+
+func (q *Queries) CreateCustomerSession(ctx context.Context, arg CreateCustomerSessionParams) error {
+	_, err := q.db.Exec(ctx, createCustomerSession, arg.TokenHash, arg.CustomerID, arg.ExpiresAt)
+	return err
 }
 
 const createMenuItem = `-- name: CreateMenuItem :one
@@ -484,6 +508,24 @@ func (q *Queries) DeleteCategory(ctx context.Context, id int64) (int64, error) {
 	return result.RowsAffected(), nil
 }
 
+const deleteCustomerSession = `-- name: DeleteCustomerSession :exec
+delete from customer_sessions where token_hash = $1
+`
+
+func (q *Queries) DeleteCustomerSession(ctx context.Context, tokenHash []byte) error {
+	_, err := q.db.Exec(ctx, deleteCustomerSession, tokenHash)
+	return err
+}
+
+const deleteExpiredCustomerSessions = `-- name: DeleteExpiredCustomerSessions :exec
+delete from customer_sessions where expires_at <= now()
+`
+
+func (q *Queries) DeleteExpiredCustomerSessions(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteExpiredCustomerSessions)
+	return err
+}
+
 const deleteExpiredSessions = `-- name: DeleteExpiredSessions :exec
 delete from sessions where expires_at <= now()
 `
@@ -520,6 +562,15 @@ delete from order_items where order_id = $1
 
 func (q *Queries) DeleteOrderItems(ctx context.Context, orderID pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteOrderItems, orderID)
+	return err
+}
+
+const deleteOtp = `-- name: DeleteOtp :exec
+delete from otp_codes where phone = $1
+`
+
+func (q *Queries) DeleteOtp(ctx context.Context, phone string) error {
+	_, err := q.db.Exec(ctx, deleteOtp, phone)
 	return err
 }
 
@@ -621,7 +672,7 @@ func (q *Queries) GetOpeningHours(ctx context.Context, weekday int16) (OpeningHo
 }
 
 const getOrder = `-- name: GetOrder :one
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive from orders where id = $1
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive, customer_id from orders where id = $1
 `
 
 func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
@@ -650,12 +701,13 @@ func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
 		&i.Vat,
 		&i.VatRate,
 		&i.VatInclusive,
+		&i.CustomerID,
 	)
 	return i, err
 }
 
 const getOrderForUpdate = `-- name: GetOrderForUpdate :one
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive from orders where id = $1 for update
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive, customer_id from orders where id = $1 for update
 `
 
 func (q *Queries) GetOrderForUpdate(ctx context.Context, id pgtype.UUID) (Order, error) {
@@ -684,6 +736,23 @@ func (q *Queries) GetOrderForUpdate(ctx context.Context, id pgtype.UUID) (Order,
 		&i.Vat,
 		&i.VatRate,
 		&i.VatInclusive,
+		&i.CustomerID,
+	)
+	return i, err
+}
+
+const getOtp = `-- name: GetOtp :one
+select phone, code_hash, expires_at, attempts from otp_codes where phone = $1
+`
+
+func (q *Queries) GetOtp(ctx context.Context, phone string) (OtpCode, error) {
+	row := q.db.QueryRow(ctx, getOtp, phone)
+	var i OtpCode
+	err := row.Scan(
+		&i.Phone,
+		&i.CodeHash,
+		&i.ExpiresAt,
+		&i.Attempts,
 	)
 	return i, err
 }
@@ -757,6 +826,24 @@ func (q *Queries) GetSessionAdmin(ctx context.Context, tokenHash []byte) (GetSes
 		&i.Email,
 		&i.Name,
 		&i.Role,
+	)
+	return i, err
+}
+
+const getSessionCustomer = `-- name: GetSessionCustomer :one
+select c.id, c.phone, c.name, c.address, c.created_at from customer_sessions s join customers c on c.id = s.customer_id
+where s.token_hash = $1 and s.expires_at > now()
+`
+
+func (q *Queries) GetSessionCustomer(ctx context.Context, tokenHash []byte) (Customer, error) {
+	row := q.db.QueryRow(ctx, getSessionCustomer, tokenHash)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.Phone,
+		&i.Name,
+		&i.Address,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -1093,6 +1180,54 @@ func (q *Queries) ListCategories(ctx context.Context) ([]Category, error) {
 	return items, nil
 }
 
+const listCustomerOrders = `-- name: ListCustomerOrders :many
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive, customer_id from orders where customer_id = $1 order by created_at desc limit 20
+`
+
+func (q *Queries) ListCustomerOrders(ctx context.Context, customerID *int64) ([]Order, error) {
+	rows, err := q.db.Query(ctx, listCustomerOrders, customerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Order
+	for rows.Next() {
+		var i Order
+		if err := rows.Scan(
+			&i.ID,
+			&i.Number,
+			&i.Mode,
+			&i.Status,
+			&i.Payment,
+			&i.CustomerName,
+			&i.Phone,
+			&i.Address,
+			&i.Note,
+			&i.Subtotal,
+			&i.DeliveryFee,
+			&i.Total,
+			&i.CreatedAt,
+			&i.Source,
+			&i.TableID,
+			&i.Discount,
+			&i.PaidAt,
+			&i.CreatedBy,
+			&i.VoidedBy,
+			&i.Vat,
+			&i.VatRate,
+			&i.VatInclusive,
+			&i.CustomerID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMenu = `-- name: ListMenu :many
 select c.slug as category_slug, c.name as category_name, i.id, i.category_id, i.name, i.description, i.price, i.tags, i.image, i.available, i.position
 from menu_items i
@@ -1235,7 +1370,7 @@ func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]O
 }
 
 const listOrders = `-- name: ListOrders :many
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive from orders
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive, customer_id from orders
 where ($1::order_status is null or status = $1)
 	and (not $2::bool or status not in ('completed', 'cancelled', 'open'))
 order by created_at desc
@@ -1279,6 +1414,7 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order
 			&i.Vat,
 			&i.VatRate,
 			&i.VatInclusive,
+			&i.CustomerID,
 		); err != nil {
 			return nil, err
 		}
@@ -1506,7 +1642,7 @@ func (q *Queries) OpenOrderCounts(ctx context.Context) ([]OpenOrderCountsRow, er
 }
 
 const openTickets = `-- name: OpenTickets :many
-select o.id, o.number, o.mode, o.status, o.payment, o.customer_name, o.phone, o.address, o.note, o.subtotal, o.delivery_fee, o.total, o.created_at, o.source, o.table_id, o.discount, o.paid_at, o.created_by, o.voided_by, o.vat, o.vat_rate, o.vat_inclusive, t.name as table_name,
+select o.id, o.number, o.mode, o.status, o.payment, o.customer_name, o.phone, o.address, o.note, o.subtotal, o.delivery_fee, o.total, o.created_at, o.source, o.table_id, o.discount, o.paid_at, o.created_by, o.voided_by, o.vat, o.vat_rate, o.vat_inclusive, o.customer_id, t.name as table_name,
 	(select coalesce(sum(qty - sent_qty), 0) from order_items where order_id = o.id)::bigint as unsent,
 	(select coalesce(sum(amount), 0) from payments where order_id = o.id)::bigint as paid
 from orders o
@@ -1538,6 +1674,7 @@ type OpenTicketsRow struct {
 	Vat          int64
 	VatRate      int32
 	VatInclusive bool
+	CustomerID   *int64
 	TableName    *string
 	Unsent       int64
 	Paid         int64
@@ -1575,6 +1712,7 @@ func (q *Queries) OpenTickets(ctx context.Context) ([]OpenTicketsRow, error) {
 			&i.Vat,
 			&i.VatRate,
 			&i.VatInclusive,
+			&i.CustomerID,
 			&i.TableName,
 			&i.Unsent,
 			&i.Paid,
@@ -1637,6 +1775,20 @@ func (q *Queries) PeriodTotals(ctx context.Context, arg PeriodTotalsParams) (Per
 		&i.DineIn,
 	)
 	return i, err
+}
+
+const setOrderCustomer = `-- name: SetOrderCustomer :exec
+update orders set customer_id = $2 where id = $1
+`
+
+type SetOrderCustomerParams struct {
+	ID         pgtype.UUID
+	CustomerID *int64
+}
+
+func (q *Queries) SetOrderCustomer(ctx context.Context, arg SetOrderCustomerParams) error {
+	_, err := q.db.Exec(ctx, setOrderCustomer, arg.ID, arg.CustomerID)
+	return err
 }
 
 const setTicketDone = `-- name: SetTicketDone :execrows
@@ -1766,6 +1918,21 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const updateCustomerDetails = `-- name: UpdateCustomerDetails :exec
+update customers set name = $2, address = coalesce($3, address) where id = $1
+`
+
+type UpdateCustomerDetailsParams struct {
+	ID      int64
+	Name    string
+	Address *string
+}
+
+func (q *Queries) UpdateCustomerDetails(ctx context.Context, arg UpdateCustomerDetailsParams) error {
+	_, err := q.db.Exec(ctx, updateCustomerDetails, arg.ID, arg.Name, arg.Address)
+	return err
 }
 
 const updateMenuItem = `-- name: UpdateMenuItem :execrows
@@ -1984,5 +2151,40 @@ type UpdateVatParams struct {
 
 func (q *Queries) UpdateVat(ctx context.Context, arg UpdateVatParams) error {
 	_, err := q.db.Exec(ctx, updateVat, arg.VatRate, arg.VatInclusive, arg.Bin)
+	return err
+}
+
+const upsertCustomer = `-- name: UpsertCustomer :one
+insert into customers (phone) values ($1)
+on conflict (phone) do update set phone = excluded.phone
+returning id, phone, name, address, created_at
+`
+
+func (q *Queries) UpsertCustomer(ctx context.Context, phone string) (Customer, error) {
+	row := q.db.QueryRow(ctx, upsertCustomer, phone)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.Phone,
+		&i.Name,
+		&i.Address,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const upsertOtp = `-- name: UpsertOtp :exec
+insert into otp_codes (phone, code_hash, expires_at) values ($1, $2, $3)
+on conflict (phone) do update set code_hash = excluded.code_hash, expires_at = excluded.expires_at, attempts = 0
+`
+
+type UpsertOtpParams struct {
+	Phone     string
+	CodeHash  []byte
+	ExpiresAt pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertOtp(ctx context.Context, arg UpsertOtpParams) error {
+	_, err := q.db.Exec(ctx, upsertOtp, arg.Phone, arg.CodeHash, arg.ExpiresAt)
 	return err
 }

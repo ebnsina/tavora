@@ -98,11 +98,14 @@ func (s *server) login(w http.ResponseWriter, r *http.Request) {
 	s.startSession(w, r, a.ID, a.Email, a.Name, a.Role)
 }
 
-func (s *server) startSession(w http.ResponseWriter, r *http.Request, id int64, email *string, name, role string) {
+func newToken() string {
 	raw := make([]byte, 32)
 	rand.Read(raw)
-	token := base64.RawURLEncoding.EncodeToString(raw)
-	expires := time.Now().Add(sessionTTL)
+	return base64.RawURLEncoding.EncodeToString(raw)
+}
+
+func (s *server) startSession(w http.ResponseWriter, r *http.Request, id int64, email *string, name, role string) {
+	token, expires := newToken(), time.Now().Add(sessionTTL)
 	if err := s.q.CreateSession(r.Context(), store.CreateSessionParams{
 		TokenHash: hashToken(token), AdminID: id, ExpiresAt: pgtype.Timestamptz{Time: expires, Valid: true},
 	}); err != nil {

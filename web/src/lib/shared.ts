@@ -59,6 +59,9 @@ export type Order = {
 	total: number;
 	created_at: string;
 };
+export type Customer = { id: number; phone: string; name: string; address: string };
+export type Session = { token: string; customer: Customer };
+
 export type Reservation = {
 	id: string;
 	name: string;
@@ -119,6 +122,8 @@ const messages: Record<string, string> = {
 	network: "We couldn't reach the restaurant. Check your connection and try again.",
 	invalid_credentials: 'That email or password is wrong.',
 	wrong_pin: 'That PIN isn’t right. Try again.',
+	code_wrong: 'That code isn’t right. Check the text message and try again.',
+	code_expired: 'That code has run out. Ask for a new one.',
 	owner_only: 'Only the owner can do this.',
 	too_many_attempts: 'Too many wrong tries. Please wait 15 minutes and try again.',
 	unauthorized: 'Please sign in again.',

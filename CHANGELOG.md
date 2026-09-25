@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Customer app: sign-in, welcome and a new look
+- Phone app opens on a Tavora splash, then three welcome slides (first launch only) with dish photos, ending in "Start ordering" or "Sign in".
+- Optional sign-in with a 6-digit code sent to the customer's phone. Signed-in customers get their name, phone and last address filled in at checkout, and see their past orders and order status under their account. Guests order exactly as before.
+- New look inspired by current food-app design: greeting header, Delivery/Pickup switch, category chips that stay pinned while scrolling, dish cards with round photos, dark order bar with a live item count.
+- Prices, totals, quantities and the "send a new code" countdown roll digit by digit when they change; buttons press in, the order bar slides up, the order-placed check pops in. All motion is off when the phone's "reduce motion" setting is on.
+- Fonts: Mona Sans for text, Geist Mono for order numbers. App icon and splash use the Tavora mark.
+- API: customer accounts (`/v1/auth/code`, `/v1/auth/verify`, `/v1/me`, `/v1/auth/logout`); orders placed while signed in are linked to the customer. New setting `SMS_PROVIDER`.
+
 ### Customer app (first step)
 - New phone app for customers (`mobile/`, Expo): shows the restaurant, whether it's open now, and the full menu with prices and sold-out dishes. Pull down to refresh.
 - Customer app ordering: add dishes from the menu, change quantities in the cart, then check out with delivery (cash on delivery) or pickup. Shows the delivery fee, free-delivery nudge and VAT the same way as the website; wrong details are outlined in red with a plain explanation. After ordering, one tap sends the order to the restaurant's WhatsApp. Checkout is locked while the restaurant is closed.

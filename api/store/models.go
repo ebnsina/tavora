@@ -198,6 +198,21 @@ type Category struct {
 	Position int32
 }
 
+type Customer struct {
+	ID        int64
+	Phone     string
+	Name      string
+	Address   string
+	CreatedAt pgtype.Timestamptz
+}
+
+type CustomerSession struct {
+	TokenHash  []byte
+	CustomerID int64
+	ExpiresAt  pgtype.Timestamptz
+	CreatedAt  pgtype.Timestamptz
+}
+
 type DiningTable struct {
 	ID       int64
 	Name     string
@@ -255,6 +270,7 @@ type Order struct {
 	Vat          int64
 	VatRate      int32
 	VatInclusive bool
+	CustomerID   *int64
 }
 
 type OrderItem struct {
@@ -265,6 +281,13 @@ type OrderItem struct {
 	Qty        int32
 	SentQty    int32
 	Note       *string
+}
+
+type OtpCode struct {
+	Phone     string
+	CodeHash  []byte
+	ExpiresAt pgtype.Timestamptz
+	Attempts  int32
 }
 
 type Payment struct {

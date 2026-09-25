@@ -42,3 +42,14 @@ func TestContrast(t *testing.T) {
 		t.Error("mustard is too light for cream text and must fail")
 	}
 }
+
+func TestNewCode(t *testing.T) {
+	for range 1000 {
+		if c := newCode(); !validPin(c) {
+			t.Fatalf("newCode() = %q, want 6 digits", c)
+		}
+	}
+	if string(hashCode("+8801712345678", "123456")) == string(hashCode("+8801812345678", "123456")) {
+		t.Error("the same code for two phones must hash differently")
+	}
+}

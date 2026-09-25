@@ -56,7 +56,7 @@ Install **Expo Go** on your phone (App Store or Play Store). Then:
 
 ```sh
 cd mobile
-cp .env.example .env    # on a real phone, change localhost to your computer's network address, e.g. http://192.168.0.10:8080
+cp .env.example .env    # on a real phone, change localhost to your computer's network address, e.g. http://192.168.0.10:8080 (both lines)
 pnpm install
 pnpm start              # scan the QR code with your phone
 ```
@@ -107,9 +107,9 @@ Each app refuses to start (or build) if a setting is missing, so nothing silentl
 
 | App | Settings |
 | --- | --- |
-| `api` | `DATABASE_URL`, `ADDR`, `CORS_ORIGIN`, `UPLOAD_DIR` |
+| `api` | `DATABASE_URL`, `ADDR`, `CORS_ORIGIN`, `UPLOAD_DIR`, `SMS_PROVIDER` (`log` prints customer sign-in codes to the server log; a real text-message provider is still to be added) |
 | `web` | `PUBLIC_API_URL`, `PUBLIC_HELP_URL` |
-| `mobile` | `EXPO_PUBLIC_API_URL` |
+| `mobile` | `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_WEB_URL` (the website, which serves the demo dish photos) |
 | `marketing` | `PUBLIC_SITE_URL`, `PUBLIC_WHATSAPP`, `PUBLIC_EMAIL`, `PUBLIC_DEMO_URL` |
 
 The product site builds to `marketing/build`. Serve it with any web server and send unknown paths to `404.html`.
@@ -145,8 +145,12 @@ All amounts are poisha. Errors always look like `{"error": {"code", "message", "
 | POST | `/v1/orders` | The client sends an `id` (UUID); retries return the same order. Prices are worked out on the server. |
 | POST | `/v1/reservations` | `date` `YYYY-MM-DD`, `time` `HH:MM`, Bangladesh time |
 | GET | `/v1/site` | All homepage text (shape: `SiteContent` in `api/content.go`) |
+| POST | `/v1/auth/code` | Phone app sign-in: `{"phone"}` texts a 6-digit code (5 minutes, 5 tries; 3 codes per phone per 15 minutes) |
+| POST | `/v1/auth/verify` | `{"phone", "code"}` returns `{token, customer}`; send the token as `Authorization: Bearer` |
+| GET | `/v1/me` | The signed-in customer and their last 20 orders. Orders placed with the token are linked to the customer and save their name and address |
+| POST | `/v1/auth/logout` | Ends the customer session |
 | POST | `/v1/admin/login` | Owner sign-in; returns a bearer token for everything under `/v1/admin/` |
 | POST | `/v1/admin/pin` | Staff sign-in with `{"pin"}`; same response |
 | | `/v1/admin/…` | Owner only: `site`, `restaurant`, `hours`, `vat`, `theme`, `categories`, `items`, `stats`, `uploads`, `tables`, `staff`, `reports/day?date=`. Owner and staff: `me`, `alerts`, `orders`, `reservations`, `/v1/pos/…`, `/v1/kitchen` |
 
-Error codes: `validation_failed`, `bad_request`, `item_not_found`, `item_unavailable`, `restaurant_closed`, `outside_opening_hours`, `unauthorized`, `owner_only`, `invalid_credentials`, `wrong_pin`, `too_many_attempts`, `name_taken`, `category_not_empty`, `item_has_orders`, `not_found`, `internal`.
+Error codes: `validation_failed`, `bad_request`, `item_not_found`, `item_unavailable`, `restaurant_closed`, `outside_opening_hours`, `unauthorized`, `owner_only`, `invalid_credentials`, `wrong_pin`, `code_wrong`, `code_expired`, `too_many_attempts`, `name_taken`, `category_not_empty`, `item_has_orders`, `not_found`, `internal`.

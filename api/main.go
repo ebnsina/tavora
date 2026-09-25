@@ -75,7 +75,11 @@ func main() {
 	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
 		log.Fatal(err)
 	}
-	s := &server{pool: pool, q: q, uploadDir: uploadDir, logins: &throttle{fails: map[string][]time.Time{}}}
+	sms, err := newSMS(mustEnv("SMS_PROVIDER"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	s := &server{pool: pool, q: q, uploadDir: uploadDir, logins: &throttle{fails: map[string][]time.Time{}}, sms: sms}
 	admin, owner := s.requireAdmin, s.requireOwner
 
 	mux := http.NewServeMux()
@@ -85,6 +89,10 @@ func main() {
 	mux.HandleFunc("POST /v1/orders", s.createOrder)
 	mux.HandleFunc("POST /v1/reservations", s.createReservation)
 	mux.Handle("GET /uploads/", s.uploads())
+	mux.HandleFunc("POST /v1/auth/code", s.sendCode)
+	mux.HandleFunc("POST /v1/auth/verify", s.verifyCode)
+	mux.HandleFunc("POST /v1/auth/logout", s.customerLogout)
+	mux.HandleFunc("GET /v1/me", s.customerMe)
 
 	mux.HandleFunc("POST /v1/admin/login", s.login)
 	mux.HandleFunc("POST /v1/admin/pin", s.pinLogin)
@@ -150,7 +158,7 @@ func cors(origin string, next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		}
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
