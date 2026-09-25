@@ -3,7 +3,9 @@
 	import { price } from '$lib/api';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 
-	let { data, form } = $props();
+	let { data, form: raw } = $props();
+	// The status buttons post to the orders list's action; its error lands here.
+	const form = $derived(raw as { error?: string } | null);
 	const o = $derived(data.order);
 
 	const labels: Record<string, string> = {

@@ -5,6 +5,7 @@
 	import DatePicker from '$lib/admin/DatePicker.svelte';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import { price, time } from '$lib/api';
+	import { onMount } from 'svelte';
 
 	let { data } = $props();
 	const s = $derived(data.stats);
@@ -15,6 +16,22 @@
 	const first = $derived(data.admin?.name.split(' ')[0] ?? '');
 
 	const fmtDay = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+	// Live clock for the header, in restaurant time.
+	let now = $state(new Date());
+	onMount(() => {
+		const t = setInterval(() => (now = new Date()), 15_000);
+		return () => clearInterval(t);
+	});
+	const clock = new Intl.DateTimeFormat('en-GB', {
+		weekday: 'short',
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+		hour: 'numeric',
+		minute: '2-digit',
+		hour12: true,
+		timeZone: 'Asia/Dhaka'
+	});
 	const fmtLong = new Intl.DateTimeFormat('en-GB', {
 		weekday: 'short',
 		day: 'numeric',
@@ -104,7 +121,7 @@
 	];
 </script>
 
-<PageHeader title="{greeting}, {first}" aside={rangeLabel}>
+<PageHeader title="{greeting}, {first}" aside={clock.format(now)}>
 	{#snippet actions()}
 		<nav class="seg" aria-label="Date range">
 			{#each presets as [v, label] (v)}

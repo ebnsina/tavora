@@ -5,7 +5,7 @@
 ### Dashboard
 - Order details page: every dish, totals, discount, customer, table, and each payment with method, time, reference and tip. Open it by tapping an order number.
 - Point of sale has its own button at the top of the sidebar.
-- Overview shows the date range on the right of the greeting.
+- Overview shows the current date and time on the right of the greeting.
 
 ### Website
 - Open or closed now shows on a sign hanging over the shop door, with today's closing or next opening time, instead of a badge above the shop.
