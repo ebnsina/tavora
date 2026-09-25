@@ -27,6 +27,9 @@ export type Ticket = {
 	items: Line[];
 	subtotal: number;
 	discount: number;
+	vat: number;
+	vat_rate: number;
+	vat_inclusive: boolean;
 	total: number;
 	paid: number;
 	due: number;

@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { ApiError, type Order } from '$lib/api';
+import { ApiError, type Order, type Restaurant } from '$lib/api';
 import type { Payment } from '$lib/pos';
 import { adminApi } from '$lib/server/admin';
 
@@ -24,5 +24,6 @@ export async function load(event) {
 		if (e instanceof ApiError && e.code === 'not_found') error(404, 'That order doesn’t exist.');
 		throw e;
 	}
-	return { order, crumb: `Order TV-${order.number}` };
+	const restaurant = await adminApi<Restaurant>(event, '/v1/restaurant');
+	return { order, restaurant, crumb: `Order TV-${order.number}` };
 }

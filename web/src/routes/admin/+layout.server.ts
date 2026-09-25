@@ -4,7 +4,13 @@ import { adminApi } from '$lib/server/admin';
 export type Me = { id: number; email: string | null; name: string; role: 'owner' | 'staff' };
 
 // Staff see the till, orders and bookings; the API refuses everything else anyway.
-const staffPages = ['/admin/pos', '/admin/orders', '/admin/bookings', '/admin/alerts', '/admin/logout'];
+const staffPages = [
+	'/admin/pos',
+	'/admin/orders',
+	'/admin/bookings',
+	'/admin/alerts',
+	'/admin/logout'
+];
 
 export async function load(event) {
 	if (event.url.pathname === '/admin/login') return { admin: null };

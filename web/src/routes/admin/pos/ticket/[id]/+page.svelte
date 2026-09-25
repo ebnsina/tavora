@@ -11,7 +11,7 @@
 	} from '@hugeicons/core-free-icons';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { ApiError, price, type Item } from '$lib/api';
+	import { ApiError, price, vatPct, type Item } from '$lib/api';
 	import {
 		addPayment,
 		blankTicket,
@@ -261,6 +261,11 @@
 				{:else if t.discount}
 					<div><span>Discount</span><span>−{price(t.discount)}</span></div>
 				{/if}
+				{#if t.vat}<div>
+						<span>VAT {vatPct(t.vat_rate)}{t.vat_inclusive ? ' (included)' : ''}</span><span
+							>{price(t.vat)}</span
+						>
+					</div>{/if}
 				{#if t.paid}<div><span>Paid so far</span><span>−{price(t.paid)}</span></div>{/if}
 				<div class="grand">
 					<span>{t.paid ? 'Left to pay' : 'Total'}</span><strong>{price(Math.max(0, t.due))}</strong

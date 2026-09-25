@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -68,6 +69,83 @@ func (s *server) putSite(w http.ResponseWriter, r *http.Request) {
 }
 
 // ---- restaurant details and hours (amounts in poisha)
+
+// PUT /v1/admin/theme: the brand colour. Cream text sits on it everywhere, so it must stay readable.
+func (s *server) putTheme(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Color string `json:"color"`
+	}
+	if err := decode(w, r, &req); err != nil {
+		fail(w, r, err)
+		return
+	}
+	c := strings.ToLower(strings.TrimSpace(req.Color))
+	if !hexColor.MatchString(c) {
+		fail(w, r, invalid(map[string]string{"color": "a colour like #d5161a"}))
+		return
+	}
+	if contrast(c, "#fff9e7") < 4.5 {
+		fail(w, r, invalid(map[string]string{"color": "too light: text on it would be hard to read"}))
+		return
+	}
+	if err := s.q.UpdateTheme(r.Context(), c); err != nil {
+		fail(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+var hexColor = regexp.MustCompile(`^#[0-9a-f]{6}$`)
+
+// contrast is the WCAG contrast ratio between two #rrggbb colours.
+func contrast(a, b string) float64 {
+	lum := func(hex string) float64 {
+		v, _ := strconv.ParseUint(hex[1:], 16, 32)
+		ch := func(c uint64) float64 {
+			x := float64(c) / 255
+			if x <= 0.04045 {
+				return x / 12.92
+			}
+			return math.Pow((x+0.055)/1.055, 2.4)
+		}
+		return 0.2126*ch(v>>16&255) + 0.7152*ch(v>>8&255) + 0.0722*ch(v&255)
+	}
+	l1, l2 := lum(a), lum(b)
+	if l1 < l2 {
+		l1, l2 = l2, l1
+	}
+	return (l1 + 0.05) / (l2 + 0.05)
+}
+
+// PUT /v1/admin/vat: rate in basis points (500 = 5%), whether menu prices already include it, and the BIN.
+func (s *server) putVat(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Rate      int32  `json:"rate"`
+		Inclusive bool   `json:"inclusive"`
+		Bin       string `json:"bin"`
+	}
+	if err := decode(w, r, &req); err != nil {
+		fail(w, r, err)
+		return
+	}
+	req.Bin = strings.TrimSpace(req.Bin)
+	bad := map[string]string{}
+	if req.Rate < 0 || req.Rate > 3000 {
+		bad["rate"] = "between 0% and 30%"
+	}
+	if len(req.Bin) > 20 {
+		bad["bin"] = "up to 20 characters"
+	}
+	if len(bad) > 0 {
+		fail(w, r, invalid(bad))
+		return
+	}
+	if err := s.q.UpdateVat(r.Context(), store.UpdateVatParams{VatRate: req.Rate, VatInclusive: req.Inclusive, Bin: req.Bin}); err != nil {
+		fail(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
 
 func (s *server) putRestaurant(w http.ResponseWriter, r *http.Request) {
 	var req struct {

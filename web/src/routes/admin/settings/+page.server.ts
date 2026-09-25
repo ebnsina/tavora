@@ -32,6 +32,32 @@ export const actions = {
 			'Details saved'
 		);
 	},
+	theme: async (event) => {
+		const f = await event.request.formData();
+		return act(
+			() =>
+				adminApi(event, '/v1/admin/theme', {
+					method: 'PUT',
+					body: json({ color: String(f.getAll('color').at(-1) ?? '') })
+				}),
+			'Colour saved'
+		);
+	},
+	vat: async (event) => {
+		const f = await event.request.formData();
+		return act(
+			() =>
+				adminApi(event, '/v1/admin/vat', {
+					method: 'PUT',
+					body: json({
+						rate: Math.round(Number(f.get('rate') ?? 0) * 100),
+						inclusive: f.get('inclusive') !== 'no',
+						bin: String(f.get('bin') ?? '')
+					})
+				}),
+			'VAT saved'
+		);
+	},
 	hours: async (event) => {
 		const f = await event.request.formData();
 		const week = [0, 1, 2, 3, 4, 5, 6]

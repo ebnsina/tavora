@@ -72,6 +72,7 @@ func (s *server) dayReport(w http.ResponseWriter, r *http.Request) {
 		"online": map[string]any{"count": orders.OnlineCount, "cash": orders.OnlineCash},
 		"discounts": map[string]any{"count": orders.DiscountCount, "amount": orders.Discounts},
 		"open": map[string]any{"count": orders.OpenCount, "total": orders.OpenTotal},
+		"vat":  orders.Vat,
 		// Till cash plus cash tips plus cash collected for online orders.
 		"drawer": cash + cashTips + orders.OnlineCash,
 	})

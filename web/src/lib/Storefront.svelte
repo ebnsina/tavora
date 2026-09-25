@@ -1,5 +1,6 @@
 <script lang="ts">
-	type Sign = { open: boolean; line: string; label: string };
+	// `word` replaces OPEN/CLOSED, e.g. on the error pages.
+	type Sign = { open: boolean; line: string; label: string; word?: string };
 	let { name, sign }: { name: string; sign?: Sign | false | null } = $props();
 	const stripes = Array.from({ length: 12 }, (_, i) => 118 + i * 34);
 </script>
@@ -58,7 +59,7 @@
 			<g class="sign" class:closed={!sign.open} role="status" aria-label={sign.label}>
 				<path d="M284 262v12M356 262v12" class="thin" />
 				<rect x="262" y="272" width="116" height="40" rx="8" />
-				<text class="big" x="320" y="294">{sign.open ? 'OPEN' : 'CLOSED'}</text>
+				<text class="big" x="320" y="294">{sign.word ?? (sign.open ? 'OPEN' : 'CLOSED')}</text>
 				<text class="small" x="320" y="306">{sign.line.toUpperCase()}</text>
 			</g>
 		{/if}

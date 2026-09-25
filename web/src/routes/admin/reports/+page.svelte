@@ -22,130 +22,248 @@
 	const other = $derived(
 		r.methods.filter((m) => m.method !== 'cash').reduce((s, m) => s + m.amount, 0)
 	);
+	const printed = new Intl.DateTimeFormat('en-GB', {
+		dateStyle: 'medium',
+		timeStyle: 'short',
+		timeZone: 'Asia/Dhaka'
+	});
 	const tips = $derived(r.methods.reduce((s, m) => s + m.tips, 0));
 	const taken = $derived(r.methods.reduce((s, m) => s + m.amount, 0) + r.online.cash);
 </script>
 
 <svelte:head><title>End of day · Tavora</title></svelte:head>
 
-<PageHeader title="End of day" sub={long.format(new Date(`${r.date}T00:00`))}>
-	{#snippet actions()}
-		<form method="GET" class="pick">
-			<DatePicker name="date" value={r.date} label="Day" />
-			<button class="btn small">Show</button>
-		</form>
-		<button class="btn primary small" type="button" onclick={() => print()}>Print</button>
-	{/snippet}
-</PageHeader>
+<div class="screen">
+	<PageHeader title="End of day" sub={long.format(new Date(`${r.date}T00:00`))}>
+		{#snippet actions()}
+			<form method="GET" class="pick">
+				<DatePicker name="date" value={r.date} label="Day" />
+				<button class="btn small">Show</button>
+			</form>
+			<button class="btn primary small" type="button" onclick={() => print()}>Print</button>
+		{/snippet}
+	</PageHeader>
 
-{#if data.dateError}<p class="flash bad" role="alert">{data.dateError}</p>{/if}
-{#if r.open.count}
-	<p class="flash bad" role="alert">
-		{r.open.count} ticket{r.open.count === 1 ? ' is' : 's are'} still open ({price(r.open.total)}).
-		Take payment or void {r.open.count === 1 ? 'it' : 'them'} before counting the drawer.
-	</p>
-{/if}
+	{#if data.dateError}<p class="flash bad" role="alert">{data.dateError}</p>{/if}
+	{#if r.open.count}
+		<p class="flash bad" role="alert">
+			{r.open.count} ticket{r.open.count === 1 ? ' is' : 's are'} still open ({price(
+				r.open.total
+			)}). Take payment or void {r.open.count === 1 ? 'it' : 'them'} before counting the drawer.
+		</p>
+	{/if}
 
-<section class="tiles" aria-label="Totals">
-	<div class="card tile hero">
-		<span class="label">Cash that should be in the drawer</span>
-		<strong class="value">{price(r.drawer)}</strong>
-		<span class="small">Till cash + cash tips + online orders paid in cash</span>
-	</div>
-	<div class="card tile">
-		<span class="label">Taken in total</span>
-		<strong class="value">{price(taken)}</strong>
-	</div>
-	<div class="card tile">
-		<span class="label">Card, bKash and Nagad</span>
-		<strong class="value">{price(other)}</strong>
-	</div>
-	<div class="card tile">
-		<span class="label">Tips</span>
-		<strong class="value">{price(tips)}</strong>
-	</div>
-</section>
-
-<div class="grid">
-	<section class="card">
-		<h2>How people paid</h2>
-		<table>
-			<thead><tr><th>Method</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
-			<tbody>
-				{#each r.methods as m (m.method)}
-					<tr>
-						<td>{names[m.method]}</td>
-						<td>{m.count}</td>
-						<td>{price(m.amount)}</td>
-						<td>{price(m.tips)}</td>
-					</tr>
-				{/each}
-				<tr>
-					<td>Online orders, cash on delivery or pickup</td>
-					<td>{r.online.count}</td>
-					<td>{price(r.online.cash)}</td>
-					<td>–</td>
-				</tr>
-			</tbody>
-		</table>
-		<h3>Counting the drawer</h3>
-		<dl>
-			<dt>Cash taken at the till</dt>
-			<dd>{price(cash?.amount ?? 0)}</dd>
-			<dt>Cash tips</dt>
-			<dd>{price(cash?.tips ?? 0)}</dd>
-			<dt>Cash from online orders</dt>
-			<dd>{price(r.online.cash)}</dd>
-			<dt class="total">Should be in the drawer</dt>
-			<dd class="total">{price(r.drawer)}</dd>
-		</dl>
+	<section class="tiles" aria-label="Totals">
+		<div class="card tile">
+			<span class="label">Cash that should be in the drawer</span>
+			<strong class="value">{price(r.drawer)}</strong>
+			<span class="small">Till cash + cash tips + online orders paid in cash</span>
+		</div>
+		<div class="card tile">
+			<span class="label">Taken in total</span>
+			<strong class="value">{price(taken)}</strong>
+		</div>
+		<div class="card tile">
+			<span class="label">Card, bKash and Nagad</span>
+			<strong class="value">{price(other)}</strong>
+		</div>
+		<div class="card tile">
+			<span class="label">Tips</span>
+			<strong class="value">{price(tips)}</strong>
+		</div>
+		<div class="card tile">
+			<span class="label">VAT collected</span>
+			<strong class="value">{price(r.vat)}</strong>
+			<span class="small">On bills closed this day</span>
+		</div>
 	</section>
 
-	<section class="card">
-		<h2>By staff</h2>
-		{#if r.staff.length}
+	<div class="grid">
+		<section class="card">
+			<h2>How people paid</h2>
 			<table>
-				<thead><tr><th>Name</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
+				<thead><tr><th>Method</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
 				<tbody>
-					{#each r.staff as s (s.name)}
-						<tr
-							><td>{s.name}</td><td>{s.count}</td><td>{price(s.amount)}</td><td>{price(s.tips)}</td
-							></tr
-						>
-					{/each}
-				</tbody>
-			</table>
-		{:else}
-			<p class="muted">No payments at the till this day.</p>
-		{/if}
-
-		<h3>Discounts</h3>
-		<p class="muted">
-			{r.discounts.count
-				? `${price(r.discounts.amount)} off across ${r.discounts.count} bill${r.discounts.count === 1 ? '' : 's'}`
-				: 'No discounts given.'}
-		</p>
-
-		<h3>Voided tickets</h3>
-		{#if r.voids.length}
-			<table>
-				<thead><tr><th>Ticket</th><th>Time</th><th>Amount</th><th>Voided by</th></tr></thead>
-				<tbody>
-					{#each r.voids as v (v.id)}
+					{#each r.methods as m (m.method)}
 						<tr>
-							<td><a href="/admin/orders/{v.id}">TV-{v.number}</a></td>
-							<td>{clock.format(new Date(v.created_at))}</td>
-							<td>{price(v.total)}</td>
-							<td>{v.voided_by || 'Not recorded'}</td>
+							<td>{names[m.method]}</td>
+							<td>{m.count}</td>
+							<td>{price(m.amount)}</td>
+							<td>{price(m.tips)}</td>
 						</tr>
 					{/each}
+					<tr>
+						<td>Online orders, cash on delivery or pickup</td>
+						<td>{r.online.count}</td>
+						<td>{price(r.online.cash)}</td>
+						<td>–</td>
+					</tr>
 				</tbody>
 			</table>
-		{:else}
-			<p class="muted">Nothing voided.</p>
-		{/if}
-	</section>
+			<h3>Counting the drawer</h3>
+			<dl>
+				<dt>Cash taken at the till</dt>
+				<dd>{price(cash?.amount ?? 0)}</dd>
+				<dt>Cash tips</dt>
+				<dd>{price(cash?.tips ?? 0)}</dd>
+				<dt>Cash from online orders</dt>
+				<dd>{price(r.online.cash)}</dd>
+				<dt class="total">Should be in the drawer</dt>
+				<dd class="total">{price(r.drawer)}</dd>
+			</dl>
+		</section>
+
+		<section class="card">
+			<h2>By staff</h2>
+			{#if r.staff.length}
+				<table>
+					<thead><tr><th>Name</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
+					<tbody>
+						{#each r.staff as s (s.name)}
+							<tr
+								><td>{s.name}</td><td>{s.count}</td><td>{price(s.amount)}</td><td
+									>{price(s.tips)}</td
+								></tr
+							>
+						{/each}
+					</tbody>
+				</table>
+			{:else}
+				<p class="muted">No payments at the till this day.</p>
+			{/if}
+
+			<h3>Discounts</h3>
+			<p class="muted">
+				{r.discounts.count
+					? `${price(r.discounts.amount)} off across ${r.discounts.count} bill${r.discounts.count === 1 ? '' : 's'}`
+					: 'No discounts given.'}
+			</p>
+
+			<h3>Voided tickets</h3>
+			{#if r.voids.length}
+				<table>
+					<thead><tr><th>Ticket</th><th>Time</th><th>Amount</th><th>Voided by</th></tr></thead>
+					<tbody>
+						{#each r.voids as v (v.id)}
+							<tr>
+								<td><a href="/admin/orders/{v.id}">TV-{v.number}</a></td>
+								<td>{clock.format(new Date(v.created_at))}</td>
+								<td>{price(v.total)}</td>
+								<td>{v.voided_by || 'Not recorded'}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{:else}
+				<p class="muted">Nothing voided.</p>
+			{/if}
+		</section>
+	</div>
 </div>
+
+<!-- Printed instead of the screen: a plain A4 sheet to count the drawer against and sign. -->
+<article class="doc" aria-hidden="true">
+	<header>
+		<div>
+			<h1>{data.restaurant.name}</h1>
+			<p>{data.restaurant.address}</p>
+			{#if data.restaurant.vat.bin}<p>BIN {data.restaurant.vat.bin}</p>{/if}
+		</div>
+		<div class="right">
+			<h2>End of day report</h2>
+			<p>{long.format(new Date(`${r.date}T00:00`))}</p>
+			<p>Printed {printed.format(new Date())}</p>
+		</div>
+	</header>
+
+	{#if r.open.count}
+		<p class="warn">
+			Warning: {r.open.count} ticket{r.open.count === 1 ? ' was' : 's were'} still open ({price(
+				r.open.total
+			)}) when this was printed.
+		</p>
+	{/if}
+
+	<h3>Summary</h3>
+	<table>
+		<tbody>
+			<tr><td>Taken in total</td><td>{price(taken)}</td></tr>
+			<tr><td>Card, bKash and Nagad</td><td>{price(other)}</td></tr>
+			<tr><td>Tips</td><td>{price(tips)}</td></tr>
+			<tr><td>Discounts ({r.discounts.count} bills)</td><td>−{price(r.discounts.amount)}</td></tr>
+			<tr><td>VAT collected</td><td>{price(r.vat)}</td></tr>
+		</tbody>
+	</table>
+
+	<h3>Payments by method</h3>
+	<table>
+		<thead><tr><th>Method</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
+		<tbody>
+			{#each r.methods as m (m.method)}
+				<tr>
+					<td>{names[m.method]}</td><td>{m.count}</td><td>{price(m.amount)}</td><td
+						>{price(m.tips)}</td
+					>
+				</tr>
+			{/each}
+			<tr>
+				<td>Online orders (cash)</td><td>{r.online.count}</td><td>{price(r.online.cash)}</td><td
+					>–</td
+				>
+			</tr>
+		</tbody>
+	</table>
+
+	<h3>Cash drawer</h3>
+	<table>
+		<tbody>
+			<tr><td>Cash taken at the till</td><td>{price(cash?.amount ?? 0)}</td></tr>
+			<tr><td>Cash tips</td><td>{price(cash?.tips ?? 0)}</td></tr>
+			<tr><td>Cash from online orders</td><td>{price(r.online.cash)}</td></tr>
+			<tr class="strong"><td>Should be in the drawer</td><td>{price(r.drawer)}</td></tr>
+			<tr><td>Actually counted</td><td class="blank"></td></tr>
+			<tr><td>Difference</td><td class="blank"></td></tr>
+		</tbody>
+	</table>
+
+	{#if r.staff.length}
+		<h3>By staff</h3>
+		<table>
+			<thead><tr><th>Name</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
+			<tbody>
+				{#each r.staff as s (s.name)}
+					<tr
+						><td>{s.name}</td><td>{s.count}</td><td>{price(s.amount)}</td><td>{price(s.tips)}</td
+						></tr
+					>
+				{/each}
+			</tbody>
+		</table>
+	{/if}
+
+	<h3>Voided tickets</h3>
+	{#if r.voids.length}
+		<table>
+			<thead><tr><th>Ticket</th><th>Time</th><th>Amount</th><th>Voided by</th></tr></thead>
+			<tbody>
+				{#each r.voids as v (v.id)}
+					<tr
+						><td>TV-{v.number}</td><td>{clock.format(new Date(v.created_at))}</td><td
+							>{price(v.total)}</td
+						><td>{v.voided_by || 'Not recorded'}</td></tr
+					>
+				{/each}
+			</tbody>
+		</table>
+	{:else}
+		<p>None.</p>
+	{/if}
+
+	<div class="sign">
+		<p>Counted by</p>
+		<p>Checked by</p>
+	</div>
+</article>
 
 <style>
 	.pick {
@@ -173,20 +291,8 @@
 		font-size: 1.75rem;
 		font-weight: 800;
 	}
-	.tile.hero {
-		background: var(--black);
-		color: var(--cream);
-	}
-	.hero .label,
-	.hero .small {
-		color: rgb(255 249 231 / 0.65);
-	}
 	.small {
 		font-size: 0.8125rem;
-	}
-	.hero .value {
-		font-size: clamp(2.25rem, 4vw, 3rem);
-		line-height: 1;
 	}
 	.grid {
 		display: grid;
@@ -251,12 +357,102 @@
 		margin: 0;
 		color: var(--muted);
 	}
+	.doc {
+		display: none;
+	}
 	@media print {
+		@page {
+			size: A4;
+			margin: 16mm;
+		}
 		:global(aside),
 		:global(.topbar),
-		.pick,
-		:global(.page-head .actions) {
+		:global(.page-head),
+		.screen {
 			display: none !important;
+		}
+		:global(main),
+		:global(.body),
+		:global(.shell) {
+			display: block !important;
+			margin: 0 !important;
+			padding: 0 !important;
+			background: #fff !important;
+		}
+		.doc {
+			display: block;
+			color: #000;
+			font: 10.5pt/1.4 var(--sans);
+		}
+		.doc header {
+			display: flex;
+			justify-content: space-between;
+			gap: 24px;
+			padding-bottom: 10px;
+			border-bottom: 2px solid #000;
+		}
+		.doc h1 {
+			margin: 0;
+			font-size: 18pt;
+		}
+		.doc h2 {
+			margin: 0;
+			font-size: 13pt;
+		}
+		.doc .right {
+			text-align: right;
+		}
+		.doc p {
+			margin: 2px 0;
+		}
+		.doc h3 {
+			margin: 16px 0 6px;
+			font-size: 11pt;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+		}
+		.doc table {
+			width: 100%;
+			border-collapse: collapse;
+			break-inside: avoid;
+		}
+		.doc th,
+		.doc td {
+			padding: 5px 6px;
+			border-bottom: 1px solid #999;
+			text-align: right;
+		}
+		.doc th:first-child,
+		.doc td:first-child {
+			text-align: left;
+		}
+		.doc th {
+			font-weight: 700;
+			border-bottom: 1.5px solid #000;
+		}
+		.doc .strong td {
+			font-weight: 800;
+			border-top: 1.5px solid #000;
+		}
+		.doc .blank {
+			height: 26px;
+		}
+		.doc .warn {
+			margin-top: 10px;
+			padding: 6px 8px;
+			border: 1.5px solid #000;
+			font-weight: 700;
+		}
+		.doc .sign {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 40px;
+			margin-top: 48px;
+			break-inside: avoid;
+		}
+		.doc .sign p {
+			padding-top: 6px;
+			border-top: 1px solid #000;
 		}
 	}
 </style>

@@ -119,6 +119,8 @@ func (s *server) restaurant(w http.ResponseWriter, r *http.Request) {
 		},
 		"pickup_eta": info.PickupEta,
 		"hours":      hours,
+		"vat":        map[string]any{"rate": info.VatRate, "inclusive": info.VatInclusive, "bin": info.Bin},
+		"theme":      info.Theme,
 	})
 }
 
@@ -259,13 +261,16 @@ func (s *server) createOrder(w http.ResponseWriter, r *http.Request) {
 		fail(w, r, perr)
 		return
 	}
+	// ponytail: VAT on food only, not the delivery fee; confirm with the accountant if delivery is taxable.
+	vat, add := vatOn(sub, info.VatRate, info.VatInclusive)
 
 	status := http.StatusOK
 	err = pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
 		n, err := q.InsertOrder(ctx, store.InsertOrderParams{
 			ID: id, Mode: store.OrderMode(req.Mode), CustomerName: name, Phone: &phone,
-			Address: address, Note: note, Subtotal: sub, DeliveryFee: fee, Total: sub + fee,
+			Address: address, Note: note, Subtotal: sub, DeliveryFee: fee, Total: sub + fee + add,
+			Vat: vat, VatRate: info.VatRate, VatInclusive: info.VatInclusive,
 		})
 		if err != nil || n == 0 {
 			return err // n == 0: a retry of an order we already saved
@@ -321,6 +326,7 @@ func orderView(o store.Order, rows []store.OrderItem) map[string]any {
 		"id": o.ID.String(), "number": o.Number, "mode": o.Mode, "status": o.Status, "payment": o.Payment,
 		"name": o.CustomerName, "phone": o.Phone, "address": o.Address, "note": o.Note,
 		"items": lines, "subtotal": o.Subtotal, "delivery_fee": o.DeliveryFee, "total": o.Total,
+		"vat": o.Vat, "vat_rate": o.VatRate, "vat_inclusive": o.VatInclusive,
 		"created_at": o.CreatedAt.Time,
 	}
 }

@@ -32,8 +32,8 @@
 
 :root {
 	--brand: #d5161a;
-	--brand-dark: #a90f13;
-	--chili-red: #d5161a;
+	--brand-dark: color-mix(in srgb, var(--brand) 80%, black);
+	--chili-red: var(--brand);
 	--cream: #fff9e7;
 	--black: #000000;
 	--charcoal: #171717;
@@ -44,7 +44,7 @@
 	--muted: #6a6155;
 	--line: #e6d9bd;
 	--accent: var(--brand);
-	--accent-soft: #fbe0dc;
+	--accent-soft: color-mix(in srgb, var(--brand) 15%, white);
 	--mustard: #f4b400;
 	--green: #2e8b57;
 	--chili: var(--chili-red);

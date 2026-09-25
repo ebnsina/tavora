@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { price } from '$lib/api';
+	import { price, vatPct } from '$lib/api';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
+	import Slip from '$lib/Slip.svelte';
+	import type { Ticket } from '$lib/pos';
 
 	let { data, form: raw } = $props();
 	// The status buttons post to the orders list's action; its error lands here.
@@ -57,6 +59,8 @@
 
 <svelte:head><title>TV-{o.number} · Orders · Tavora</title></svelte:head>
 
+<Slip ticket={o as unknown as Ticket} restaurant={data.restaurant} table={o.table ?? ''} />
+
 <PageHeader
 	title="Order TV-{o.number}"
 	sub="{when.format(new Date(o.created_at))} · {o.source === 'pos'
@@ -65,6 +69,7 @@
 >
 	{#snippet actions()}
 		<a class="btn ghost small" href="/admin/orders">All orders</a>
+		<button class="btn ghost small" type="button" onclick={() => print()}>Print receipt</button>
 		{#if o.source === 'pos' && o.status === 'open'}
 			<a class="btn primary small" href="/admin/pos/ticket/{o.id}">Open at the till</a>
 		{/if}
@@ -104,6 +109,8 @@
 				<dd>{price(o.delivery_fee)}</dd>{/if}
 			{#if o.discount}<dt>Discount</dt>
 				<dd>−{price(o.discount)}</dd>{/if}
+			{#if o.vat}<dt>VAT {vatPct(o.vat_rate)}{o.vat_inclusive ? ' (included)' : ''}</dt>
+				<dd>{price(o.vat)}</dd>{/if}
 			<dt class="total">Total</dt>
 			<dd class="total">{price(o.total)}</dd>
 		</dl>

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { price, type Restaurant } from '$lib/api';
+	import { price, vatPct, type Restaurant } from '$lib/api';
 	import type { Ticket } from '$lib/pos';
+	import { portal } from '$lib/portal';
 
 	// Printed straight from the tablet's own data, so bills and kitchen tickets work offline.
 	let {
@@ -26,13 +27,17 @@
 		bkash: 'bKash',
 		nagad: 'Nagad'
 	};
-	const where = $derived(table ? `Table ${table}` : 'Takeaway');
+	const where = $derived(
+		table ? `Table ${table}` : (t.mode as string) === 'delivery' ? 'Delivery' : 'Takeaway'
+	);
+	// A VAT-registered restaurant's bill is its Mushak-6.3 tax invoice.
+	const taxInvoice = $derived(!!r?.vat?.bin && t.vat_rate > 0);
 	// Tickets rung up offline get their number from the server later; print a short code meanwhile.
 	const ref = $derived(t.number ? `#${t.number}` : `Offline ${t.id.slice(0, 6).toUpperCase()}`);
 	const tips = $derived(t.payments.reduce((s, p) => s + p.tip, 0));
 </script>
 
-<div class="slip" aria-hidden="true">
+<div class="slip" aria-hidden="true" use:portal>
 	{#if kitchen}
 		<h1>KITCHEN</h1>
 		<p class="big">{where}</p>
@@ -45,19 +50,38 @@
 	{:else}
 		<h1>{(r?.name ?? 'Tavora').toUpperCase()}</h1>
 		{#if r}<p class="center">{r.address}<br />{r.phone}</p>{/if}
+		{#if taxInvoice}
+			<p class="center"><b>BIN {r?.vat.bin}</b></p>
+			<p class="center big-sm">VAT INVOICE (MUSHAK-6.3)</p>
+		{/if}
 		<hr />
-		<p>{where} · {ref}</p>
+		<p>{taxInvoice ? 'Invoice' : where} {ref}{taxInvoice ? ` · ${where}` : ''}</p>
 		<p>{stamp.format(new Date(t.created_at))}</p>
 		{#if t.name && !['Walk-in', 'Table'].includes(t.name)}<p>{t.name}</p>{/if}
 		<hr />
 		{#each t.items as l (l.id)}
-			<div class="row"><span>{l.qty} × {l.name}</span><span>{price(l.amount)}</span></div>
+			<p class="iname">{l.name}</p>
+			<div class="row sub">
+				<span>{l.qty} × {price(l.unit_price)}</span><span>{price(l.amount)}</span>
+			</div>
 		{/each}
 		<hr />
 		<div class="row"><span>Subtotal</span><span>{price(t.subtotal)}</span></div>
 		{#if t.discount}<div class="row">
 				<span>Discount</span><span>−{price(t.discount)}</span>
 			</div>{/if}
+		{#if t.vat}
+			<div class="row">
+				<span>VAT {vatPct(t.vat_rate)}{t.vat_inclusive ? ' (included)' : ''}</span><span
+					>{price(t.vat)}</span
+				>
+			</div>
+		{/if}
+		{#if (t as { delivery_fee?: number }).delivery_fee}
+			<div class="row">
+				<span>Delivery</span><span>{price((t as { delivery_fee?: number }).delivery_fee!)}</span>
+			</div>
+		{/if}
 		<div class="row total"><span>TOTAL</span><span>{price(t.total)}</span></div>
 		{#if t.payments.length}
 			<hr />
@@ -82,22 +106,21 @@
 	.slip {
 		display: none;
 	}
+	/* Only the slip prints; the receipt printer's own paper setting (80 mm roll) sets the page. */
 	@media print {
 		@page {
-			size: 80mm auto;
-			margin: 4mm;
+			margin: 3mm;
 		}
-		:global(body *) {
-			visibility: hidden;
+		:global(body > *:not(.slip)) {
+			display: none !important;
 		}
-		.slip,
-		.slip :global(*) {
-			visibility: visible;
+		:global(html),
+		:global(body) {
+			background: #fff !important;
+			margin: 0 !important;
 		}
 		.slip {
 			display: block;
-			position: absolute;
-			inset: 0 auto auto 0;
 			width: 72mm;
 			color: #000;
 			background: #fff;
@@ -123,6 +146,16 @@
 		font-size: 20px;
 		font-weight: 800;
 		text-align: center;
+	}
+	.big-sm {
+		font-weight: 800;
+		letter-spacing: 0.04em;
+	}
+	.iname {
+		margin: 4px 0 0;
+	}
+	.row.sub {
+		padding-left: 12px;
 	}
 	.kline {
 		font-size: 16px;

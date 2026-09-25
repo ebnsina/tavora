@@ -46,6 +46,20 @@ func priceOrder(lines []line, items map[int64]store.MenuItem, delivery bool, r s
 	return sub, fee, nil
 }
 
+// vatOn returns the VAT in `base` and how much it adds to the bill: nothing when prices already include it.
+// Half-up rounding to the poisha.
+func vatOn(base int64, rate int32, inclusive bool) (vat, add int64) {
+	if rate <= 0 || base <= 0 {
+		return 0, 0
+	}
+	r := int64(rate)
+	if inclusive {
+		return (base*r + (10000+r)/2) / (10000 + r), 0
+	}
+	vat = (base*r + 5000) / 10000
+	return vat, vat
+}
+
 func minutes(t pgtype.Time) int { return int(t.Microseconds / 60_000_000) }
 
 func clock(t pgtype.Time) string {

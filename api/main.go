@@ -99,6 +99,8 @@ func main() {
 	mux.HandleFunc("PUT /v1/admin/site", owner(s.putSite))
 	mux.HandleFunc("PUT /v1/admin/restaurant", owner(s.putRestaurant))
 	mux.HandleFunc("PUT /v1/admin/hours", owner(s.putHours))
+	mux.HandleFunc("PUT /v1/admin/vat", owner(s.putVat))
+	mux.HandleFunc("PUT /v1/admin/theme", owner(s.putTheme))
 	mux.HandleFunc("GET /v1/admin/categories", owner(s.listCategories))
 	mux.HandleFunc("POST /v1/admin/categories", owner(s.createCategory))
 	mux.HandleFunc("PUT /v1/admin/categories/{id}", owner(s.updateCategory))

@@ -25,7 +25,23 @@ export type Restaurant = {
 	delivery: { fee: number; free_over: number; areas: string; eta: string };
 	pickup_eta: string;
 	hours: Hours[];
+	// rate in basis points (500 = 5%); 0 means VAT is off.
+	vat: { rate: number; inclusive: boolean; bin: string };
+	theme: string;
 };
+
+// Same rule as the API (rules.go vatOn): VAT on `base`, and how much it adds to the bill.
+export function vatOn(base: number, rate: number, inclusive: boolean) {
+	if (rate <= 0 || base <= 0) return { vat: 0, add: 0 };
+	if (inclusive)
+		return {
+			vat: Math.floor((base * rate + Math.floor((10000 + rate) / 2)) / (10000 + rate)),
+			add: 0
+		};
+	const vat = Math.floor((base * rate + 5000) / 10000);
+	return { vat, add: vat };
+}
+export const vatPct = (rate: number) => `${rate / 100}%`;
 export type Order = {
 	id: string;
 	number: number;
@@ -38,6 +54,9 @@ export type Order = {
 	items: { id: number; name: string; unit_price: number; qty: number; amount: number }[];
 	subtotal: number;
 	delivery_fee: number;
+	vat: number;
+	vat_rate: number;
+	vat_inclusive: boolean;
 	total: number;
 	created_at: string;
 };

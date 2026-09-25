@@ -354,6 +354,7 @@ select
 	coalesce(sum(total) filter (where source = 'online' and status = 'completed'), 0)::bigint as online_cash,
 	count(*) filter (where source = 'pos' and status = 'completed' and discount > 0)::int as discount_count,
 	coalesce(sum(discount) filter (where source = 'pos' and status = 'completed'), 0)::bigint as discounts,
+	coalesce(sum(vat) filter (where status = 'completed'), 0)::bigint as vat,
 	count(*) filter (where status = 'open')::int as open_count,
 	coalesce(sum(total) filter (where status = 'open'), 0)::bigint as open_total
 from orders
@@ -365,6 +366,7 @@ type DayOrdersRow struct {
 	OnlineCash    int64
 	DiscountCount int32
 	Discounts     int64
+	Vat           int64
 	OpenCount     int32
 	OpenTotal     int64
 }
@@ -378,6 +380,7 @@ func (q *Queries) DayOrders(ctx context.Context, day pgtype.Date) (DayOrdersRow,
 		&i.OnlineCash,
 		&i.DiscountCount,
 		&i.Discounts,
+		&i.Vat,
 		&i.OpenCount,
 		&i.OpenTotal,
 	)
@@ -618,7 +621,7 @@ func (q *Queries) GetOpeningHours(ctx context.Context, weekday int16) (OpeningHo
 }
 
 const getOrder = `-- name: GetOrder :one
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by from orders where id = $1
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive from orders where id = $1
 `
 
 func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
@@ -644,12 +647,15 @@ func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
 		&i.PaidAt,
 		&i.CreatedBy,
 		&i.VoidedBy,
+		&i.Vat,
+		&i.VatRate,
+		&i.VatInclusive,
 	)
 	return i, err
 }
 
 const getOrderForUpdate = `-- name: GetOrderForUpdate :one
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by from orders where id = $1 for update
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive from orders where id = $1 for update
 `
 
 func (q *Queries) GetOrderForUpdate(ctx context.Context, id pgtype.UUID) (Order, error) {
@@ -675,6 +681,9 @@ func (q *Queries) GetOrderForUpdate(ctx context.Context, id pgtype.UUID) (Order,
 		&i.PaidAt,
 		&i.CreatedBy,
 		&i.VoidedBy,
+		&i.Vat,
+		&i.VatRate,
+		&i.VatInclusive,
 	)
 	return i, err
 }
@@ -700,7 +709,7 @@ func (q *Queries) GetReservation(ctx context.Context, id pgtype.UUID) (Reservati
 }
 
 const getRestaurant = `-- name: GetRestaurant :one
-select id, name, area, address, phone, whatsapp, email, delivery_fee, free_delivery_over, delivery_areas, delivery_eta, pickup_eta from restaurant where id = 1
+select id, name, area, address, phone, whatsapp, email, delivery_fee, free_delivery_over, delivery_areas, delivery_eta, pickup_eta, vat_rate, vat_inclusive, bin, theme from restaurant where id = 1
 `
 
 func (q *Queries) GetRestaurant(ctx context.Context) (Restaurant, error) {
@@ -719,6 +728,10 @@ func (q *Queries) GetRestaurant(ctx context.Context) (Restaurant, error) {
 		&i.DeliveryAreas,
 		&i.DeliveryEta,
 		&i.PickupEta,
+		&i.VatRate,
+		&i.VatInclusive,
+		&i.Bin,
+		&i.Theme,
 	)
 	return i, err
 }
@@ -795,8 +808,8 @@ func (q *Queries) InsertOpeningHours(ctx context.Context, arg InsertOpeningHours
 }
 
 const insertOrder = `-- name: InsertOrder :execrows
-insert into orders (id, mode, customer_name, phone, address, note, subtotal, delivery_fee, total)
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+insert into orders (id, mode, customer_name, phone, address, note, subtotal, delivery_fee, total, vat, vat_rate, vat_inclusive)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 on conflict (id) do nothing
 `
 
@@ -810,6 +823,9 @@ type InsertOrderParams struct {
 	Subtotal     int64
 	DeliveryFee  int64
 	Total        int64
+	Vat          int64
+	VatRate      int32
+	VatInclusive bool
 }
 
 func (q *Queries) InsertOrder(ctx context.Context, arg InsertOrderParams) (int64, error) {
@@ -823,6 +839,9 @@ func (q *Queries) InsertOrder(ctx context.Context, arg InsertOrderParams) (int64
 		arg.Subtotal,
 		arg.DeliveryFee,
 		arg.Total,
+		arg.Vat,
+		arg.VatRate,
+		arg.VatInclusive,
 	)
 	if err != nil {
 		return 0, err
@@ -912,8 +931,8 @@ func (q *Queries) InsertPosItem(ctx context.Context, arg InsertPosItemParams) er
 }
 
 const insertPosOrder = `-- name: InsertPosOrder :exec
-insert into orders (id, mode, status, source, table_id, customer_name, phone, note, subtotal, delivery_fee, discount, total, created_by)
-values ($1, $2, 'open', 'pos', $3, $4, $5, $6, $7, 0, $8, $9, $10)
+insert into orders (id, mode, status, source, table_id, customer_name, phone, note, subtotal, delivery_fee, discount, total, created_by, vat, vat_rate, vat_inclusive)
+values ($1, $2, 'open', 'pos', $3, $4, $5, $6, $7, 0, $8, $9, $10, $11, $12, $13)
 `
 
 type InsertPosOrderParams struct {
@@ -927,6 +946,9 @@ type InsertPosOrderParams struct {
 	Discount     int64
 	Total        int64
 	CreatedBy    *int64
+	Vat          int64
+	VatRate      int32
+	VatInclusive bool
 }
 
 func (q *Queries) InsertPosOrder(ctx context.Context, arg InsertPosOrderParams) error {
@@ -941,6 +963,9 @@ func (q *Queries) InsertPosOrder(ctx context.Context, arg InsertPosOrderParams) 
 		arg.Discount,
 		arg.Total,
 		arg.CreatedBy,
+		arg.Vat,
+		arg.VatRate,
+		arg.VatInclusive,
 	)
 	return err
 }
@@ -1210,7 +1235,7 @@ func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]O
 }
 
 const listOrders = `-- name: ListOrders :many
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by from orders
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by, vat, vat_rate, vat_inclusive from orders
 where ($1::order_status is null or status = $1)
 	and (not $2::bool or status not in ('completed', 'cancelled', 'open'))
 order by created_at desc
@@ -1251,6 +1276,9 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order
 			&i.PaidAt,
 			&i.CreatedBy,
 			&i.VoidedBy,
+			&i.Vat,
+			&i.VatRate,
+			&i.VatInclusive,
 		); err != nil {
 			return nil, err
 		}
@@ -1478,7 +1506,7 @@ func (q *Queries) OpenOrderCounts(ctx context.Context) ([]OpenOrderCountsRow, er
 }
 
 const openTickets = `-- name: OpenTickets :many
-select o.id, o.number, o.mode, o.status, o.payment, o.customer_name, o.phone, o.address, o.note, o.subtotal, o.delivery_fee, o.total, o.created_at, o.source, o.table_id, o.discount, o.paid_at, o.created_by, o.voided_by, t.name as table_name,
+select o.id, o.number, o.mode, o.status, o.payment, o.customer_name, o.phone, o.address, o.note, o.subtotal, o.delivery_fee, o.total, o.created_at, o.source, o.table_id, o.discount, o.paid_at, o.created_by, o.voided_by, o.vat, o.vat_rate, o.vat_inclusive, t.name as table_name,
 	(select coalesce(sum(qty - sent_qty), 0) from order_items where order_id = o.id)::bigint as unsent,
 	(select coalesce(sum(amount), 0) from payments where order_id = o.id)::bigint as paid
 from orders o
@@ -1507,6 +1535,9 @@ type OpenTicketsRow struct {
 	PaidAt       pgtype.Timestamptz
 	CreatedBy    *int64
 	VoidedBy     *int64
+	Vat          int64
+	VatRate      int32
+	VatInclusive bool
 	TableName    *string
 	Unsent       int64
 	Paid         int64
@@ -1541,6 +1572,9 @@ func (q *Queries) OpenTickets(ctx context.Context) ([]OpenTicketsRow, error) {
 			&i.PaidAt,
 			&i.CreatedBy,
 			&i.VoidedBy,
+			&i.Vat,
+			&i.VatRate,
+			&i.VatInclusive,
 			&i.TableName,
 			&i.Unsent,
 			&i.Paid,
@@ -1790,7 +1824,7 @@ func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusPa
 
 const updatePosOrder = `-- name: UpdatePosOrder :exec
 update orders set mode = $2, table_id = $3, customer_name = $4, phone = $5, note = $6,
-	subtotal = $7, discount = $8, total = $9
+	subtotal = $7, discount = $8, total = $9, vat = $10
 where id = $1
 `
 
@@ -1804,6 +1838,7 @@ type UpdatePosOrderParams struct {
 	Subtotal     int64
 	Discount     int64
 	Total        int64
+	Vat          int64
 }
 
 func (q *Queries) UpdatePosOrder(ctx context.Context, arg UpdatePosOrderParams) error {
@@ -1817,6 +1852,7 @@ func (q *Queries) UpdatePosOrder(ctx context.Context, arg UpdatePosOrderParams) 
 		arg.Subtotal,
 		arg.Discount,
 		arg.Total,
+		arg.Vat,
 	)
 	return err
 }
@@ -1925,4 +1961,28 @@ func (q *Queries) UpdateTable(ctx context.Context, arg UpdateTableParams) (int64
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const updateTheme = `-- name: UpdateTheme :exec
+update restaurant set theme = $1 where id = 1
+`
+
+func (q *Queries) UpdateTheme(ctx context.Context, theme string) error {
+	_, err := q.db.Exec(ctx, updateTheme, theme)
+	return err
+}
+
+const updateVat = `-- name: UpdateVat :exec
+update restaurant set vat_rate = $1, vat_inclusive = $2, bin = $3 where id = 1
+`
+
+type UpdateVatParams struct {
+	VatRate      int32
+	VatInclusive bool
+	Bin          string
+}
+
+func (q *Queries) UpdateVat(ctx context.Context, arg UpdateVatParams) error {
+	_, err := q.db.Exec(ctx, updateVat, arg.VatRate, arg.VatInclusive, arg.Bin)
+	return err
 }

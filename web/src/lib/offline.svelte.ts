@@ -1,4 +1,4 @@
-import { ApiError, message, type Category, type Item, type Restaurant } from '$lib/api';
+import { ApiError, message, vatOn, type Category, type Item, type Restaurant } from '$lib/api';
 import { pos, type Floor, type Payment, type Ticket } from '$lib/pos';
 
 // The POS keeps working without internet: every change is applied here first, saved on the
@@ -176,6 +176,10 @@ export function blankTicket(id: string, mode: Ticket['mode'], tableId: number | 
 		items: [],
 		subtotal: 0,
 		discount: 0,
+		vat: 0,
+		// New tickets take today's VAT setting; the server does the same.
+		vat_rate: store.restaurant?.vat?.rate ?? 0,
+		vat_inclusive: store.restaurant?.vat?.inclusive ?? true,
 		total: 0,
 		paid: 0,
 		due: 0,
@@ -188,7 +192,9 @@ export function blankTicket(id: string, mode: Ticket['mode'], tableId: number | 
 function totals(t: Ticket) {
 	t.subtotal = t.items.reduce((s, l) => s + l.amount, 0);
 	t.discount = Math.min(t.discount, t.subtotal);
-	t.total = t.subtotal - t.discount;
+	const { vat, add } = vatOn(t.subtotal - t.discount, t.vat_rate ?? 0, t.vat_inclusive ?? true);
+	t.vat = vat;
+	t.total = t.subtotal - t.discount + add;
 	t.paid = t.payments.reduce((s, p) => s + p.amount, 0);
 	t.due = t.total - t.paid;
 	return t;

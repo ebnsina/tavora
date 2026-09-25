@@ -17,8 +17,8 @@ order by c.position, i.position;
 select * from menu_items where id = any(@ids::bigint[]);
 
 -- name: InsertOrder :execrows
-insert into orders (id, mode, customer_name, phone, address, note, subtotal, delivery_fee, total)
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+insert into orders (id, mode, customer_name, phone, address, note, subtotal, delivery_fee, total, vat, vat_rate, vat_inclusive)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 on conflict (id) do nothing;
 
 -- name: InsertOrderItem :exec
@@ -89,6 +89,12 @@ delete from sessions where expires_at <= now();
 update restaurant set name = $1, area = $2, address = $3, phone = $4, whatsapp = $5, email = $6,
 	delivery_fee = $7, free_delivery_over = $8, delivery_areas = $9, delivery_eta = $10, pickup_eta = $11
 where id = 1;
+
+-- name: UpdateTheme :exec
+update restaurant set theme = $1 where id = 1;
+
+-- name: UpdateVat :exec
+update restaurant set vat_rate = $1, vat_inclusive = $2, bin = $3 where id = 1;
 
 -- name: DeleteOpeningHours :exec
 delete from opening_hours;
@@ -230,12 +236,12 @@ order by o.created_at;
 select * from orders where id = $1 for update;
 
 -- name: InsertPosOrder :exec
-insert into orders (id, mode, status, source, table_id, customer_name, phone, note, subtotal, delivery_fee, discount, total, created_by)
-values ($1, $2, 'open', 'pos', $3, $4, $5, $6, $7, 0, $8, $9, $10);
+insert into orders (id, mode, status, source, table_id, customer_name, phone, note, subtotal, delivery_fee, discount, total, created_by, vat, vat_rate, vat_inclusive)
+values ($1, $2, 'open', 'pos', $3, $4, $5, $6, $7, 0, $8, $9, $10, $11, $12, $13);
 
 -- name: UpdatePosOrder :exec
 update orders set mode = $2, table_id = $3, customer_name = $4, phone = $5, note = $6,
-	subtotal = $7, discount = $8, total = $9
+	subtotal = $7, discount = $8, total = $9, vat = $10
 where id = $1;
 
 -- name: DeleteOrderItems :exec
@@ -297,6 +303,7 @@ select
 	coalesce(sum(total) filter (where source = 'online' and status = 'completed'), 0)::bigint as online_cash,
 	count(*) filter (where source = 'pos' and status = 'completed' and discount > 0)::int as discount_count,
 	coalesce(sum(discount) filter (where source = 'pos' and status = 'completed'), 0)::bigint as discounts,
+	coalesce(sum(vat) filter (where status = 'completed'), 0)::bigint as vat,
 	count(*) filter (where status = 'open')::int as open_count,
 	coalesce(sum(total) filter (where status = 'open'), 0)::bigint as open_total
 from orders

@@ -252,6 +252,9 @@ type Order struct {
 	PaidAt       pgtype.Timestamptz
 	CreatedBy    *int64
 	VoidedBy     *int64
+	Vat          int64
+	VatRate      int32
+	VatInclusive bool
 }
 
 type OrderItem struct {
@@ -299,6 +302,10 @@ type Restaurant struct {
 	DeliveryAreas    string
 	DeliveryEta      string
 	PickupEta        string
+	VatRate          int32
+	VatInclusive     bool
+	Bin              string
+	Theme            string
 }
 
 type Session struct {

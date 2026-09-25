@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### VAT, printing, brand colour, error pages
+- VAT settings (rate, whether menu prices include it, BIN). Off until you set a rate. Each order keeps the VAT it was made with.
+- VAT shows on the checkout, the customer's receipt, the POS bill, order details and the end-of-day report ("VAT collected").
+- With a BIN set, bills print as a Mushak-6.3 VAT invoice with unit prices, VAT rate and amount.
+- Printing is now a real printout, not a copy of the screen: receipts print alone on white paper at receipt width; the end-of-day report prints as an A4 sheet with a drawer count and signature lines.
+- Order details has a Print receipt button; the customer's online receipt has one too.
+- Brand colour: pick from eight colours or your own in Hours & details. It changes the website, dashboard and POS. Colours too light to read text on are refused.
+- Friendly 404 and error pages with the shopfront drawing and a sign on the door.
+- End of day: all cards look the same, and warnings no longer touch the cards below.
+
 ### Staff, alerts, end of day, dish notes
 - Staff accounts: the owner adds staff with a 6-digit PIN. Staff sign in with a number pad and only see the POS, orders and bookings.
 - Every ticket shows who opened it, who took each payment and who voided it.

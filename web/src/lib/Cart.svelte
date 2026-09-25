@@ -7,7 +7,8 @@
 		MotorbikeIcon,
 		ShoppingBag01Icon,
 		Store01Icon,
-		WhatsappIcon
+		WhatsappIcon,
+		PrinterIcon
 	} from '@hugeicons/core-free-icons';
 	import {
 		api,
@@ -15,12 +16,15 @@
 		openState,
 		price,
 		time,
+		vatOn,
+		vatPct,
 		ApiError,
 		type Item,
 		type Order,
 		type Restaurant
 	} from '$lib/api';
 	import { cart, clock, count, subtotal, add } from '$lib/order.svelte';
+	import { portal } from '$lib/portal';
 
 	let { restaurant, items }: { restaurant: Restaurant; items: Map<number, Item> } = $props();
 
@@ -44,7 +48,9 @@
 	const fee = $derived(
 		mode === 'delivery' && sub < restaurant.delivery.free_over ? restaurant.delivery.fee : 0
 	);
-	const total = $derived(sub + fee);
+	// VAT on food only, same rule as the API.
+	const vat = $derived(vatOn(sub, restaurant.vat.rate, restaurant.vat.inclusive));
+	const total = $derived(sub + fee + vat.add);
 	const pay = (m: string) => (m === 'delivery' ? 'Cash on delivery' : 'Pay at the counter');
 	const stamp = new Intl.DateTimeFormat('en-GB', {
 		dateStyle: 'medium',
@@ -126,6 +132,44 @@
 		<strong class="r-brand">{restaurant.name.toUpperCase()}</strong>
 		<span>{restaurant.address}</span>
 		<span>Tel {restaurant.phone}</span>
+		{#if restaurant.vat.bin}<span>BIN {restaurant.vat.bin}</span>{/if}
+	</div>
+{/snippet}
+
+{#snippet orderReceipt(order: Order)}
+	<div class="receipt">
+		{@render receiptHead()}
+		<div class="r-row"><span>ORDER</span><strong>{code(order)}</strong></div>
+		<div class="r-row">
+			<span>DATE</span><span>{stamp.format(new Date(order.created_at))}</span>
+		</div>
+		<div class="r-row"><span>TYPE</span><span>{order.mode.toUpperCase()}</span></div>
+		<hr />
+		{#each order.items as l (l.id)}
+			<div class="r-row"><span>{l.qty} × {l.name}</span><span>{price(l.amount)}</span></div>
+		{/each}
+		<hr />
+		<div class="r-row"><span>SUBTOTAL</span><span>{price(order.subtotal)}</span></div>
+		{#if order.mode === 'delivery'}
+			<div class="r-row">
+				<span>DELIVERY</span><span>{order.delivery_fee ? price(order.delivery_fee) : 'FREE'}</span>
+			</div>
+		{/if}
+		{#if order.vat}
+			<div class="r-row">
+				<span>VAT {vatPct(order.vat_rate)}{order.vat_inclusive ? ' (INCLUDED)' : ''}</span><span
+					>{price(order.vat)}</span
+				>
+			</div>
+		{/if}
+		<div class="r-row r-total"><span>TOTAL</span><span>{price(order.total)}</span></div>
+		<hr />
+		<div class="r-row"><span>NAME</span><span>{order.name}</span></div>
+		<div class="r-row"><span>PHONE</span><span>{order.phone}</span></div>
+		{#if order.address}<p class="r-addr">{order.address}</p>{/if}
+		<span class="stamp">{pay(order.mode).toUpperCase()}</span>
+		<div class="barcode" aria-hidden="true"></div>
+		<p class="r-thanks">*** THANK YOU ***</p>
 	</div>
 {/snippet}
 
@@ -153,35 +197,7 @@
 		<div class="body done">
 			<div class="printer" aria-hidden="true"></div>
 			<div class="print">
-				<div class="receipt">
-					{@render receiptHead()}
-					<div class="r-row"><span>ORDER</span><strong>{code(order)}</strong></div>
-					<div class="r-row">
-						<span>DATE</span><span>{stamp.format(new Date(order.created_at))}</span>
-					</div>
-					<div class="r-row"><span>TYPE</span><span>{order.mode.toUpperCase()}</span></div>
-					<hr />
-					{#each order.items as l (l.id)}
-						<div class="r-row"><span>{l.qty} × {l.name}</span><span>{price(l.amount)}</span></div>
-					{/each}
-					<hr />
-					<div class="r-row"><span>SUBTOTAL</span><span>{price(order.subtotal)}</span></div>
-					{#if order.mode === 'delivery'}
-						<div class="r-row">
-							<span>DELIVERY</span><span
-								>{order.delivery_fee ? price(order.delivery_fee) : 'FREE'}</span
-							>
-						</div>
-					{/if}
-					<div class="r-row r-total"><span>TOTAL</span><span>{price(order.total)}</span></div>
-					<hr />
-					<div class="r-row"><span>NAME</span><span>{order.name}</span></div>
-					<div class="r-row"><span>PHONE</span><span>{order.phone}</span></div>
-					{#if order.address}<p class="r-addr">{order.address}</p>{/if}
-					<span class="stamp">{pay(order.mode).toUpperCase()}</span>
-					<div class="barcode" aria-hidden="true"></div>
-					<p class="r-thanks">*** THANK YOU ***</p>
-				</div>
+				{@render orderReceipt(order)}
 			</div>
 			<p class="next">
 				We've got your order. <strong>One last tap:</strong> send it to our WhatsApp so the kitchen
@@ -193,7 +209,12 @@
 			<a class="btn primary" href={whatsapp} target="_blank" rel="noopener">
 				<HugeiconsIcon icon={WhatsappIcon} size={20} /> Send to our WhatsApp
 			</a>
-			<button class="btn" type="button" onclick={close}>Back to the menu</button>
+			<div class="done-row">
+				<button class="btn" type="button" onclick={() => print()}>
+					<HugeiconsIcon icon={PrinterIcon} size={18} /> Print receipt
+				</button>
+				<button class="btn" type="button" onclick={close}>Back to the menu</button>
+			</div>
 		</div>
 	{:else if !lines.length}
 		<div class="body empty">
@@ -321,6 +342,15 @@
 				{#if mode === 'delivery'}
 					<div class="r-row"><span>DELIVERY</span><span>{fee ? price(fee) : 'FREE'}</span></div>
 				{/if}
+				{#if vat.vat}
+					<div class="r-row">
+						<span
+							>VAT {vatPct(restaurant.vat.rate)}{restaurant.vat.inclusive
+								? ' (INCLUDED)'
+								: ''}</span
+						><span>{price(vat.vat)}</span>
+					</div>
+				{/if}
 				<hr />
 				<div class="r-row r-total"><span>TOTAL</span><span>{price(total)}</span></div>
 			</div>
@@ -334,6 +364,11 @@
 		</footer>
 	{/if}
 </dialog>
+
+<!-- Print copy at the top of the page, so printing hides everything else outright. -->
+{#if step === 'done' && order}
+	<div class="cart-print" aria-hidden="true" use:portal>{@render orderReceipt(order)}</div>
+{/if}
 
 <style>
 	dialog {
@@ -365,7 +400,7 @@
 		}
 	}
 	dialog::backdrop {
-		background: rgb(213 22 26 / 0.55);
+		background: color-mix(in srgb, var(--brand) 55%, transparent);
 		backdrop-filter: blur(3px);
 		transition:
 			opacity 0.35s,
@@ -767,6 +802,11 @@
 		rotate: -8deg;
 	}
 
+	.done-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
 	/* The receipt feeds out of a printer slot. */
 	.printer {
 		width: 100%;
@@ -798,6 +838,39 @@
 	@keyframes pop {
 		from {
 			scale: 0.6;
+		}
+	}
+	.cart-print {
+		display: none;
+	}
+	/* Only the receipt prints, black on white; the printer's paper setting sets the page. */
+	@media print {
+		@page {
+			margin: 4mm;
+		}
+		:global(body > *:not(.cart-print)) {
+			display: none !important;
+		}
+		:global(html),
+		:global(body) {
+			background: #fff !important;
+		}
+		.cart-print {
+			display: block;
+			width: 72mm;
+		}
+		.cart-print .receipt {
+			margin: 0;
+			padding: 0;
+			box-shadow: none;
+			background: #fff;
+			color: #000;
+			rotate: none;
+			mask: none;
+			-webkit-mask: none;
+		}
+		.cart-print .barcode {
+			display: none;
 		}
 	}
 </style>

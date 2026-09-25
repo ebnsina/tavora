@@ -415,12 +415,15 @@
 		font-weight: 600;
 	}
 	main :global(.flash) {
-		margin: 0;
+		margin: 0 0 16px;
 		padding: 12px 16px;
 		border-radius: 12px;
 		font-weight: 600;
 		background: var(--black);
 		color: var(--cream);
+	}
+	main :global(.actions .flash) {
+		margin: 0;
 	}
 	main :global(.flash.bad) {
 		background: var(--brand);

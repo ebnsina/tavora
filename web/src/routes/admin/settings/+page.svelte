@@ -16,6 +16,18 @@
 	const hoursFor = (d: number) => r.hours.find((h) => h.weekday === d);
 	// The phone is stored as +8801…; the form shows the local 01… form.
 	const local = (p: string) => p.replace(/^\+?88/, '');
+	const presets = [
+		['#d5161a', 'Chili red'],
+		['#c2410c', 'Tomato'],
+		['#be185d', 'Berry'],
+		['#7e22ce', 'Plum'],
+		['#1d4ed8', 'Royal blue'],
+		['#0f766e', 'Teal'],
+		['#1f7a3f', 'Leaf green'],
+		['#262626', 'Charcoal']
+	];
+	// svelte-ignore state_referenced_locally
+	let color = $state(r.theme);
 	const keep =
 		() =>
 		async ({ update }: { update: (o?: { reset?: boolean }) => Promise<void> }) =>
@@ -170,9 +182,158 @@
 			</div>
 		</div>
 	</form>
+
+	<form method="POST" action="?/theme" use:enhance={keep} class="card">
+		<div class="card-head">
+			<h2>Brand colour</h2>
+			<button class="btn primary small">Save colour</button>
+		</div>
+		<p class="hint">
+			Used for buttons, highlights and the website. Only colours dark enough to read light text on
+			are allowed.
+		</p>
+		<div class="swatches" role="radiogroup" aria-label="Brand colour">
+			{#each presets as [hex, name] (hex)}
+				<label class="swatch" style="--c: {hex}">
+					<input type="radio" name="color" value={hex} bind:group={color} />
+					<span aria-hidden="true"></span>{name}
+				</label>
+			{/each}
+			<label class="swatch custom">
+				<input type="color" bind:value={color} aria-label="Pick any colour" />
+				Your own
+			</label>
+		</div>
+		<input type="hidden" name="color" value={color} />
+		<p class="preview" style="--c: {color}"><span>Preview</span> {color}</p>
+		{@render err('color')}
+	</form>
+
+	<form method="POST" action="?/vat" use:enhance={keep} class="card">
+		<div class="card-head">
+			<h2>VAT</h2>
+			<button class="btn primary small">Save VAT</button>
+		</div>
+		<div class="stack">
+			<p class="hint">
+				Leave the rate at 0 if you're not VAT-registered. Ask your accountant for your rate; it
+				depends on your kind of restaurant. Changes apply to new bills only; old bills keep the VAT
+				they were made with.
+			</p>
+			<div class="grid2">
+				<label
+					>VAT rate (%) <input
+						name="rate"
+						type="number"
+						min="0"
+						max="30"
+						step="0.5"
+						value={r.vat.rate / 100}
+						required
+					/>{@render err('rate')}</label
+				>
+				<label
+					>BIN (VAT registration number) <input
+						name="bin"
+						value={r.vat.bin}
+						maxlength="20"
+						inputmode="numeric"
+						placeholder="e.g. 000123456-0101"
+					/>
+					<span class="hint">With a BIN, bills print as a Mushak-6.3 VAT invoice.</span>
+					{@render err('bin')}</label
+				>
+			</div>
+			<fieldset class="prices">
+				<legend>Your menu prices</legend>
+				<label class="radio"
+					><input type="radio" name="inclusive" value="yes" checked={r.vat.inclusive} /> Already include
+					VAT (customers pay the menu price)</label
+				>
+				<label class="radio"
+					><input type="radio" name="inclusive" value="no" checked={!r.vat.inclusive} /> Don't include
+					VAT (VAT is added on top of the bill)</label
+				>
+			</fieldset>
+		</div>
+	</form>
 </div>
 
 <style>
+	.swatches {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin: 12px 0;
+	}
+	.swatch {
+		display: flex !important;
+		align-items: center;
+		gap: 8px;
+		padding: 6px 12px 6px 6px;
+		border-radius: 999px;
+		background: var(--soft);
+		font-weight: 600 !important;
+		cursor: pointer;
+	}
+	.swatch input[type='radio'] {
+		position: absolute;
+		opacity: 0;
+	}
+	.swatch span {
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		background: var(--c);
+	}
+	.swatch:has(:checked) {
+		outline: 2px solid var(--ink);
+	}
+	.swatch:has(:focus-visible) {
+		outline: 3px solid var(--ink);
+		outline-offset: 2px;
+	}
+	.custom input[type='color'] {
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: none;
+		cursor: pointer;
+	}
+	.preview {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin: 0;
+		color: var(--muted);
+	}
+	.preview span {
+		padding: 8px 16px;
+		border-radius: 10px;
+		background: var(--c);
+		color: var(--cream);
+		font-weight: 700;
+	}
+	.prices {
+		display: grid;
+		gap: 8px;
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+	.prices legend {
+		margin-bottom: 6px;
+		font-weight: 600;
+		font-size: 0.875rem;
+	}
+	.radio {
+		display: flex !important;
+		align-items: center;
+		gap: 10px;
+		font-weight: 500 !important;
+	}
 	.layout {
 		display: grid;
 		gap: 16px;

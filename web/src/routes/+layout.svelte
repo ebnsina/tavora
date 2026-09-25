@@ -2,7 +2,7 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 
-	let { children } = $props();
+	let { data, children } = $props();
 
 	// In-page links glide to their section without adding #section to the URL; runs before SvelteKit's router.
 	function inPage(e: MouseEvent) {
@@ -18,6 +18,9 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<!-- The owner's brand colour, chosen in the dashboard; the API only stores #rrggbb, so it's safe to inline. -->
+	{@html `<style>html:root{--brand:${data.theme}}</style>`}
+	<meta name="theme-color" content={data.theme} />
 </svelte:head>
 
 <svelte:window onclickcapture={inPage} />

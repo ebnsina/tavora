@@ -251,10 +251,21 @@ func (s *server) putPosOrder(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		mode := store.OrderMode(req.Mode)
+		// A ticket keeps the VAT setting it was opened under.
+		rate, inclusive := existing.VatRate, existing.VatInclusive
 		if isNew {
-			err = q.InsertPosOrder(ctx, store.InsertPosOrderParams{ID: id, Mode: mode, TableID: req.TableID, CustomerName: name, Phone: phone, Note: note, Subtotal: sub, Discount: req.Discount, Total: sub - req.Discount, CreatedBy: &actorID})
+			info, err := q.GetRestaurant(ctx)
+			if err != nil {
+				return err
+			}
+			rate, inclusive = info.VatRate, info.VatInclusive
+		}
+		base := sub - req.Discount
+		vat, add := vatOn(base, rate, inclusive)
+		if isNew {
+			err = q.InsertPosOrder(ctx, store.InsertPosOrderParams{ID: id, Mode: mode, TableID: req.TableID, CustomerName: name, Phone: phone, Note: note, Subtotal: sub, Discount: req.Discount, Total: base + add, CreatedBy: &actorID, Vat: vat, VatRate: rate, VatInclusive: inclusive})
 		} else {
-			err = q.UpdatePosOrder(ctx, store.UpdatePosOrderParams{ID: id, Mode: mode, TableID: req.TableID, CustomerName: name, Phone: phone, Note: note, Subtotal: sub, Discount: req.Discount, Total: sub - req.Discount})
+			err = q.UpdatePosOrder(ctx, store.UpdatePosOrderParams{ID: id, Mode: mode, TableID: req.TableID, CustomerName: name, Phone: phone, Note: note, Subtotal: sub, Discount: req.Discount, Total: base + add, Vat: vat})
 		}
 		if isUnique(err) {
 			return errBusy
