@@ -12,7 +12,7 @@
 		source: string;
 		table: string | null;
 		name: string;
-		lines: { name: string; qty: number }[];
+		lines: { name: string; qty: number; note?: string }[];
 		created_at: string;
 		done: boolean;
 	};
@@ -87,7 +87,11 @@
 				</div>
 				<ul class="items">
 					{#each t.lines as l, i (i)}
-						<li><b>{l.qty}×</b> {l.name}</li>
+						<li>
+							<b>{l.qty}×</b>
+							{l.name}
+							{#if l.note}<em class="note">{l.note}</em>{/if}
+						</li>
 					{/each}
 				</ul>
 				<button type="button" class="bump" onclick={() => mark(t, true)}>
@@ -113,6 +117,12 @@
 </div>
 
 <style>
+	.note {
+		display: block;
+		margin-left: 22px;
+		color: var(--brand);
+		font-weight: 700;
+	}
 	.kds {
 		height: 100%;
 		overflow-y: auto;

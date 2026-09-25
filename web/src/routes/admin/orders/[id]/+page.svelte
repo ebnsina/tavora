@@ -88,7 +88,11 @@
 		<ul class="lines">
 			{#each o.items as l (l.id)}
 				<li>
-					<span>{l.qty} × {l.name} <small>{price(l.unit_price)} each</small></span>
+					<span
+						>{l.qty} × {l.name} <small>{price(l.unit_price)} each</small>{#if l.note}<small
+								class="note">Note: {l.note}</small
+							>{/if}</span
+					>
 					<span>{price(l.amount)}</span>
 				</li>
 			{/each}
@@ -113,8 +117,7 @@
 				<dd><span class="badge {o.status}">{labels[o.status] ?? o.status}</span></dd>
 				<dt>Type</dt>
 				<dd>
-					{modes[o.mode]}{#if data.table}
-						· {data.table}{/if}
+					{[modes[o.mode], o.table].filter(Boolean).join(' · ')}
 				</dd>
 				<dt>Customer</dt>
 				<dd>{o.name || 'Walk-in'}</dd>
@@ -122,6 +125,10 @@
 					<dd><a href="tel:{o.phone}">{o.phone}</a></dd>{/if}
 				{#if o.address}<dt>Address</dt>
 					<dd>{o.address}</dd>{/if}
+				{#if o.created_by}<dt>Opened by</dt>
+					<dd>{o.created_by}</dd>{/if}
+				{#if o.voided_by}<dt>Voided by</dt>
+					<dd>{o.voided_by}</dd>{/if}
 				{#if o.note}<dt>Note</dt>
 					<dd>{o.note}</dd>{/if}
 			</dl>
@@ -136,9 +143,14 @@
 							<span
 								>{methods[p.method] ?? p.method}
 								<small
-									>{when.format(new Date(p.created_at))}{#if p.reference}
-										· {p.reference}{/if}{#if p.tip}
-										· tip {price(p.tip)}{/if}</small
+									>{[
+										when.format(new Date(p.created_at)),
+										p.reference,
+										p.tip && `tip ${price(p.tip)}`,
+										p.taken_by && `by ${p.taken_by}`
+									]
+										.filter(Boolean)
+										.join(' · ')}</small
 								></span
 							>
 							<span>{price(p.amount)}</span>
@@ -229,6 +241,10 @@
 		color: var(--ink);
 		font-size: 1.125rem;
 		font-weight: 800;
+	}
+	.lines .note {
+		color: var(--brand);
+		font-style: italic;
 	}
 	.muted {
 		margin: 0;

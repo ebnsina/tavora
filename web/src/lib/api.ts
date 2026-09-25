@@ -53,8 +53,18 @@ export type Reservation = {
 };
 
 export type TickerIcon =
-	| 'burger' | 'rice' | 'soup' | 'chicken' | 'sandwich' | 'fries'
-	| 'drink' | 'pizza' | 'noodles' | 'coffee' | 'cake' | 'icecream';
+	| 'burger'
+	| 'rice'
+	| 'soup'
+	| 'chicken'
+	| 'sandwich'
+	| 'fries'
+	| 'drink'
+	| 'pizza'
+	| 'noodles'
+	| 'coffee'
+	| 'cake'
+	| 'icecream';
 
 // Mirrors SiteContent in api/content.go.
 export type SiteContent = {
@@ -90,6 +100,8 @@ const messages: Record<string, string> = {
 	outside_opening_hours: "We can't book a table at that time. Please pick another.",
 	network: "We couldn't reach the restaurant. Check your connection and try again.",
 	invalid_credentials: 'That email or password is wrong.',
+	wrong_pin: 'That PIN isn’t right. Try again.',
+	owner_only: 'Only the owner can do this.',
 	too_many_attempts: 'Too many wrong tries. Please wait 15 minutes and try again.',
 	unauthorized: 'Please sign in again.',
 	name_taken: 'That name is already used. Please pick another.',

@@ -7,7 +7,10 @@ export const cart = $state({ lines: {} as Record<number, number>, open: false })
 
 export const count = () => Object.values(cart.lines).reduce((a, b) => a + b, 0);
 export const subtotal = (items: Map<number, Item>) =>
-	Object.entries(cart.lines).reduce((sum, [id, qty]) => sum + (items.get(+id)?.price ?? 0) * qty, 0);
+	Object.entries(cart.lines).reduce(
+		(sum, [id, qty]) => sum + (items.get(+id)?.price ?? 0) * qty,
+		0
+	);
 
 export function add(id: number, by = 1) {
 	const qty = (cart.lines[id] ?? 0) + by;

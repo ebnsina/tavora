@@ -23,8 +23,9 @@ func normalizePhone(s string) string {
 }
 
 type line struct {
-	ID  int64 `json:"id"`
-	Qty int   `json:"qty"`
+	ID   int64  `json:"id"`
+	Qty  int    `json:"qty"`
+	Note string `json:"note"` // POS only: an instruction for the cook
 }
 
 // priceOrder recomputes every amount from database prices; client-sent totals are never trusted.

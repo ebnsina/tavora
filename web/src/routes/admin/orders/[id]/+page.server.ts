@@ -9,7 +9,11 @@ export type OrderDetail = Order & {
 	paid: number;
 	due: number;
 	table_id: number | null;
-	payments: (Payment & { created_at: string })[];
+	table: string | null;
+	created_by: string | null;
+	voided_by: string | null;
+	items: (Order['items'][number] & { note: string | null })[];
+	payments: (Payment & { created_at: string; taken_by: string | null })[];
 };
 
 export async function load(event) {
@@ -20,10 +24,5 @@ export async function load(event) {
 		if (e instanceof ApiError && e.code === 'not_found') error(404, 'That order doesn’t exist.');
 		throw e;
 	}
-	const table = order.table_id
-		? (await adminApi<{ id: number; name: string }[]>(event, '/v1/admin/tables')).find(
-				(t) => t.id === order.table_id
-			)?.name
-		: null;
-	return { order, table, crumb: `Order TV-${order.number}` };
+	return { order, crumb: `Order TV-${order.number}` };
 }

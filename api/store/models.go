@@ -184,10 +184,11 @@ func (e PayMethod) Valid() bool {
 
 type Admin struct {
 	ID           int64
-	Email        string
+	Email        *string
 	Name         string
 	PasswordHash string
 	CreatedAt    pgtype.Timestamptz
+	Role         string
 }
 
 type Category struct {
@@ -249,6 +250,8 @@ type Order struct {
 	TableID      *int64
 	Discount     int64
 	PaidAt       pgtype.Timestamptz
+	CreatedBy    *int64
+	VoidedBy     *int64
 }
 
 type OrderItem struct {
@@ -258,6 +261,7 @@ type OrderItem struct {
 	UnitPrice  int64
 	Qty        int32
 	SentQty    int32
+	Note       *string
 }
 
 type Payment struct {
@@ -268,6 +272,7 @@ type Payment struct {
 	Tip       int64
 	Reference *string
 	CreatedAt pgtype.Timestamptz
+	TakenBy   *int64
 }
 
 type Reservation struct {

@@ -7,6 +7,7 @@ export type Line = {
 	qty: number;
 	amount: number;
 	sent: number;
+	note: string | null;
 };
 export type Payment = {
 	id: string;

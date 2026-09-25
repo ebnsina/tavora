@@ -8,10 +8,12 @@
 		ShoppingBag01Icon,
 		TableRoundIcon,
 		Tick02Icon,
+		UserSwitchIcon,
 		WifiDisconnected01Icon
 	} from '@hugeicons/core-free-icons';
 	import { page } from '$app/state';
 	import { dismiss, start, store } from '$lib/offline.svelte';
+	import { alerts, watchAlerts } from '$lib/alerts.svelte';
 	import { onMount } from 'svelte';
 
 	let { children } = $props();
@@ -28,7 +30,11 @@
 
 	onMount(() => {
 		const t = setInterval(() => (now = new Date()), 15_000);
-		return () => clearInterval(t);
+		const stop = watchAlerts();
+		return () => {
+			clearInterval(t);
+			stop();
+		};
 	});
 
 	const tabs = [
@@ -58,6 +64,10 @@
 			{#each tabs as t (t.href)}
 				<a href={t.href} aria-current={active(t.href) ? 'page' : undefined}>
 					<HugeiconsIcon icon={t.icon} size={20} /><span>{t.label}</span>
+					{#if t.href === '/admin/orders' && alerts.new_orders}<b
+							class="count"
+							aria-label="{alerts.new_orders} new">{alerts.new_orders}</b
+						>{/if}
 				</a>
 			{/each}
 		</nav>
@@ -107,6 +117,16 @@
 
 		<span class="clock">{clock.format(now)}</span>
 		{#if store.me}<span class="who">{store.me.name}</span>{/if}
+		<!-- Sales sync under whoever is signed in, so the next person waits until this tablet is caught up. -->
+		<form method="POST" action="/admin/logout">
+			<button
+				class="switch"
+				disabled={waiting > 0}
+				title={waiting ? 'Wait until everything is saved' : 'Hand the till to someone else'}
+			>
+				<HugeiconsIcon icon={UserSwitchIcon} size={18} /><span>Switch staff</span>
+			</button>
+		</form>
 	</header>
 	<div class="screen">{@render children()}</div>
 </div>
@@ -234,6 +254,32 @@
 		font: 700 1.125rem var(--sans);
 		font-variant-numeric: tabular-nums;
 	}
+	.count {
+		min-width: 22px;
+		padding: 1px 7px;
+		border-radius: 999px;
+		background: var(--mustard);
+		color: var(--black);
+		font-size: 0.75rem;
+		text-align: center;
+	}
+	.switch {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 40px;
+		padding: 0 12px;
+		border: 0;
+		border-radius: 12px;
+		background: rgb(255 249 231 / 0.12);
+		color: var(--cream);
+		font: 700 0.875rem var(--sans);
+		cursor: pointer;
+	}
+	.switch:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
 	.who {
 		color: rgb(255 249 231 / 0.65);
 		font-size: 0.875rem;
@@ -244,6 +290,7 @@
 	}
 	@media (max-width: 860px) {
 		nav a span,
+		.switch span,
 		.who {
 			display: none;
 		}

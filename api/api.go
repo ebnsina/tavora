@@ -308,13 +308,14 @@ type lineJSON struct {
 	UnitPrice int64  `json:"unit_price"`
 	Qty       int32  `json:"qty"`
 	Amount    int64  `json:"amount"`
-	Sent      int32  `json:"sent"`
+	Sent      int32   `json:"sent"`
+	Note      *string `json:"note"`
 }
 
 func orderView(o store.Order, rows []store.OrderItem) map[string]any {
 	lines := make([]lineJSON, len(rows))
 	for i, l := range rows {
-		lines[i] = lineJSON{l.MenuItemID, l.Name, l.UnitPrice, l.Qty, l.UnitPrice * int64(l.Qty), l.SentQty}
+		lines[i] = lineJSON{l.MenuItemID, l.Name, l.UnitPrice, l.Qty, l.UnitPrice * int64(l.Qty), l.SentQty, l.Note}
 	}
 	return map[string]any{
 		"id": o.ID.String(), "number": o.Number, "mode": o.Mode, "status": o.Status, "payment": o.Payment,

@@ -207,7 +207,8 @@ export function setLines(t: Ticket, qty: Record<number, number>, menu: Map<numbe
 				unit_price: unit,
 				qty: q,
 				amount: unit * q,
-				sent: old?.sent ?? 0
+				sent: old?.sent ?? 0,
+				note: old?.note ?? null
 			};
 		});
 	return totals(t);
@@ -225,16 +226,23 @@ export function saveTicket(t: Ticket) {
 			table_id: t.table_id,
 			name: t.name,
 			discount: t.discount,
-			items: t.items.map((l) => ({ id: l.id, qty: l.qty }))
+			items: t.items.map((l) => ({ id: l.id, qty: l.qty, note: l.note ?? '' }))
 		}
 	});
+}
+
+export function setNote(t: Ticket, itemId: number, note: string) {
+	const line = t.items.find((l) => l.id === itemId);
+	if (!line) return;
+	line.note = note.trim() || null;
+	saveTicket(t);
 }
 
 // Marks everything as sent and returns just the new lines, for the kitchen printout.
 export function sendKitchen(t: Ticket) {
 	const lines = t.items
 		.filter((l) => l.qty > l.sent)
-		.map((l) => ({ name: l.name, qty: l.qty - l.sent }));
+		.map((l) => ({ name: l.name, qty: l.qty - l.sent, note: l.note }));
 	if (!lines.length) return lines;
 	t.items = t.items.map((l) => ({ ...l, sent: l.qty }));
 	store.tickets[t.id] = t;

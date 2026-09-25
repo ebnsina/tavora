@@ -11,18 +11,69 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const adminNames = `-- name: AdminNames :many
+select id, name from admins where id = any($1::bigint[])
+`
+
+type AdminNamesRow struct {
+	ID   int64
+	Name string
+}
+
+func (q *Queries) AdminNames(ctx context.Context, ids []int64) ([]AdminNamesRow, error) {
+	rows, err := q.db.Query(ctx, adminNames, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AdminNamesRow
+	for rows.Next() {
+		var i AdminNamesRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const alerts = `-- name: Alerts :one
+
+select
+	(select count(*) from orders where source = 'online' and status = 'new')::int as new_orders,
+	(select count(*) from reservations where status = 'requested')::int as waiting_bookings
+`
+
+type AlertsRow struct {
+	NewOrders       int32
+	WaitingBookings int32
+}
+
+// ---- New-order alert
+func (q *Queries) Alerts(ctx context.Context) (AlertsRow, error) {
+	row := q.db.QueryRow(ctx, alerts)
+	var i AlertsRow
+	err := row.Scan(&i.NewOrders, &i.WaitingBookings)
+	return i, err
+}
+
 const closeOrder = `-- name: CloseOrder :exec
-update orders set status = $1, paid_at = case when $1 = 'completed'::order_status then now() else paid_at end
-where id = $2
+update orders set status = $1, paid_at = case when $1 = 'completed'::order_status then now() else paid_at end,
+	voided_by = $2
+where id = $3
 `
 
 type CloseOrderParams struct {
-	Status OrderStatus
-	ID     pgtype.UUID
+	Status   OrderStatus
+	VoidedBy *int64
+	ID       pgtype.UUID
 }
 
 func (q *Queries) CloseOrder(ctx context.Context, arg CloseOrderParams) error {
-	_, err := q.db.Exec(ctx, closeOrder, arg.Status, arg.ID)
+	_, err := q.db.Exec(ctx, closeOrder, arg.Status, arg.VoidedBy, arg.ID)
 	return err
 }
 
@@ -64,7 +115,7 @@ insert into admins (email, name, password_hash) values ($1, $2, $3) returning id
 `
 
 type CreateAdminParams struct {
-	Email        string
+	Email        *string
 	Name         string
 	PasswordHash string
 }
@@ -155,6 +206,22 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 	return err
 }
 
+const createStaff = `-- name: CreateStaff :one
+insert into admins (name, password_hash, role) values ($1, $2, 'staff') returning id
+`
+
+type CreateStaffParams struct {
+	Name         string
+	PasswordHash string
+}
+
+func (q *Queries) CreateStaff(ctx context.Context, arg CreateStaffParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createStaff, arg.Name, arg.PasswordHash)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createTable = `-- name: CreateTable :one
 insert into dining_tables (name, seats, area, position)
 values ($1, $2, $3, (select coalesce(max(position), 0) + 1 from dining_tables))
@@ -241,6 +308,167 @@ func (q *Queries) DailySales(ctx context.Context, arg DailySalesParams) ([]Daily
 	return items, nil
 }
 
+const dayByStaff = `-- name: DayByStaff :many
+select coalesce(a.name, 'Not recorded')::text as name, count(*)::int as count,
+	sum(p.amount)::bigint as amount, sum(p.tip)::bigint as tips
+from payments p left join admins a on a.id = p.taken_by
+where (p.created_at at time zone 'Asia/Dhaka')::date = $1::date
+group by 1 order by 3 desc
+`
+
+type DayByStaffRow struct {
+	Name   string
+	Count  int32
+	Amount int64
+	Tips   int64
+}
+
+func (q *Queries) DayByStaff(ctx context.Context, day pgtype.Date) ([]DayByStaffRow, error) {
+	rows, err := q.db.Query(ctx, dayByStaff, day)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DayByStaffRow
+	for rows.Next() {
+		var i DayByStaffRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.Count,
+			&i.Amount,
+			&i.Tips,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const dayOrders = `-- name: DayOrders :one
+select
+	count(*) filter (where source = 'online' and status = 'completed')::int as online_count,
+	coalesce(sum(total) filter (where source = 'online' and status = 'completed'), 0)::bigint as online_cash,
+	count(*) filter (where source = 'pos' and status = 'completed' and discount > 0)::int as discount_count,
+	coalesce(sum(discount) filter (where source = 'pos' and status = 'completed'), 0)::bigint as discounts,
+	count(*) filter (where status = 'open')::int as open_count,
+	coalesce(sum(total) filter (where status = 'open'), 0)::bigint as open_total
+from orders
+where (created_at at time zone 'Asia/Dhaka')::date = $1::date
+`
+
+type DayOrdersRow struct {
+	OnlineCount   int32
+	OnlineCash    int64
+	DiscountCount int32
+	Discounts     int64
+	OpenCount     int32
+	OpenTotal     int64
+}
+
+// Online orders are paid in cash on delivery or pickup and have no payment rows.
+func (q *Queries) DayOrders(ctx context.Context, day pgtype.Date) (DayOrdersRow, error) {
+	row := q.db.QueryRow(ctx, dayOrders, day)
+	var i DayOrdersRow
+	err := row.Scan(
+		&i.OnlineCount,
+		&i.OnlineCash,
+		&i.DiscountCount,
+		&i.Discounts,
+		&i.OpenCount,
+		&i.OpenTotal,
+	)
+	return i, err
+}
+
+const dayPayments = `-- name: DayPayments :many
+
+select p.method, count(*)::int as count, sum(p.amount)::bigint as amount, sum(p.tip)::bigint as tips
+from payments p
+where (p.created_at at time zone 'Asia/Dhaka')::date = $1::date
+group by p.method order by p.method
+`
+
+type DayPaymentsRow struct {
+	Method PayMethod
+	Count  int32
+	Amount int64
+	Tips   int64
+}
+
+// ---- End of day (one Bangladesh calendar day)
+func (q *Queries) DayPayments(ctx context.Context, day pgtype.Date) ([]DayPaymentsRow, error) {
+	rows, err := q.db.Query(ctx, dayPayments, day)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DayPaymentsRow
+	for rows.Next() {
+		var i DayPaymentsRow
+		if err := rows.Scan(
+			&i.Method,
+			&i.Count,
+			&i.Amount,
+			&i.Tips,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const dayVoids = `-- name: DayVoids :many
+select o.id, o.number, o.total, o.customer_name, o.created_at, coalesce(a.name, '')::text as voided_by
+from orders o left join admins a on a.id = o.voided_by
+where o.source = 'pos' and o.status = 'cancelled'
+	and (o.created_at at time zone 'Asia/Dhaka')::date = $1::date
+order by o.created_at
+`
+
+type DayVoidsRow struct {
+	ID           pgtype.UUID
+	Number       int64
+	Total        int64
+	CustomerName string
+	CreatedAt    pgtype.Timestamptz
+	VoidedBy     string
+}
+
+func (q *Queries) DayVoids(ctx context.Context, day pgtype.Date) ([]DayVoidsRow, error) {
+	rows, err := q.db.Query(ctx, dayVoids, day)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DayVoidsRow
+	for rows.Next() {
+		var i DayVoidsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Number,
+			&i.Total,
+			&i.CustomerName,
+			&i.CreatedAt,
+			&i.VoidedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const deleteCategory = `-- name: DeleteCategory :execrows
 delete from categories where id = $1
 `
@@ -301,6 +529,18 @@ func (q *Queries) DeleteSession(ctx context.Context, tokenHash []byte) error {
 	return err
 }
 
+const deleteStaff = `-- name: DeleteStaff :execrows
+delete from admins where id = $1 and role = 'staff'
+`
+
+func (q *Queries) DeleteStaff(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteStaff, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteTable = `-- name: DeleteTable :execrows
 delete from dining_tables t where t.id = $1
 	and not exists (select 1 from orders o where o.table_id = t.id)
@@ -315,10 +555,10 @@ func (q *Queries) DeleteTable(ctx context.Context, id int64) (int64, error) {
 }
 
 const getAdminByEmail = `-- name: GetAdminByEmail :one
-select id, email, name, password_hash, created_at from admins where email = $1
+select id, email, name, password_hash, created_at, role from admins where email = $1
 `
 
-func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, error) {
+func (q *Queries) GetAdminByEmail(ctx context.Context, email *string) (Admin, error) {
 	row := q.db.QueryRow(ctx, getAdminByEmail, email)
 	var i Admin
 	err := row.Scan(
@@ -327,6 +567,7 @@ func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, err
 		&i.Name,
 		&i.PasswordHash,
 		&i.CreatedAt,
+		&i.Role,
 	)
 	return i, err
 }
@@ -377,7 +618,7 @@ func (q *Queries) GetOpeningHours(ctx context.Context, weekday int16) (OpeningHo
 }
 
 const getOrder = `-- name: GetOrder :one
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at from orders where id = $1
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by from orders where id = $1
 `
 
 func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
@@ -401,12 +642,14 @@ func (q *Queries) GetOrder(ctx context.Context, id pgtype.UUID) (Order, error) {
 		&i.TableID,
 		&i.Discount,
 		&i.PaidAt,
+		&i.CreatedBy,
+		&i.VoidedBy,
 	)
 	return i, err
 }
 
 const getOrderForUpdate = `-- name: GetOrderForUpdate :one
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at from orders where id = $1 for update
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by from orders where id = $1 for update
 `
 
 func (q *Queries) GetOrderForUpdate(ctx context.Context, id pgtype.UUID) (Order, error) {
@@ -430,6 +673,8 @@ func (q *Queries) GetOrderForUpdate(ctx context.Context, id pgtype.UUID) (Order,
 		&i.TableID,
 		&i.Discount,
 		&i.PaidAt,
+		&i.CreatedBy,
+		&i.VoidedBy,
 	)
 	return i, err
 }
@@ -479,21 +724,27 @@ func (q *Queries) GetRestaurant(ctx context.Context) (Restaurant, error) {
 }
 
 const getSessionAdmin = `-- name: GetSessionAdmin :one
-select a.id, a.email, a.name
+select a.id, a.email, a.name, a.role
 from sessions s join admins a on a.id = s.admin_id
 where s.token_hash = $1 and s.expires_at > now()
 `
 
 type GetSessionAdminRow struct {
 	ID    int64
-	Email string
+	Email *string
 	Name  string
+	Role  string
 }
 
 func (q *Queries) GetSessionAdmin(ctx context.Context, tokenHash []byte) (GetSessionAdminRow, error) {
 	row := q.db.QueryRow(ctx, getSessionAdmin, tokenHash)
 	var i GetSessionAdminRow
-	err := row.Scan(&i.ID, &i.Email, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.Role,
+	)
 	return i, err
 }
 
@@ -603,7 +854,7 @@ func (q *Queries) InsertOrderItem(ctx context.Context, arg InsertOrderItemParams
 }
 
 const insertPayment = `-- name: InsertPayment :execrows
-insert into payments (id, order_id, method, amount, tip, reference) values ($1, $2, $3, $4, $5, $6)
+insert into payments (id, order_id, method, amount, tip, reference, taken_by) values ($1, $2, $3, $4, $5, $6, $7)
 on conflict (id) do nothing
 `
 
@@ -614,6 +865,7 @@ type InsertPaymentParams struct {
 	Amount    int64
 	Tip       int64
 	Reference *string
+	TakenBy   *int64
 }
 
 func (q *Queries) InsertPayment(ctx context.Context, arg InsertPaymentParams) (int64, error) {
@@ -624,6 +876,7 @@ func (q *Queries) InsertPayment(ctx context.Context, arg InsertPaymentParams) (i
 		arg.Amount,
 		arg.Tip,
 		arg.Reference,
+		arg.TakenBy,
 	)
 	if err != nil {
 		return 0, err
@@ -632,7 +885,7 @@ func (q *Queries) InsertPayment(ctx context.Context, arg InsertPaymentParams) (i
 }
 
 const insertPosItem = `-- name: InsertPosItem :exec
-insert into order_items (order_id, menu_item_id, name, unit_price, qty, sent_qty) values ($1, $2, $3, $4, $5, $6)
+insert into order_items (order_id, menu_item_id, name, unit_price, qty, sent_qty, note) values ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type InsertPosItemParams struct {
@@ -642,6 +895,7 @@ type InsertPosItemParams struct {
 	UnitPrice  int64
 	Qty        int32
 	SentQty    int32
+	Note       *string
 }
 
 func (q *Queries) InsertPosItem(ctx context.Context, arg InsertPosItemParams) error {
@@ -652,13 +906,14 @@ func (q *Queries) InsertPosItem(ctx context.Context, arg InsertPosItemParams) er
 		arg.UnitPrice,
 		arg.Qty,
 		arg.SentQty,
+		arg.Note,
 	)
 	return err
 }
 
 const insertPosOrder = `-- name: InsertPosOrder :exec
-insert into orders (id, mode, status, source, table_id, customer_name, phone, note, subtotal, delivery_fee, discount, total)
-values ($1, $2, 'open', 'pos', $3, $4, $5, $6, $7, 0, $8, $9)
+insert into orders (id, mode, status, source, table_id, customer_name, phone, note, subtotal, delivery_fee, discount, total, created_by)
+values ($1, $2, 'open', 'pos', $3, $4, $5, $6, $7, 0, $8, $9, $10)
 `
 
 type InsertPosOrderParams struct {
@@ -671,6 +926,7 @@ type InsertPosOrderParams struct {
 	Subtotal     int64
 	Discount     int64
 	Total        int64
+	CreatedBy    *int64
 }
 
 func (q *Queries) InsertPosOrder(ctx context.Context, arg InsertPosOrderParams) error {
@@ -684,6 +940,7 @@ func (q *Queries) InsertPosOrder(ctx context.Context, arg InsertPosOrderParams) 
 		arg.Subtotal,
 		arg.Discount,
 		arg.Total,
+		arg.CreatedBy,
 	)
 	return err
 }
@@ -889,7 +1146,7 @@ func (q *Queries) ListOpeningHours(ctx context.Context) ([]OpeningHour, error) {
 }
 
 const listOrderItems = `-- name: ListOrderItems :many
-select order_id, menu_item_id, name, unit_price, qty, sent_qty from order_items where order_id = $1 order by name
+select order_id, menu_item_id, name, unit_price, qty, sent_qty, note from order_items where order_id = $1 order by name
 `
 
 func (q *Queries) ListOrderItems(ctx context.Context, orderID pgtype.UUID) ([]OrderItem, error) {
@@ -908,6 +1165,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, orderID pgtype.UUID) ([]Or
 			&i.UnitPrice,
 			&i.Qty,
 			&i.SentQty,
+			&i.Note,
 		); err != nil {
 			return nil, err
 		}
@@ -920,7 +1178,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, orderID pgtype.UUID) ([]Or
 }
 
 const listOrderItemsFor = `-- name: ListOrderItemsFor :many
-select order_id, menu_item_id, name, unit_price, qty, sent_qty from order_items where order_id = any($1::uuid[]) order by name
+select order_id, menu_item_id, name, unit_price, qty, sent_qty, note from order_items where order_id = any($1::uuid[]) order by name
 `
 
 func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]OrderItem, error) {
@@ -939,6 +1197,7 @@ func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]O
 			&i.UnitPrice,
 			&i.Qty,
 			&i.SentQty,
+			&i.Note,
 		); err != nil {
 			return nil, err
 		}
@@ -951,7 +1210,7 @@ func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]O
 }
 
 const listOrders = `-- name: ListOrders :many
-select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at from orders
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at, source, table_id, discount, paid_at, created_by, voided_by from orders
 where ($1::order_status is null or status = $1)
 	and (not $2::bool or status not in ('completed', 'cancelled', 'open'))
 order by created_at desc
@@ -990,6 +1249,8 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order
 			&i.TableID,
 			&i.Discount,
 			&i.PaidAt,
+			&i.CreatedBy,
+			&i.VoidedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1002,7 +1263,7 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order
 }
 
 const listPayments = `-- name: ListPayments :many
-select id, order_id, method, amount, tip, reference, created_at from payments where order_id = $1 order by created_at
+select id, order_id, method, amount, tip, reference, created_at, taken_by from payments where order_id = $1 order by created_at
 `
 
 func (q *Queries) ListPayments(ctx context.Context, orderID pgtype.UUID) ([]Payment, error) {
@@ -1022,6 +1283,7 @@ func (q *Queries) ListPayments(ctx context.Context, orderID pgtype.UUID) ([]Paym
 			&i.Tip,
 			&i.Reference,
 			&i.CreatedAt,
+			&i.TakenBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1107,6 +1369,42 @@ func (q *Queries) ListReservationsByPhone(ctx context.Context, arg ListReservati
 	return items, nil
 }
 
+const listStaff = `-- name: ListStaff :many
+select id, name, password_hash, created_at from admins where role = 'staff' order by name
+`
+
+type ListStaffRow struct {
+	ID           int64
+	Name         string
+	PasswordHash string
+	CreatedAt    pgtype.Timestamptz
+}
+
+func (q *Queries) ListStaff(ctx context.Context) ([]ListStaffRow, error) {
+	rows, err := q.db.Query(ctx, listStaff)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListStaffRow
+	for rows.Next() {
+		var i ListStaffRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.PasswordHash,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTables = `-- name: ListTables :many
 
 select id, name, seats, area, position from dining_tables order by position, name
@@ -1180,7 +1478,7 @@ func (q *Queries) OpenOrderCounts(ctx context.Context) ([]OpenOrderCountsRow, er
 }
 
 const openTickets = `-- name: OpenTickets :many
-select o.id, o.number, o.mode, o.status, o.payment, o.customer_name, o.phone, o.address, o.note, o.subtotal, o.delivery_fee, o.total, o.created_at, o.source, o.table_id, o.discount, o.paid_at, t.name as table_name,
+select o.id, o.number, o.mode, o.status, o.payment, o.customer_name, o.phone, o.address, o.note, o.subtotal, o.delivery_fee, o.total, o.created_at, o.source, o.table_id, o.discount, o.paid_at, o.created_by, o.voided_by, t.name as table_name,
 	(select coalesce(sum(qty - sent_qty), 0) from order_items where order_id = o.id)::bigint as unsent,
 	(select coalesce(sum(amount), 0) from payments where order_id = o.id)::bigint as paid
 from orders o
@@ -1207,6 +1505,8 @@ type OpenTicketsRow struct {
 	TableID      *int64
 	Discount     int64
 	PaidAt       pgtype.Timestamptz
+	CreatedBy    *int64
+	VoidedBy     *int64
 	TableName    *string
 	Unsent       int64
 	Paid         int64
@@ -1239,6 +1539,8 @@ func (q *Queries) OpenTickets(ctx context.Context) ([]OpenTicketsRow, error) {
 			&i.TableID,
 			&i.Discount,
 			&i.PaidAt,
+			&i.CreatedBy,
+			&i.VoidedBy,
 			&i.TableName,
 			&i.Unsent,
 			&i.Paid,
@@ -1318,6 +1620,17 @@ func (q *Queries) SetTicketDone(ctx context.Context, arg SetTicketDoneParams) (i
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const tableName = `-- name: TableName :one
+select name from dining_tables where id = $1
+`
+
+func (q *Queries) TableName(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRow(ctx, tableName, id)
+	var name string
+	err := row.Scan(&name)
+	return name, err
 }
 
 const topItems = `-- name: TopItems :many
@@ -1569,6 +1882,25 @@ update site_content set data = $1, updated_at = now() where id = 1
 func (q *Queries) UpdateSiteContent(ctx context.Context, data []byte) error {
 	_, err := q.db.Exec(ctx, updateSiteContent, data)
 	return err
+}
+
+const updateStaff = `-- name: UpdateStaff :execrows
+update admins set name = $1, password_hash = coalesce($2, password_hash)
+where id = $3 and role = 'staff'
+`
+
+type UpdateStaffParams struct {
+	Name    string
+	PinHash *string
+	ID      int64
+}
+
+func (q *Queries) UpdateStaff(ctx context.Context, arg UpdateStaffParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateStaff, arg.Name, arg.PinHash, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const updateTable = `-- name: UpdateTable :execrows

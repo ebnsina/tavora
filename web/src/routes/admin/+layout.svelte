@@ -12,34 +12,51 @@
 		Menu01Icon,
 		Settings02Icon,
 		ShoppingBag01Icon,
-		TextFontIcon
+		TextFontIcon,
+		UserGroupIcon,
+		Invoice03Icon
 	} from '@hugeicons/core-free-icons';
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { alerts, watchAlerts } from '$lib/alerts.svelte';
 
 	let { data, children } = $props();
 
-	const groups = [
-		{
-			label: 'Today',
-			links: [
-				{ href: '/admin', label: 'Overview', icon: DashboardSquare01Icon },
-				{ href: '/admin/orders', label: 'Online orders', icon: ShoppingBag01Icon },
-				{ href: '/admin/bookings', label: 'Table bookings', icon: Calendar03Icon }
-			]
-		},
-		{
-			label: 'Restaurant',
-			links: [
-				{ href: '/admin/menu', label: 'Menu', icon: Menu01Icon },
-				{ href: '/admin/tables', label: 'Tables', icon: TableRoundIcon },
-				{ href: '/admin/settings', label: 'Hours & details', icon: Settings02Icon }
-			]
-		},
-		{
-			label: 'Website',
-			links: [{ href: '/admin/content', label: 'Website text', icon: TextFontIcon }]
-		}
-	];
+	onMount(watchAlerts);
+
+	const orders = { href: '/admin/orders', label: 'Online orders', icon: ShoppingBag01Icon };
+	const bookings = { href: '/admin/bookings', label: 'Table bookings', icon: Calendar03Icon };
+	// Staff only get what they need on shift.
+	const groups = $derived(
+		data.admin?.role === 'staff'
+			? [{ label: 'Today', links: [orders, bookings] }]
+			: [
+					{
+						label: 'Today',
+						links: [
+							{ href: '/admin', label: 'Overview', icon: DashboardSquare01Icon },
+							orders,
+							bookings,
+							{ href: '/admin/reports', label: 'End of day', icon: Invoice03Icon }
+						]
+					},
+					{
+						label: 'Restaurant',
+						links: [
+							{ href: '/admin/menu', label: 'Menu', icon: Menu01Icon },
+							{ href: '/admin/tables', label: 'Tables', icon: TableRoundIcon },
+							{ href: '/admin/staff', label: 'Staff', icon: UserGroupIcon },
+							{ href: '/admin/settings', label: 'Hours & details', icon: Settings02Icon }
+						]
+					},
+					{
+						label: 'Website',
+						links: [{ href: '/admin/content', label: 'Website text', icon: TextFontIcon }]
+					}
+				]
+	);
+	const badge = (href: string) =>
+		href === orders.href ? alerts.new_orders : href === bookings.href ? alerts.waiting_bookings : 0;
 
 	// Dashboard › section › item; a detail page names itself through `crumb` in its load data.
 	const crumbs = $derived.by(() => {
@@ -81,6 +98,9 @@
 					{#each g.links as n (n.href)}
 						<a href={n.href} aria-current={page.url.pathname === n.href ? 'page' : undefined}>
 							<HugeiconsIcon icon={n.icon} size={20} />{n.label}
+							{#if badge(n.href)}<span class="count" aria-label="{badge(n.href)} waiting"
+									>{badge(n.href)}</span
+								>{/if}
 						</a>
 					{/each}
 				{/each}
@@ -186,6 +206,17 @@
 	}
 	.pos-link:hover {
 		background: color-mix(in srgb, var(--mustard) 85%, white);
+	}
+	.count {
+		min-width: 22px;
+		margin-left: auto;
+		padding: 1px 7px;
+		border-radius: 999px;
+		background: var(--mustard);
+		color: var(--black);
+		font-size: 0.75rem;
+		font-weight: 800;
+		text-align: center;
 	}
 	.group {
 		margin: 14px 0 6px;

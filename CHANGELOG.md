@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Staff, alerts, end of day, dish notes
+- Staff accounts: the owner adds staff with a 6-digit PIN. Staff sign in with a number pad and only see the POS, orders and bookings.
+- Every ticket shows who opened it, who took each payment and who voided it.
+- Switch staff button on the POS, held back until everything on the tablet is saved.
+- New online orders and booking requests show a count in the menu and on the POS, and play a chime, within 15 seconds.
+- End of day report: takings by payment method and by staff, tips, discounts, voids, open tickets, and the cash that should be in the drawer. Printable.
+- Dish notes on the POS ("no onion", "extra spicy" or anything typed), printed on the kitchen ticket and shown on the kitchen screen.
+
 ### Dashboard
 - Booking details page: date, guests, contact, note and when it was made, plus the guest's other bookings and past orders found by phone number. Open it with the Details button on each booking.
 - Breadcrumbs at the top of every page (Dashboard › Online orders › Order TV-1001) in place of the date.

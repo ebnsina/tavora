@@ -23,8 +23,9 @@ var (
 )
 
 type kitchenLine struct {
-	Name string `json:"name"`
-	Qty  int32  `json:"qty"`
+	Name string  `json:"name"`
+	Qty  int32   `json:"qty"`
+	Note *string `json:"note,omitempty"`
 }
 
 // posView is an order plus what the till needs: what's been sent, what's been paid, what's left.
@@ -42,14 +43,48 @@ func (s *server) posView(ctx context.Context, q *store.Queries, id pgtype.UUID) 
 		return nil, err
 	}
 	v := orderView(o, items)
+	// Names of whoever opened, voided or took payment, for the order page and the bill.
+	ids := []int64{}
+	for _, by := range []*int64{o.CreatedBy, o.VoidedBy} {
+		if by != nil {
+			ids = append(ids, *by)
+		}
+	}
+	for _, p := range pays {
+		if p.TakenBy != nil {
+			ids = append(ids, *p.TakenBy)
+		}
+	}
+	names := map[int64]string{}
+	if len(ids) > 0 {
+		rows, err := q.AdminNames(ctx, ids)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range rows {
+			names[n.ID] = n.Name
+		}
+	}
+	name := func(id *int64) any {
+		if id == nil {
+			return nil
+		}
+		return names[*id]
+	}
 	var paid int64
 	payJSON := make([]map[string]any, len(pays))
 	for i, p := range pays {
 		paid += p.Amount
-		payJSON[i] = map[string]any{"id": p.ID.String(), "method": p.Method, "amount": p.Amount, "tip": p.Tip, "reference": p.Reference, "created_at": p.CreatedAt.Time}
+		payJSON[i] = map[string]any{"id": p.ID.String(), "method": p.Method, "amount": p.Amount, "tip": p.Tip, "reference": p.Reference, "created_at": p.CreatedAt.Time, "taken_by": name(p.TakenBy)}
 	}
 	v["payments"], v["paid"], v["due"] = payJSON, paid, o.Total-paid
 	v["source"], v["table_id"], v["discount"] = o.Source, o.TableID, o.Discount
+	v["created_by"], v["voided_by"], v["table"] = name(o.CreatedBy), name(o.VoidedBy), nil
+	if o.TableID != nil {
+		if t, err := q.TableName(ctx, *o.TableID); err == nil {
+			v["table"] = t
+		}
+	}
 	return v, nil
 }
 
@@ -108,11 +143,17 @@ func (s *server) putPosOrder(w http.ResponseWriter, r *http.Request) {
 		req.TableID = nil
 	}
 	seen := map[int64]bool{}
+	notes := map[int64]*string{}
 	for _, l := range req.Items {
 		if l.Qty < 1 || l.Qty > 99 || seen[l.ID] {
 			bad["items"] = "each dish once, quantity 1 to 99"
 		}
 		seen[l.ID] = true
+		n, ok := optional(l.Note, 100)
+		if !ok {
+			bad["items"] = "dish notes up to 100 characters"
+		}
+		notes[l.ID] = n
 	}
 	var phone *string
 	if p := strings.TrimSpace(req.Phone); p != "" {
@@ -136,6 +177,7 @@ func (s *server) putPosOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	actorID := actor(r).ID
 	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
 		existing, err := q.GetOrderForUpdate(ctx, id)
@@ -189,13 +231,13 @@ func (s *server) putPosOrder(w http.ResponseWriter, r *http.Request) {
 			m, ok := menu[l.ID]
 			switch {
 			case had:
-				rows = append(rows, store.InsertPosItemParams{OrderID: id, MenuItemID: l.ID, Name: prev.Name, UnitPrice: prev.UnitPrice, Qty: int32(l.Qty), SentQty: prev.SentQty})
+				rows = append(rows, store.InsertPosItemParams{OrderID: id, MenuItemID: l.ID, Name: prev.Name, UnitPrice: prev.UnitPrice, Qty: int32(l.Qty), SentQty: prev.SentQty, Note: notes[l.ID]})
 			case !ok:
 				return &apiError{http.StatusUnprocessableEntity, "item_not_found", "a menu item no longer exists", map[string]any{"id": l.ID}}
 			case !m.Available:
 				return &apiError{http.StatusConflict, "item_unavailable", "a menu item is sold out", map[string]any{"id": l.ID, "name": m.Name}}
 			default:
-				rows = append(rows, store.InsertPosItemParams{OrderID: id, MenuItemID: l.ID, Name: m.Name, UnitPrice: m.Price, Qty: int32(l.Qty)})
+				rows = append(rows, store.InsertPosItemParams{OrderID: id, MenuItemID: l.ID, Name: m.Name, UnitPrice: m.Price, Qty: int32(l.Qty), Note: notes[l.ID]})
 			}
 			sub += rows[len(rows)-1].UnitPrice * int64(l.Qty)
 		}
@@ -210,7 +252,7 @@ func (s *server) putPosOrder(w http.ResponseWriter, r *http.Request) {
 		}
 		mode := store.OrderMode(req.Mode)
 		if isNew {
-			err = q.InsertPosOrder(ctx, store.InsertPosOrderParams{ID: id, Mode: mode, TableID: req.TableID, CustomerName: name, Phone: phone, Note: note, Subtotal: sub, Discount: req.Discount, Total: sub - req.Discount})
+			err = q.InsertPosOrder(ctx, store.InsertPosOrderParams{ID: id, Mode: mode, TableID: req.TableID, CustomerName: name, Phone: phone, Note: note, Subtotal: sub, Discount: req.Discount, Total: sub - req.Discount, CreatedBy: &actorID})
 		} else {
 			err = q.UpdatePosOrder(ctx, store.UpdatePosOrderParams{ID: id, Mode: mode, TableID: req.TableID, CustomerName: name, Phone: phone, Note: note, Subtotal: sub, Discount: req.Discount, Total: sub - req.Discount})
 		}
@@ -276,7 +318,7 @@ func (s *server) sendToKitchen(w http.ResponseWriter, r *http.Request) {
 		lines := []kitchenLine{}
 		for _, it := range items {
 			if it.Qty > it.SentQty {
-				lines = append(lines, kitchenLine{it.Name, it.Qty - it.SentQty})
+				lines = append(lines, kitchenLine{it.Name, it.Qty - it.SentQty, it.Note})
 			}
 		}
 		if len(lines) == 0 {
@@ -337,6 +379,7 @@ func (s *server) addPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
+	by := actor(r).ID
 	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
 		q := s.q.WithTx(tx)
 		o, err := q.GetOrderForUpdate(ctx, id)
@@ -363,7 +406,7 @@ func (s *server) addPayment(w http.ResponseWriter, r *http.Request) {
 		if due := o.Total - paid; req.Amount > due {
 			return &apiError{http.StatusUnprocessableEntity, "overpayment", "that's more than what's left to pay", map[string]any{"due": due}}
 		}
-		if _, err := q.InsertPayment(ctx, store.InsertPaymentParams{ID: payID, OrderID: id, Method: method, Amount: req.Amount, Tip: req.Tip, Reference: ref}); err != nil {
+		if _, err := q.InsertPayment(ctx, store.InsertPaymentParams{ID: payID, OrderID: id, Method: method, Amount: req.Amount, Tip: req.Tip, Reference: ref, TakenBy: &by}); err != nil {
 			return err
 		}
 		if paid+req.Amount >= o.Total {
@@ -405,7 +448,8 @@ func (s *server) voidOrder(w http.ResponseWriter, r *http.Request) {
 			}
 			return &apiError{http.StatusConflict, "has_payments", "money was already taken on this ticket, so it can't be voided", nil}
 		}
-		return q.CloseOrder(ctx, store.CloseOrderParams{Status: "cancelled", ID: id})
+		by := actor(r).ID
+		return q.CloseOrder(ctx, store.CloseOrderParams{Status: "cancelled", ID: id, VoidedBy: &by})
 	})
 	if err != nil {
 		fail(w, r, err)
@@ -506,7 +550,7 @@ func sendOnlineToKitchen(ctx context.Context, q *store.Queries, id pgtype.UUID) 
 	}
 	lines := make([]kitchenLine, len(items))
 	for i, it := range items {
-		lines[i] = kitchenLine{it.Name, it.Qty}
+		lines[i] = kitchenLine{it.Name, it.Qty, it.Note}
 	}
 	data, _ := json.Marshal(lines)
 	if _, err := q.InsertKitchenTicket(ctx, store.InsertKitchenTicketParams{ID: newUUID(), OrderID: id, Lines: data}); err != nil {

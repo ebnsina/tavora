@@ -33,19 +33,19 @@ func TestPriceOrder(t *testing.T) {
 		2: {ID: 2, Price: 35000, Available: true},
 		3: {ID: 3, Price: 9000, Available: false},
 	}
-	if sub, fee, err := priceOrder([]line{{1, 1}, {2, 2}}, items, true, r); err != nil || sub != 115000 || fee != 6000 {
+	if sub, fee, err := priceOrder([]line{{ID: 1, Qty: 1}, {ID: 2, Qty: 2}}, items, true, r); err != nil || sub != 115000 || fee != 6000 {
 		t.Fatalf("delivery under threshold: sub=%d fee=%d err=%v", sub, fee, err)
 	}
-	if _, fee, _ := priceOrder([]line{{1, 4}}, items, true, r); fee != 0 {
+	if _, fee, _ := priceOrder([]line{{ID: 1, Qty: 4}}, items, true, r); fee != 0 {
 		t.Fatalf("free delivery over ৳1,500: fee=%d", fee)
 	}
-	if _, fee, _ := priceOrder([]line{{1, 1}}, items, false, r); fee != 0 {
+	if _, fee, _ := priceOrder([]line{{ID: 1, Qty: 1}}, items, false, r); fee != 0 {
 		t.Fatalf("pickup has no fee: fee=%d", fee)
 	}
-	if _, _, err := priceOrder([]line{{3, 1}}, items, false, r); err == nil || err.Code != "item_unavailable" {
+	if _, _, err := priceOrder([]line{{ID: 3, Qty: 1}}, items, false, r); err == nil || err.Code != "item_unavailable" {
 		t.Fatalf("sold-out item accepted: %v", err)
 	}
-	if _, _, err := priceOrder([]line{{9, 1}}, items, false, r); err == nil || err.Code != "item_not_found" {
+	if _, _, err := priceOrder([]line{{ID: 9, Qty: 1}}, items, false, r); err == nil || err.Code != "item_not_found" {
 		t.Fatalf("unknown item accepted: %v", err)
 	}
 }

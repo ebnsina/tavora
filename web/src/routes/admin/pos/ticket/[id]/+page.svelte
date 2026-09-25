@@ -18,6 +18,7 @@
 		saveTicket,
 		sendKitchen,
 		setLines,
+		setNote,
 		store,
 		voidTicket
 	} from '$lib/offline.svelte';
@@ -25,6 +26,7 @@
 	import Slip from '$lib/Slip.svelte';
 	import { onMount, tick } from 'svelte';
 	import PaySheet from './PaySheet.svelte';
+	import Dialog from '$lib/admin/Dialog.svelte';
 
 	const id = $derived(page.params.id!);
 	// The tablet's copy is the source of truth on screen; the server catches up through the queue.
@@ -34,7 +36,28 @@
 	let askDiscount = $state(false);
 	let cat = $state<number | 'all'>('all');
 	let search = $state('');
-	let slip = $state<{ kitchen?: { name: string; qty: number }[] } | null>(null);
+	let slip = $state<{ kitchen?: { name: string; qty: number; note?: string | null }[] } | null>(
+		null
+	);
+	// The dish whose cook's note is being written.
+	let noting = $state<number | null>(null);
+	let draft = $state('');
+	const quickNotes = [
+		'No onion',
+		'Extra spicy',
+		'Less spicy',
+		'No ice',
+		'Well done',
+		'Pack separately'
+	];
+	const notingLine = $derived(t?.items.find((l) => l.id === noting));
+	function toggleQuick(q: string) {
+		const parts = draft
+			.split(',')
+			.map((p) => p.trim())
+			.filter(Boolean);
+		draft = (parts.includes(q) ? parts.filter((p) => p !== q) : [...parts, q]).join(', ');
+	}
 
 	const menu = $derived(new Map(store.menu.flatMap((c) => c.items).map((i) => [i.id, i])));
 	const tableName = $derived(store.floor?.tables.find((x) => x.id === t?.table_id)?.name ?? '');
@@ -178,6 +201,19 @@
 						{#if l.sent}<span class="sent"
 								><HugeiconsIcon icon={ChefHatIcon} size={12} /> {l.sent} in kitchen</span
 							>{/if}
+						<!-- Notes go with the next kitchen send, so they can only change while some are unsent. -->
+						{#if l.note || (open && l.qty > l.sent)}
+							<button
+								type="button"
+								class="note-btn"
+								class:has={l.note}
+								disabled={!open || l.qty <= l.sent}
+								onclick={() => {
+									noting = l.id;
+									draft = l.note ?? '';
+								}}>{l.note ? `“${l.note}”` : '+ Note'}</button
+							>
+						{/if}
 					</div>
 					<div class="qty">
 						<button
@@ -276,6 +312,39 @@
 	</section>
 </div>
 
+<Dialog
+	open={noting !== null}
+	title="Note for {notingLine?.name ?? 'dish'}"
+	onclose={() => (noting = null)}
+>
+	<form
+		class="note-form"
+		onsubmit={(e) => {
+			e.preventDefault();
+			if (t && noting !== null) setNote(t, noting, draft);
+			noting = null;
+		}}
+	>
+		<div class="quick">
+			{#each quickNotes as q (q)}
+				<button
+					type="button"
+					aria-pressed={draft
+						.split(',')
+						.map((p) => p.trim())
+						.includes(q)}
+					onclick={() => toggleQuick(q)}>{q}</button
+				>
+			{/each}
+		</div>
+		<label>
+			Anything else for the cook
+			<textarea bind:value={draft} maxlength="100" rows="2"></textarea>
+		</label>
+		<button class="save" type="submit">Save note</button>
+	</form>
+</Dialog>
+
 {#if paying && t}
 	<PaySheet
 		ticket={t}
@@ -289,6 +358,69 @@
 {/if}
 
 <style>
+	.note-btn {
+		justify-self: start;
+		padding: 2px 0;
+		border: 0;
+		background: none;
+		color: var(--muted);
+		font: 600 0.8125rem var(--sans);
+		text-align: left;
+		cursor: pointer;
+	}
+	.note-btn.has {
+		color: var(--brand);
+		font-style: italic;
+	}
+	.note-btn:disabled {
+		cursor: default;
+	}
+	.note-form {
+		display: grid;
+		gap: 14px;
+	}
+	.quick {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.quick button {
+		min-height: 48px;
+		padding: 0 16px;
+		border: 0;
+		border-radius: 12px;
+		background: var(--soft);
+		font: 700 0.9375rem var(--sans);
+		cursor: pointer;
+	}
+	.quick button[aria-pressed='true'] {
+		background: var(--black);
+		color: var(--cream);
+	}
+	.note-form label {
+		display: grid;
+		gap: 6px;
+		font-weight: 700;
+		font-size: 0.875rem;
+	}
+	.note-form textarea {
+		padding: 10px 14px;
+		border: 0;
+		border-radius: 12px;
+		background: #fffdf6;
+		box-shadow: inset 0 0 0 2px var(--line);
+		font: 1rem var(--sans);
+		resize: vertical;
+	}
+	.save {
+		min-height: 56px;
+		border: 0;
+		border-radius: 14px;
+		background: var(--brand);
+		color: var(--cream);
+		font: 800 1.125rem var(--sans);
+		cursor: pointer;
+	}
 	.till {
 		height: 100%;
 		display: grid;

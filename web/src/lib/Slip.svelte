@@ -12,7 +12,7 @@
 		ticket: Ticket;
 		restaurant: Restaurant | null;
 		table: string;
-		kitchen?: { name: string; qty: number }[];
+		kitchen?: { name: string; qty: number; note?: string | null }[];
 	} = $props();
 
 	const stamp = new Intl.DateTimeFormat('en-GB', {
@@ -38,7 +38,8 @@
 		<p class="big">{where}</p>
 		<p>{ref} · {stamp.format(new Date())}</p>
 		<hr />
-		{#each kitchen as l, i (i)}<p class="kline"><b>{l.qty} ×</b> {l.name}</p>{/each}
+		{#each kitchen as l, i (i)}<p class="kline"><b>{l.qty} ×</b> {l.name}</p>
+			{#if l.note}<p class="knote">» {l.note}</p>{/if}{/each}
 		{#if t.note}<hr />
 			<p><b>Note:</b> {t.note}</p>{/if}
 	{:else}
@@ -126,6 +127,11 @@
 	.kline {
 		font-size: 16px;
 		margin: 4px 0;
+	}
+	.knote {
+		margin: 0 0 6px 16px;
+		font-size: 14px;
+		font-weight: 700;
 	}
 	hr {
 		border: 0;
