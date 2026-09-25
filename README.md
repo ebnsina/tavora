@@ -22,6 +22,8 @@ Tests: `cd api && go test ./...`
 
 For tablets at the counter and in the kitchen. Tables on the floor screen, tap dishes onto a ticket, send new items to the kitchen, take cash, card, bKash or Nagad (split and tips allowed). The kitchen display at `/admin/pos/kitchen` shows every ticket with a timer. Every POS write carries an id made on the device, so a retry never doubles a ticket, a kitchen send or a payment.
 
+**Offline:** the POS runs entirely in the browser. A service worker caches the app; the menu, tables and tickets are kept in the tablet's local storage; every change goes into a queue (`web/src/lib/offline.svelte.ts`) that replays in order when the API is reachable. Conflicts the server rejects (for example a table opened on two tablets while one was offline) show under the sync pill. Offline mode needs a production build (`pnpm build && node build`); the dev server doesn't cache its files.
+
 Printing uses the tablet's normal print dialog with 80 mm receipt layouts; pair the tablet with the receipt printer through Android's print service.
 
 ## Dashboard (`/admin`)

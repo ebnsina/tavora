@@ -51,10 +51,12 @@ export type Floor = {
 export async function pos<T>(path: string, init?: RequestInit): Promise<T> {
 	let res: Response;
 	try {
-		res = await fetch(
-			`/admin/pos/api/${path}`,
-			init && { ...init, headers: { 'Content-Type': 'application/json' } }
-		);
+		// A request stuck on a dying connection must fail, not hang, or the sync queue would stall behind it.
+		res = await fetch(`/admin/pos/api/${path}`, {
+			...init,
+			headers: { 'Content-Type': 'application/json' },
+			signal: AbortSignal.timeout(15_000)
+		});
 	} catch {
 		throw new ApiError('network');
 	}

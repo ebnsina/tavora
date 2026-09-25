@@ -1,16 +1,21 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Cancel01Icon, Tick02Icon } from '@hugeicons/core-free-icons';
-	import { ApiError, message, price } from '$lib/api';
-	import { pos, type Ticket } from '$lib/pos';
+	import { price } from '$lib/api';
+	import type { Payment, Ticket } from '$lib/pos';
 
+	// Payments are recorded on the tablet first and synced after, so this works offline too.
 	let {
-		ticket,
+		ticket: t,
 		onclose,
-		onpaid,
+		onpay,
 		ondone
-	}: { ticket: Ticket; onclose: () => void; onpaid: (t: Ticket) => void; ondone: () => void } =
-		$props();
+	}: {
+		ticket: Ticket;
+		onclose: () => void;
+		onpay: (p: Omit<Payment, 'id'>) => void;
+		ondone: () => void;
+	} = $props();
 
 	const methods = [
 		{ id: 'cash', label: 'Cash' },
@@ -19,17 +24,13 @@
 		{ id: 'nagad', label: 'Nagad' }
 	] as const;
 
-	// svelte-ignore state_referenced_locally
-	let t = $state(ticket);
 	let method = $state<(typeof methods)[number]['id']>('cash');
-	// Amounts in taka while typing; the API gets poisha.
+	// Amounts in taka while typing; stored in poisha.
 	// svelte-ignore state_referenced_locally
-	let amount = $state(ticket.due / 100);
+	let amount = $state(t.due / 100);
 	let tendered = $state<number | null>(null);
 	let tip = $state(0);
 	let reference = $state('');
-	let busy = $state(false);
-	let error = $state('');
 	let lastChange = $state(0);
 
 	const due = $derived(t.due / 100);
@@ -44,35 +45,26 @@
 			)
 		].slice(0, 4)
 	);
+	const needsRef = $derived(method === 'bkash' || method === 'nagad');
+	const ready = $derived(
+		amount > 0 &&
+			amount <= due &&
+			!(method === 'cash' && tendered !== null && tendered < amount) &&
+			!(needsRef && !reference.trim())
+	);
 
-	async function take() {
-		busy = true;
-		error = '';
-		try {
-			const next = await pos<Ticket>(`pos/orders/${t.id}/payments`, {
-				method: 'POST',
-				body: JSON.stringify({
-					id: crypto.randomUUID(),
-					method,
-					amount: Math.round(amount * 100),
-					tip: Math.round(tip * 100),
-					reference: reference.trim()
-				})
-			});
-			lastChange = change;
-			t = next;
-			onpaid(next);
-			amount = next.due / 100;
-			tendered = null;
-			tip = 0;
-			reference = '';
-		} catch (e) {
-			error = message(e);
-			if (e instanceof ApiError && e.code === 'overpayment')
-				error = `Only ${price(Number(e.details.due))} is left to pay.`;
-		} finally {
-			busy = false;
-		}
+	function take() {
+		lastChange = change;
+		onpay({
+			method,
+			amount: Math.round(amount * 100),
+			tip: Math.max(0, Math.round(tip * 100)),
+			reference: reference.trim() || null
+		});
+		amount = t.due / 100;
+		tendered = null;
+		tip = 0;
+		reference = '';
 	}
 </script>
 
@@ -170,23 +162,10 @@
 				<input type="number" min="0" step="1" bind:value={tip} />
 			</label>
 
-			{#if error}<p class="err" role="alert">{error}</p>{/if}
-
-			<button
-				type="button"
-				class="big"
-				disabled={busy ||
-					amount <= 0 ||
-					amount > due ||
-					(method === 'cash' && tendered !== null && tendered < amount) ||
-					((method === 'bkash' || method === 'nagad') && !reference.trim())}
-				onclick={take}
-			>
-				{busy
-					? 'Recording…'
-					: amount < due
-						? `Take ${price(Math.round(amount * 100))} now`
-						: `Take ${price(Math.round(amount * 100))} and close`}
+			<button type="button" class="big" disabled={!ready} onclick={take}>
+				{amount < due
+					? `Take ${price(Math.round(amount * 100))} now`
+					: `Take ${price(Math.round(amount * 100))} and close`}
 			</button>
 		{/if}
 	</div>
@@ -304,14 +283,6 @@
 		border-radius: 12px;
 		background: #e6f4ea;
 		font-size: 1.125rem;
-	}
-	.err {
-		margin: 0;
-		padding: 10px 12px;
-		border-radius: 10px;
-		background: var(--brand);
-		color: var(--cream);
-		font-weight: 600;
 	}
 	.big {
 		min-height: 64px;

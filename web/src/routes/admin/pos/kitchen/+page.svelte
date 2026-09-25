@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Tick02Icon } from '@hugeicons/core-free-icons';
-	import { message } from '$lib/api';
+	import { ApiError, message } from '$lib/api';
 	import { minutesSince, pos } from '$lib/pos';
 	import { onMount } from 'svelte';
 
@@ -26,7 +26,11 @@
 			tickets = await pos<KTicket[]>('kitchen');
 			error = '';
 		} catch (e) {
-			error = message(e);
+			// Offline: keep showing the last board; the till prints kitchen tickets on paper meanwhile.
+			error =
+				e instanceof ApiError && e.code === 'network'
+					? 'No internet. Showing the last tickets; new orders print at the till until it’s back.'
+					: message(e);
 		}
 	}
 

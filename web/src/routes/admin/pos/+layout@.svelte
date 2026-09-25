@@ -1,37 +1,34 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
+		Alert02Icon,
 		ArrowLeft01Icon,
 		ChefHatIcon,
+		Refresh01Icon,
 		ShoppingBag01Icon,
 		TableRoundIcon,
+		Tick02Icon,
 		WifiDisconnected01Icon
 	} from '@hugeicons/core-free-icons';
 	import { page } from '$app/state';
+	import { dismiss, start, store } from '$lib/offline.svelte';
 	import { onMount } from 'svelte';
 
-	let { data, children } = $props();
+	let { children } = $props();
 
 	let now = $state(new Date());
-	let online = $state(true);
 	const clock = new Intl.DateTimeFormat('en-GB', {
 		hour: 'numeric',
 		minute: '2-digit',
 		timeZone: 'Asia/Dhaka'
 	});
 
+	// Restore the tablet's saved state before any POS page mounts and reads it.
+	start();
+
 	onMount(() => {
-		online = navigator.onLine;
 		const t = setInterval(() => (now = new Date()), 15_000);
-		const on = () => (online = true);
-		const off = () => (online = false);
-		addEventListener('online', on);
-		addEventListener('offline', off);
-		return () => {
-			clearInterval(t);
-			removeEventListener('online', on);
-			removeEventListener('offline', off);
-		};
+		return () => clearInterval(t);
 	});
 
 	const tabs = [
@@ -43,12 +40,12 @@
 		href === '/admin/pos'
 			? page.url.pathname === href || page.url.pathname.startsWith('/admin/pos/ticket')
 			: page.url.pathname.startsWith(href);
+	const waiting = $derived(store.queue.length);
 </script>
 
 <svelte:head>
 	<title>POS · Tavora</title>
 	<meta name="robots" content="noindex" />
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 </svelte:head>
 
 <div class="pos">
@@ -64,13 +61,52 @@
 				</a>
 			{/each}
 		</nav>
-		{#if !online}
-			<span class="offline" role="status"
-				><HugeiconsIcon icon={WifiDisconnected01Icon} size={18} /> No internet</span
-			>
-		{/if}
+
+		<!-- Sync status: always visible so staff know whether sales have reached the server. -->
+		<button
+			class="sync"
+			popovertarget="sync-panel"
+			class:off={!store.online}
+			class:warn={store.failed.length}
+		>
+			{#if store.failed.length}
+				<HugeiconsIcon icon={Alert02Icon} size={18} /> {store.failed.length} need attention
+			{:else if !store.online}
+				<HugeiconsIcon icon={WifiDisconnected01Icon} size={18} /> No internet{waiting
+					? ` · ${waiting} waiting`
+					: ''}
+			{:else if waiting || store.syncing}
+				<HugeiconsIcon icon={Refresh01Icon} size={18} /> Syncing {waiting || ''}
+			{:else}
+				<HugeiconsIcon icon={Tick02Icon} size={18} /> All saved
+			{/if}
+		</button>
+		<div id="sync-panel" popover class="panel">
+			{#if !store.online}
+				<p>
+					<strong>Working offline.</strong> Keep taking orders and payments. Kitchen tickets and
+					bills print from this tablet. {waiting} change{waiting === 1 ? '' : 's'} will send when the
+					internet is back.
+				</p>
+			{:else if waiting}
+				<p>Sending {waiting} change{waiting === 1 ? '' : 's'} to the server…</p>
+			{:else}
+				<p>Everything on this tablet has reached the server.</p>
+			{/if}
+			{#each store.failed as f (f.opId)}
+				<div class="failed">
+					<strong>{f.label} wasn’t saved</strong>
+					<span>{f.error}</span>
+					<div class="row">
+						<a href="/admin/pos/ticket/{f.orderId}">Open ticket</a>
+						<button type="button" onclick={() => dismiss(f.opId)}>Dismiss</button>
+					</div>
+				</div>
+			{/each}
+		</div>
+
 		<span class="clock">{clock.format(now)}</span>
-		<span class="who">{data.admin.name}</span>
+		{#if store.me}<span class="who">{store.me.name}</span>{/if}
 	</header>
 	<div class="screen">{@render children()}</div>
 </div>
@@ -130,19 +166,71 @@
 	nav a[aria-current='page'] {
 		background: var(--brand);
 	}
-	.offline {
+	.sync {
 		display: flex;
 		align-items: center;
 		gap: 6px;
-		padding: 6px 12px;
+		min-height: 40px;
+		margin-left: auto;
+		padding: 0 14px;
+		border: 0;
 		border-radius: 999px;
+		background: rgb(255 249 231 / 0.12);
+		color: var(--cream);
+		font: 700 0.875rem var(--sans);
+		cursor: pointer;
+	}
+	.sync.off {
 		background: var(--mustard);
 		color: var(--black);
-		font-weight: 700;
-		font-size: 0.875rem;
+	}
+	.sync.warn {
+		background: var(--brand);
+		color: var(--cream);
+	}
+	.panel {
+		position: fixed;
+		inset: 64px 12px auto auto;
+		width: min(380px, calc(100vw - 24px));
+		margin: 0;
+		padding: 16px;
+		border: 0;
+		border-radius: 16px;
+		background: var(--cream);
+		color: var(--ink);
+		box-shadow: 0 16px 40px rgb(0 0 0 / 0.25);
+	}
+	.panel p {
+		margin: 0 0 10px;
+		line-height: 1.45;
+	}
+	.failed {
+		display: grid;
+		gap: 4px;
+		margin-top: 8px;
+		padding: 12px;
+		border-radius: 12px;
+		background: #fde4e1;
+	}
+	.failed span {
+		font-size: 0.9375rem;
+	}
+	.failed .row {
+		display: flex;
+		gap: 14px;
+		margin-top: 4px;
+	}
+	.failed a,
+	.failed button {
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--brand);
+		font: 700 0.875rem var(--sans);
+		text-decoration: underline;
+		cursor: pointer;
 	}
 	.clock {
-		margin-left: auto;
 		font: 700 1.125rem var(--sans);
 		font-variant-numeric: tabular-nums;
 	}
@@ -154,7 +242,7 @@
 		min-height: 0;
 		overflow: hidden;
 	}
-	@media (max-width: 760px) {
+	@media (max-width: 860px) {
 		nav a span,
 		.who {
 			display: none;

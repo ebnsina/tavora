@@ -11,170 +11,94 @@
 	} from '@hugeicons/core-free-icons';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { ApiError, message, price, type Item } from '$lib/api';
-	import { pos, type Floor, type Ticket } from '$lib/pos';
-	import { onMount } from 'svelte';
+	import { ApiError, price, type Item } from '$lib/api';
+	import {
+		addPayment,
+		blankTicket,
+		saveTicket,
+		sendKitchen,
+		setLines,
+		store,
+		voidTicket
+	} from '$lib/offline.svelte';
+	import { pos, type Ticket } from '$lib/pos';
+	import Slip from '$lib/Slip.svelte';
+	import { onMount, tick } from 'svelte';
 	import PaySheet from './PaySheet.svelte';
 
-	let { data } = $props();
 	const id = $derived(page.params.id!);
-
-	// Local copy of the bill; every change is saved to the API shortly after.
-	let ticket = $state<Ticket | null>(null);
-	let lines = $state<Record<number, number>>({});
-	let discount = $state(0);
-	let name = $state('');
-	let mode = $state<'dine_in' | 'pickup'>('pickup');
-	let tableId = $state<number | null>(null);
-	let tableName = $state('');
-	let loaded = $state(false);
-	let saving = $state(false);
-	let error = $state('');
+	// The tablet's copy is the source of truth on screen; the server catches up through the queue.
+	const t = $derived(store.tickets[id] ?? null);
+	let loading = $state(true);
 	let paying = $state(false);
 	let askDiscount = $state(false);
 	let cat = $state<number | 'all'>('all');
 	let search = $state('');
+	let slip = $state<{ kitchen?: { name: string; qty: number }[] } | null>(null);
 
-	const items = $derived(new Map(data.menu.flatMap((c) => c.items).map((i) => [i.id, i])));
-	const sent = $derived(new Map((ticket?.items ?? []).map((l) => [l.id, l.sent])));
-	const unitPrice = (itemId: number) =>
-		ticket?.items.find((l) => l.id === itemId)?.unit_price ?? items.get(itemId)?.price ?? 0;
-	const rows = $derived(
-		Object.entries(lines)
-			.filter(([, q]) => q > 0)
-			.map(([k, q]) => ({
-				id: +k,
-				qty: q,
-				name: items.get(+k)?.name ?? ticket?.items.find((l) => l.id === +k)?.name ?? ''
-			}))
-	);
-	const subtotal = $derived(rows.reduce((s, r) => s + unitPrice(r.id) * r.qty, 0));
-	const total = $derived(Math.max(0, subtotal - discount));
-	const unsent = $derived(rows.reduce((n, r) => n + r.qty - (sent.get(r.id) ?? 0), 0));
-	const paid = $derived(ticket?.paid ?? 0);
+	const menu = $derived(new Map(store.menu.flatMap((c) => c.items).map((i) => [i.id, i])));
+	const tableName = $derived(store.floor?.tables.find((x) => x.id === t?.table_id)?.name ?? '');
+	const unsent = $derived(t?.items.reduce((n, l) => n + l.qty - l.sent, 0) ?? 0);
+	const open = $derived(t?.status === 'open');
+	const failures = $derived(store.failed.filter((f) => f.orderId === id));
 	const shown = $derived(
-		data.menu
+		store.menu
 			.filter((c) => cat === 'all' || c.id === cat)
 			.flatMap((c) => c.items)
 			.filter((i) => i.name.toLowerCase().includes(search.trim().toLowerCase()))
 	);
 
-	function adopt(t: Ticket) {
-		ticket = t;
-		lines = Object.fromEntries(t.items.map((l) => [l.id, l.qty]));
-		discount = t.discount;
-		name = ['Walk-in', 'Table'].includes(t.name) ? '' : t.name;
-		mode = t.mode;
-		tableId = t.table_id;
-	}
-
 	onMount(async () => {
-		try {
-			adopt(await pos<Ticket>(`pos/orders/${id}`));
-		} catch (e) {
-			if (!(e instanceof ApiError && e.code === 'not_found')) error = message(e);
-			// A brand-new ticket: the floor says which table (or takeaway).
-			const t = page.url.searchParams.get('table');
-			mode = t ? 'dine_in' : 'pickup';
-			tableId = t ? +t : null;
+		// Fresh server copy when online and nothing from this tablet is still waiting for it.
+		if (store.online && !store.queue.some((op) => op.orderId === id)) {
+			try {
+				store.tickets[id] = await pos<Ticket>(`pos/orders/${id}`);
+			} catch (e) {
+				if (!(e instanceof ApiError) || !['not_found', 'network'].includes(e.code))
+					console.error(e);
+			}
 		}
-		if (tableId) {
-			const floor = await pos<Floor>('pos/floor').catch(() => null);
-			tableName = floor?.tables.find((x) => x.id === tableId)?.name ?? '';
+		if (!store.tickets[id]) {
+			const table = page.url.searchParams.get('table');
+			store.tickets[id] = blankTicket(id, table ? 'dine_in' : 'pickup', table ? +table : null);
 		}
-		loaded = true;
+		loading = false;
 	});
 
-	// Saves run one after another so an older save can never land after a newer one.
-	let chain = Promise.resolve();
-	let timer: ReturnType<typeof setTimeout>;
-	function save(now = false) {
-		clearTimeout(timer);
-		const run = () =>
-			(chain = chain.then(async () => {
-				saving = true;
-				try {
-					const t = await pos<Ticket>(`pos/orders/${id}`, {
-						method: 'PUT',
-						body: JSON.stringify({
-							mode,
-							table_id: tableId,
-							name,
-							discount,
-							items: rows.map((r) => ({ id: r.id, qty: r.qty }))
-						})
-					});
-					ticket = t;
-					error = '';
-				} catch (e) {
-					error = message(e);
-					if (e instanceof ApiError && e.code === 'already_sent')
-						error = `${e.details.name} is already in the kitchen, so it can’t go lower.`;
-					if (e instanceof ApiError && e.code === 'table_busy')
-						error = 'Someone just opened this table on another device. Go back to the floor.';
-				} finally {
-					saving = false;
-				}
-			}));
-		if (now) return run();
-		timer = setTimeout(run, 400);
-		return chain;
+	const qtyMap = () => Object.fromEntries(t!.items.map((l) => [l.id, l.qty]));
+	function setQty(itemId: number, qty: number) {
+		if (!t || !open) return;
+		saveTicket(setLines(t, { ...qtyMap(), [itemId]: qty }, menu));
 	}
-
-	function add(item: Item) {
-		if (!item.available) return;
-		lines[item.id] = (lines[item.id] ?? 0) + 1;
-		save();
-	}
+	const add = (item: Item) =>
+		item.available && setQty(item.id, (t?.items.find((l) => l.id === item.id)?.qty ?? 0) + 1);
 	function change(itemId: number, by: number) {
-		const next = (lines[itemId] ?? 0) + by;
-		if (next < (sent.get(itemId) ?? 0)) return;
-		lines[itemId] = next;
-		save();
+		const line = t?.items.find((l) => l.id === itemId);
+		if (line && line.qty + by >= line.sent) setQty(itemId, line.qty + by);
 	}
 
-	// Prints through a hidden frame so the till never leaves this screen.
-	function print(query: string) {
-		const f = document.createElement('iframe');
-		f.style.cssText = 'position:fixed;width:0;height:0;border:0';
-		f.src = `/admin/pos/print/${id}?${query}`;
-		document.body.append(f);
-		setTimeout(() => f.remove(), 60_000);
+	async function print(what: typeof slip) {
+		slip = what;
+		await tick();
+		window.print();
 	}
 
-	async function sendKitchen() {
-		await save(true);
-		const kid = crypto.randomUUID();
-		try {
-			ticket = await pos<Ticket>(`pos/orders/${id}/kitchen`, {
-				method: 'POST',
-				body: JSON.stringify({ ticket_id: kid })
-			});
-			print(`kitchen=${kid}`);
-		} catch (e) {
-			error = message(e);
-			if (e instanceof ApiError && e.code === 'nothing_to_send')
-				error = 'The kitchen already has everything on this ticket.';
-		}
+	function toKitchen() {
+		if (!t) return;
+		const lines = sendKitchen(t);
+		if (lines.length) print({ kitchen: lines });
 	}
 
-	async function voidTicket() {
-		if (!confirm('Void this ticket? It will be cancelled.')) return;
-		try {
-			await pos(`pos/orders/${id}/void`, { method: 'POST', body: '{}' });
-			goto('/admin/pos');
-		} catch (e) {
-			error = message(e);
-			if (e instanceof ApiError && e.code === 'has_payments')
-				error = 'Money was already taken on this ticket, so it can’t be voided.';
-		}
-	}
-
-	async function openPay() {
-		await save(true);
-		if (!error) paying = true;
+	function doVoid() {
+		if (!t || !confirm('Void this ticket? It will be cancelled.')) return;
+		voidTicket(t);
+		goto('/admin/pos');
 	}
 </script>
+
+{#if t}
+	<Slip ticket={t} restaurant={store.restaurant} table={tableName} kitchen={slip?.kitchen} />
+{/if}
 
 <div class="till">
 	<section class="menu" aria-label="Menu">
@@ -187,7 +111,7 @@
 				<button type="button" role="tab" aria-selected={cat === 'all'} onclick={() => (cat = 'all')}
 					>All</button
 				>
-				{#each data.menu as c (c.id)}
+				{#each store.menu as c (c.id)}
 					<button type="button" role="tab" aria-selected={cat === c.id} onclick={() => (cat = c.id)}
 						>{c.name}</button
 					>
@@ -196,17 +120,24 @@
 		</div>
 		<ul class="dishes">
 			{#each shown as item (item.id)}
+				{@const q = t?.items.find((l) => l.id === item.id)?.qty}
 				<li>
 					<button
 						type="button"
 						class="dish"
-						disabled={!item.available || (ticket?.status !== undefined && ticket.status !== 'open')}
+						disabled={!item.available || !open}
 						onclick={() => add(item)}
 					>
 						<span class="dname">{item.name}</span>
 						<span class="dprice">{item.available ? price(item.price) : 'Sold out'}</span>
-						{#if lines[item.id]}<span class="qbadge">{lines[item.id]}</span>{/if}
+						{#if q}<span class="qbadge">{q}</span>{/if}
 					</button>
+				</li>
+			{:else}
+				<li class="muted">
+					{store.menu.length
+						? 'No dishes match.'
+						: 'The menu hasn’t loaded on this tablet yet. Connect once to get it.'}
 				</li>
 			{/each}
 		</ul>
@@ -215,123 +146,143 @@
 	<section class="bill" aria-label="Ticket">
 		<div class="bill-head">
 			<div>
-				<strong class="where">{mode === 'dine_in' ? tableName || 'Table' : 'Takeaway'}</strong>
-				<span class="num"
-					>{ticket ? `#${ticket.number}` : 'New ticket'} · {saving
-						? 'Saving…'
-						: ticket
-							? 'Saved'
-							: 'Not started'}</span
-				>
+				<strong class="where">{t?.mode === 'dine_in' ? tableName || 'Table' : 'Takeaway'}</strong>
+				<span class="num">
+					{t?.number ? `#${t.number}` : t?.items.length ? 'Not synced yet' : 'New ticket'}
+					{#if t && !open}· {t.status === 'completed' ? 'Paid' : 'Voided'}{/if}
+				</span>
 			</div>
-			<input
-				class="guest"
-				bind:value={name}
-				onchange={() => save()}
-				placeholder="Customer name (optional)"
-				aria-label="Customer name"
-				maxlength="80"
-			/>
+			{#if t}
+				<input
+					class="guest"
+					value={['Walk-in', 'Table'].includes(t.name) ? '' : t.name}
+					onchange={(e) => {
+						t.name = e.currentTarget.value;
+						if (t.items.length) saveTicket(t);
+					}}
+					disabled={!open}
+					placeholder="Customer name (optional)"
+					aria-label="Customer name"
+					maxlength="80"
+				/>
+			{/if}
 		</div>
 
-		{#if error}<p class="err" role="alert">{error}</p>{/if}
+		{#each failures as f (f.opId)}<p class="err" role="alert">{f.label}: {f.error}</p>{/each}
 
 		<ul class="lines">
-			{#each rows as r (r.id)}
-				{@const inKitchen = sent.get(r.id) ?? 0}
+			{#each t?.items ?? [] as l (l.id)}
 				<li>
 					<div class="lname">
-						<span>{r.name}</span>
-						{#if inKitchen}<span class="sent"
-								><HugeiconsIcon icon={ChefHatIcon} size={12} /> {inKitchen} in kitchen</span
+						<span>{l.name}</span>
+						{#if l.sent}<span class="sent"
+								><HugeiconsIcon icon={ChefHatIcon} size={12} /> {l.sent} in kitchen</span
 							>{/if}
 					</div>
 					<div class="qty">
 						<button
 							type="button"
-							aria-label="One less {r.name}"
-							disabled={r.qty <= inKitchen}
-							onclick={() => change(r.id, -1)}
+							aria-label="One less {l.name}"
+							disabled={!open || l.qty <= l.sent}
+							onclick={() => change(l.id, -1)}
 						>
 							<HugeiconsIcon icon={MinusSignIcon} size={18} />
 						</button>
-						<span>{r.qty}</span>
-						<button type="button" aria-label="One more {r.name}" onclick={() => change(r.id, 1)}>
+						<span>{l.qty}</span>
+						<button
+							type="button"
+							aria-label="One more {l.name}"
+							disabled={!open}
+							onclick={() => change(l.id, 1)}
+						>
 							<HugeiconsIcon icon={Add01Icon} size={18} />
 						</button>
 					</div>
-					<span class="lamt">{price(unitPrice(r.id) * r.qty)}</span>
+					<span class="lamt">{price(l.amount)}</span>
 				</li>
 			{:else}
-				<li class="none">{loaded ? 'Tap dishes on the left to add them.' : 'Loading…'}</li>
+				<li class="none">{loading ? 'Loading…' : 'Tap dishes on the left to add them.'}</li>
 			{/each}
 		</ul>
 
-		<div class="totals">
-			<div><span>Subtotal</span><span>{price(subtotal)}</span></div>
-			{#if askDiscount}
-				<label class="disc">
-					Discount (৳)
-					<input
-						type="number"
-						min="0"
-						step="1"
-						value={discount / 100}
-						onchange={(e) => {
-							discount = Math.round(Number(e.currentTarget.value) * 100);
-							save();
-						}}
-					/>
-				</label>
-			{:else if discount}
-				<div><span>Discount</span><span>−{price(discount)}</span></div>
-			{/if}
-			{#if paid}<div><span>Paid so far</span><span>−{price(paid)}</span></div>{/if}
-			<div class="grand">
-				<span>{paid ? 'Left to pay' : 'Total'}</span><strong>{price(total - paid)}</strong>
+		{#if t}
+			<div class="totals">
+				<div><span>Subtotal</span><span>{price(t.subtotal)}</span></div>
+				{#if askDiscount && open}
+					<label class="disc">
+						Discount (৳)
+						<input
+							type="number"
+							min="0"
+							step="1"
+							value={t.discount / 100}
+							onchange={(e) => {
+								t.discount = Math.max(0, Math.round(Number(e.currentTarget.value) * 100));
+								saveTicket(t);
+							}}
+						/>
+					</label>
+				{:else if t.discount}
+					<div><span>Discount</span><span>−{price(t.discount)}</span></div>
+				{/if}
+				{#if t.paid}<div><span>Paid so far</span><span>−{price(t.paid)}</span></div>{/if}
+				<div class="grand">
+					<span>{t.paid ? 'Left to pay' : 'Total'}</span><strong>{price(Math.max(0, t.due))}</strong
+					>
+				</div>
 			</div>
-		</div>
 
-		<div class="actions">
-			<button type="button" class="act kitchen" disabled={!unsent || saving} onclick={sendKitchen}>
-				<HugeiconsIcon icon={ChefHatIcon} size={20} />
-				{unsent ? `Send ${unsent} to kitchen` : 'Kitchen has it all'}
-			</button>
-			<div class="small-acts">
+			<div class="actions">
+				<button type="button" class="act kitchen" disabled={!unsent || !open} onclick={toKitchen}>
+					<HugeiconsIcon icon={ChefHatIcon} size={20} />
+					{unsent ? `Send ${unsent} to kitchen` : 'Kitchen has it all'}
+				</button>
+				<div class="small-acts">
+					<button
+						type="button"
+						class="act ghost"
+						disabled={!t.items.length}
+						onclick={() => print({})}
+					>
+						<HugeiconsIcon icon={PrinterIcon} size={18} /> Bill
+					</button>
+					<button
+						type="button"
+						class="act ghost"
+						disabled={!open}
+						onclick={() => (askDiscount = !askDiscount)}
+					>
+						<HugeiconsIcon icon={DiscountIcon} size={18} /> Discount
+					</button>
+					<button
+						type="button"
+						class="act ghost"
+						disabled={!open || t.paid > 0 || !t.items.length}
+						onclick={doVoid}
+					>
+						<HugeiconsIcon icon={Delete02Icon} size={18} /> Void
+					</button>
+				</div>
 				<button
 					type="button"
-					class="act ghost"
-					disabled={!rows.length}
-					onclick={() => print('bill=1')}
+					class="act pay"
+					disabled={!open || !t.items.length || t.due <= 0}
+					onclick={() => (paying = true)}
 				>
-					<HugeiconsIcon icon={PrinterIcon} size={18} /> Bill
-				</button>
-				<button type="button" class="act ghost" onclick={() => (askDiscount = !askDiscount)}>
-					<HugeiconsIcon icon={DiscountIcon} size={18} /> Discount
-				</button>
-				<button type="button" class="act ghost" disabled={!ticket || paid > 0} onclick={voidTicket}>
-					<HugeiconsIcon icon={Delete02Icon} size={18} /> Void
+					Pay {price(Math.max(0, t.due))}
 				</button>
 			</div>
-			<button
-				type="button"
-				class="act pay"
-				disabled={!rows.length || total - paid <= 0 || saving}
-				onclick={openPay}
-			>
-				Pay {price(total - paid)}
-			</button>
-		</div>
+		{/if}
 	</section>
 </div>
 
-{#if paying && ticket}
+{#if paying && t}
 	<PaySheet
-		{ticket}
+		ticket={t}
 		onclose={() => (paying = false)}
-		onpaid={(t) => {
-			ticket = t;
-			if (t.status === 'completed') print('bill=1');
+		onpay={(p) => {
+			addPayment(t, p);
+			if (t.status === 'completed') print({});
 		}}
 		ondone={() => goto('/admin/pos')}
 	/>
@@ -504,6 +455,12 @@
 		gap: 10px;
 		padding: 10px 0;
 		border-bottom: 1px dashed var(--line);
+	}
+	.dishes .muted {
+		grid-column: 1 / -1;
+		padding: 40px 0;
+		text-align: center;
+		color: var(--muted);
 	}
 	.lines .none {
 		display: block;

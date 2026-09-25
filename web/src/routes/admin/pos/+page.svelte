@@ -2,32 +2,22 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Add01Icon, ChefHatIcon } from '@hugeicons/core-free-icons';
 	import { goto } from '$app/navigation';
-	import { message, price } from '$lib/api';
-	import { minutesSince, pos, type Floor } from '$lib/pos';
+	import { price } from '$lib/api';
+	import { floorView, refresh, store } from '$lib/offline.svelte';
+	import { minutesSince } from '$lib/pos';
 	import { onMount } from 'svelte';
 
-	let floor = $state<Floor | null>(null);
-	let error = $state('');
-
-	async function refresh() {
-		try {
-			floor = await pos<Floor>('pos/floor');
-			error = '';
-		} catch (e) {
-			error = message(e);
-		}
-	}
-
-	// Other tablets open and close tables too, so keep the floor current.
+	// Other tablets open and close tables too, so keep the floor current while online.
 	onMount(() => {
-		refresh();
 		const t = setInterval(refresh, 10_000);
 		return () => clearInterval(t);
 	});
 
+	const floor = $derived(floorView());
 	const areas = $derived(Object.groupBy(floor?.tables ?? [], (t) => t.area || 'Tables'));
 	const busy = $derived(floor?.tables.filter((t) => t.ticket).length ?? 0);
 	const newTicket = (query: string) => goto(`/admin/pos/ticket/${crypto.randomUUID()}?${query}`);
+	const label = (n: number) => (n ? `#${n}` : 'New');
 </script>
 
 <div class="floor">
@@ -36,8 +26,11 @@
 			<h1>Tables</h1>
 			{#if floor}<span class="count">{busy} of {floor.tables.length} in use</span>{/if}
 		</div>
-		{#if error}<p class="flash bad" role="alert">{error}</p>{/if}
-		{#if !floor && !error}<p class="muted">Loading tables…</p>{/if}
+		{#if !floor}<p class="muted">
+				{store.online
+					? 'Loading tables…'
+					: 'No internet, and this tablet hasn’t loaded the tables yet. Connect once to get started.'}
+			</p>{/if}
 
 		{#each Object.entries(areas) as [area, tables] (area)}
 			<h2>{area}</h2>
@@ -80,7 +73,7 @@
 				{#each floor.counter as c (c.id)}
 					<li>
 						<a href="/admin/pos/ticket/{c.id}">
-							<span><strong>#{c.number}</strong> {c.name}</span>
+							<span><strong>{label(c.number)}</strong> {c.name}</span>
 							<span class="amt">{price(c.total - c.paid)}</span>
 						</a>
 					</li>
@@ -213,13 +206,6 @@
 		border-radius: 14px;
 		background: var(--soft);
 		text-decoration: none;
-		font-weight: 600;
-	}
-	.flash {
-		padding: 12px 16px;
-		border-radius: 12px;
-		background: var(--brand);
-		color: var(--cream);
 		font-weight: 600;
 	}
 	@media (max-width: 860px) {

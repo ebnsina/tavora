@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Point of sale
+- Works without internet: tickets, kitchen sends, payments and voids are saved on the tablet and sent in order when the connection returns, never twice.
+- Sync status in the POS top bar ("All saved", "No internet · 3 waiting", "Syncing") and a list of anything the server rejected, such as two tablets opening the same table.
+- Bills and kitchen tickets print straight from the tablet, so printing works offline too.
+- The POS app is cached on the tablet and reopens offline, even after a reload.
 - Floor screen with every table and its open bill, time seated and dishes not yet sent to the kitchen.
 - Ticket screen: tap-to-add menu with search and categories, running bill, discount, void.
 - Send to kitchen sends only what the kitchen doesn't have yet and prints a kitchen ticket; sent dishes can't be quietly reduced.

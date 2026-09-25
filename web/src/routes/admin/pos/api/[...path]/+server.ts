@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/public';
 
 // Relays POS calls to the API with the signed-in session, so the browser never holds the token.
-const allowed = /^(pos|kitchen)(\/|$)/;
+const allowed = /^(pos|kitchen|menu|restaurant|admin\/me)(\/|$)/;
 
 async function relay({ params, request, locals }: import('./$types').RequestEvent) {
 	if (!locals.token) error(401, 'Please sign in again.');
