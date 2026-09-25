@@ -14,11 +14,11 @@ func hm(h, m int) pgtype.Time {
 
 func TestNormalizePhone(t *testing.T) {
 	for in, want := range map[string]string{
-		"01712345678":    "01712345678",
-		"+8801712345678": "01712345678",
+		"01712345678":     "01712345678",
+		"+8801712345678":  "01712345678",
 		"880 1712-345678": "01712345678",
-		"01212345678":    "",
-		"12345":          "",
+		"01212345678":     "",
+		"12345":           "",
 	} {
 		if got := normalizePhone(in); got != want {
 			t.Errorf("normalizePhone(%q) = %q, want %q", in, got, want)

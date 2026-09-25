@@ -2,7 +2,10 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Call02Icon } from '@hugeicons/core-free-icons';
 
-	let { phone, freeOver }: { phone: string; freeOver: string } = $props();
+	import type { SiteContent } from '$lib/api';
+
+	let { phone, freeOver, call }: { phone: string; freeOver: string; call: SiteContent['call'] } =
+		$props();
 
 	// Side wall runs 330 wide and drops 80; windows and sign follow that slope.
 	const slope = 80 / 330;
@@ -83,18 +86,17 @@
 		<path class="awning" d="M28 560h414l-12 40H40z" />
 		{#each stripes as x (x)}<path class="stripe" d="M{x} 560l-2 40h20l2-40z" />{/each}
 		<path class="awning-edge" d="M40 600 {'a9.75 9.75 0 0 0 19.5 0 '.repeat(20)}" />
-
 	</svg>
 
 	<!-- Sign board on the side wall, skewed to sit flat against it. -->
 	<a class="sign" href="#menu" style="--skew: {skew}deg">
-		<span class="s-top">Cash on<br />delivery</span>
+		<span class="s-top">{call.sign_top}</span>
 		<span class="s-small">Free delivery<br />over {freeOver}</span>
-		<span class="s-big">Order<br />now</span>
+		<span class="s-big">{call.sign_big}</span>
 		<span class="s-pill">Open the menu</span>
 	</a>
 
-	<p class="khida">Hot.<br /><span>Fresh.</span><br />Yours.</p>
+	<p class="khida">{call.slogan[0]}<br /><span>{call.slogan[1]}</span><br />{call.slogan[2]}</p>
 
 	<a class="bulbs poster" href="tel:{phone}">
 		<span class="ring"><HugeiconsIcon icon={Call02Icon} size={26} strokeWidth={2.2} /></span>

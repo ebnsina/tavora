@@ -19,8 +19,10 @@ import (
 var bdTime = mustLoc("Asia/Dhaka")
 
 type server struct {
-	pool *pgxpool.Pool
-	q    *store.Queries
+	pool      *pgxpool.Pool
+	q         *store.Queries
+	uploadDir string
+	logins    *throttle
 }
 
 // apiError is the only error shape clients ever see; Code is stable, Message is for developers.
@@ -124,6 +126,8 @@ func (s *server) restaurant(w http.ResponseWriter, r *http.Request) {
 
 type itemJSON struct {
 	ID          int64    `json:"id"`
+	CategoryID  int64    `json:"category_id"`
+	Position    int32    `json:"position"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Price       int64    `json:"price"`
@@ -133,6 +137,7 @@ type itemJSON struct {
 }
 
 type categoryJSON struct {
+	ID    int64      `json:"id"`
 	Slug  string     `json:"slug"`
 	Name  string     `json:"name"`
 	Items []itemJSON `json:"items"`
@@ -147,10 +152,10 @@ func (s *server) menu(w http.ResponseWriter, r *http.Request) {
 	cats := []categoryJSON{}
 	for _, row := range rows {
 		if len(cats) == 0 || cats[len(cats)-1].Slug != row.CategorySlug {
-			cats = append(cats, categoryJSON{Slug: row.CategorySlug, Name: row.CategoryName, Items: []itemJSON{}})
+			cats = append(cats, categoryJSON{ID: row.CategoryID, Slug: row.CategorySlug, Name: row.CategoryName, Items: []itemJSON{}})
 		}
 		c := &cats[len(cats)-1]
-		c.Items = append(c.Items, itemJSON{row.ID, row.Name, row.Description, row.Price, row.Tags, row.Image, row.Available})
+		c.Items = append(c.Items, itemJSON{row.ID, row.CategoryID, row.Position, row.Name, row.Description, row.Price, row.Tags, row.Image, row.Available})
 	}
 	writeJSON(w, http.StatusOK, cats)
 }
@@ -294,23 +299,37 @@ func (s *server) writeOrder(w http.ResponseWriter, r *http.Request, id pgtype.UU
 		fail(w, r, err)
 		return
 	}
-	type lineJSON struct {
-		ID        int64  `json:"id"`
-		Name      string `json:"name"`
-		UnitPrice int64  `json:"unit_price"`
-		Qty       int32  `json:"qty"`
-		Amount    int64  `json:"amount"`
-	}
+	writeJSON(w, status, orderView(o, rows))
+}
+
+type lineJSON struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	UnitPrice int64  `json:"unit_price"`
+	Qty       int32  `json:"qty"`
+	Amount    int64  `json:"amount"`
+}
+
+func orderView(o store.Order, rows []store.OrderItem) map[string]any {
 	lines := make([]lineJSON, len(rows))
 	for i, l := range rows {
 		lines[i] = lineJSON{l.MenuItemID, l.Name, l.UnitPrice, l.Qty, l.UnitPrice * int64(l.Qty)}
 	}
-	writeJSON(w, status, map[string]any{
+	return map[string]any{
 		"id": o.ID.String(), "number": o.Number, "mode": o.Mode, "status": o.Status, "payment": o.Payment,
 		"name": o.CustomerName, "phone": o.Phone, "address": o.Address, "note": o.Note,
 		"items": lines, "subtotal": o.Subtotal, "delivery_fee": o.DeliveryFee, "total": o.Total,
 		"created_at": o.CreatedAt.Time,
-	})
+	}
+}
+
+func reservationView(res store.Reservation) map[string]any {
+	local := res.StartsAt.Time.In(bdTime)
+	return map[string]any{
+		"id": res.ID.String(), "name": res.CustomerName, "phone": res.Phone, "guests": res.Guests,
+		"date": local.Format("2006-01-02"), "time": local.Format("15:04"), "note": res.Note,
+		"status": res.Status, "created_at": res.CreatedAt.Time,
+	}
 }
 
 // ---- POST /v1/reservations
@@ -394,12 +413,7 @@ func (s *server) createReservation(w http.ResponseWriter, r *http.Request) {
 		fail(w, r, err)
 		return
 	}
-	local := res.StartsAt.Time.In(bdTime)
-	writeJSON(w, status, map[string]any{
-		"id": res.ID.String(), "name": res.CustomerName, "phone": res.Phone, "guests": res.Guests,
-		"date": local.Format("2006-01-02"), "time": local.Format("15:04"), "note": res.Note,
-		"status": res.Status, "created_at": res.CreatedAt.Time,
-	})
+	writeJSON(w, status, reservationView(res))
 }
 
 func (s *server) notFound(w http.ResponseWriter, r *http.Request) {

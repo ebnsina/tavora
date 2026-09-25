@@ -53,6 +53,15 @@ func (ns NullOrderMode) Value() (driver.Value, error) {
 	return string(ns.OrderMode), nil
 }
 
+func (e OrderMode) Valid() bool {
+	switch e {
+	case OrderModeDelivery,
+		OrderModePickup:
+		return true
+	}
+	return false
+}
+
 type OrderStatus string
 
 const (
@@ -98,6 +107,28 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.OrderStatus), nil
+}
+
+func (e OrderStatus) Valid() bool {
+	switch e {
+	case OrderStatusNew,
+		OrderStatusAccepted,
+		OrderStatusPreparing,
+		OrderStatusReady,
+		OrderStatusOutForDelivery,
+		OrderStatusCompleted,
+		OrderStatusCancelled:
+		return true
+	}
+	return false
+}
+
+type Admin struct {
+	ID           int64
+	Email        string
+	Name         string
+	PasswordHash string
+	CreatedAt    pgtype.Timestamptz
 }
 
 type Category struct {
@@ -173,4 +204,17 @@ type Restaurant struct {
 	DeliveryAreas    string
 	DeliveryEta      string
 	PickupEta        string
+}
+
+type Session struct {
+	TokenHash []byte
+	AdminID   int64
+	ExpiresAt pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+}
+
+type SiteContent struct {
+	ID        int32
+	Data      []byte
+	UpdatedAt pgtype.Timestamptz
 }

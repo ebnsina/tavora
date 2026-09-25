@@ -4,6 +4,8 @@ import { env } from '$env/dynamic/public';
 export type Tag = 'veg' | 'spicy' | 'popular';
 export type Item = {
 	id: number;
+	category_id: number;
+	position: number;
 	name: string;
 	description: string;
 	price: number;
@@ -11,7 +13,7 @@ export type Item = {
 	image: string | null;
 	available: boolean;
 };
-export type Category = { slug: string; name: string; items: Item[] };
+export type Category = { id: number; slug: string; name: string; items: Item[] };
 export type Hours = { weekday: number; opens: string; closes: string };
 export type Restaurant = {
 	name: string;
@@ -50,6 +52,26 @@ export type Reservation = {
 	status: string;
 };
 
+export type TickerIcon =
+	| 'burger' | 'rice' | 'soup' | 'chicken' | 'sandwich' | 'fries'
+	| 'drink' | 'pizza' | 'noodles' | 'coffee' | 'cake' | 'icecream';
+
+// Mirrors SiteContent in api/content.go.
+export type SiteContent = {
+	seo: { url: string; image: string };
+	hero: { tagline: string; description: string };
+	marquee: string;
+	slogans: string[];
+	story: { title: string; paragraphs: string[]; image: string; stickers: string[] };
+	menu: { title: string; subtitle: string };
+	booking: { title: string; subtitle: string };
+	tawa: string;
+	reviews: { title: string; items: { text: string; by: string }[] };
+	ticker: { label: string; icon: TickerIcon }[];
+	call: { kicker: string; title: string; slogan: string[]; sign_top: string; sign_big: string };
+	social: { facebook: string; instagram: string };
+};
+
 export class ApiError extends Error {
 	constructor(
 		public code: string,
@@ -67,6 +89,13 @@ const messages: Record<string, string> = {
 	restaurant_closed: "We're closed right now, so we can't take orders.",
 	outside_opening_hours: "We can't book a table at that time. Please pick another.",
 	network: "We couldn't reach the restaurant. Check your connection and try again.",
+	invalid_credentials: 'That email or password is wrong.',
+	too_many_attempts: 'Too many wrong tries. Please wait 15 minutes and try again.',
+	unauthorized: 'Please sign in again.',
+	name_taken: 'That name is already used. Please pick another.',
+	category_not_empty: 'This category still has dishes. Move or delete them first.',
+	item_has_orders: 'This dish is on past orders, so it can’t be deleted. Mark it sold out instead.',
+	not_found: 'That no longer exists. Refresh the page.',
 	internal: 'Something went wrong on our side. Please try again, or call us.'
 };
 
@@ -75,22 +104,27 @@ export const message = (e: unknown) =>
 
 export async function api<T>(
 	path: string,
-	init?: RequestInit,
+	init?: RequestInit & { token?: string },
 	f: typeof fetch = fetch
 ): Promise<T> {
 	let res: Response;
+	const headers: Record<string, string> = { ...(init?.headers as Record<string, string>) };
+	if (!(init?.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+	if (init?.token) headers.Authorization = `Bearer ${init.token}`;
 	try {
-		res = await f(`${env.PUBLIC_API_URL}${path}`, {
-			...init,
-			headers: { 'Content-Type': 'application/json', ...init?.headers }
-		});
+		res = await f(`${env.PUBLIC_API_URL}${path}`, { ...init, headers });
 	} catch {
 		throw new ApiError('network');
 	}
 	const body = await res.json().catch(() => null);
+	if (res.status === 204) return undefined as T;
 	if (!res.ok) throw new ApiError(body?.error?.code ?? 'internal', body?.error?.details);
 	return body as T;
 }
+
+// Uploaded images live on the API; bundled ones (/img/…) are served by the web app itself.
+export const asset = (src: string | null | undefined) =>
+	src?.startsWith('/uploads/') ? `${env.PUBLIC_API_URL}${src}` : (src ?? '');
 
 export const price = (poisha: number) => fmt.format(poisha / 100);
 const fmt = new Intl.NumberFormat('en-BD', {

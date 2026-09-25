@@ -2,7 +2,16 @@
 
 ## Unreleased
 
+### Dashboard
+- Owner dashboard at `/admin` with email and password sign-in.
+- Orders board: new orders highlighted, one-tap status steps, auto-refresh.
+- Table bookings: confirm, decline or cancel requests.
+- Menu editor: add, rename and delete categories; add, edit and delete dishes with photos; sold-out switch.
+- Website text editor: every homepage heading, slogan, story, sticker, review, ticker word and icon, and sharing picture.
+- Opening hours and restaurant details, including delivery fee, free-delivery threshold and delivery areas.
+
 ### Website
+- All homepage content now comes from the database, so it can be changed without a code update.
 - Poster-style design in red, cream and black with mango-yellow accents; PolySans throughout.
 - Hero with the shopfront illustration; fast food leads the copy and the menu.
 - Most-loved dish rail, spinning name rings, full menu with sticky categories and sold-out states.

@@ -47,7 +47,9 @@ func priceOrder(lines []line, items map[int64]store.MenuItem, delivery bool, r s
 
 func minutes(t pgtype.Time) int { return int(t.Microseconds / 60_000_000) }
 
-func clock(t pgtype.Time) string { return time.Time{}.Add(time.Duration(t.Microseconds) * time.Microsecond).Format("15:04") }
+func clock(t pgtype.Time) string {
+	return time.Time{}.Add(time.Duration(t.Microseconds) * time.Microsecond).Format("15:04")
+}
 
 // isOpen reports whether minute-of-day m falls inside today's hours.
 func isOpen(h store.OpeningHour, m int) bool { return m >= minutes(h.Opens) && m < minutes(h.Closes) }

@@ -11,6 +11,192 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countCategoryItems = `-- name: CountCategoryItems :one
+select count(*) from menu_items where category_id = $1
+`
+
+func (q *Queries) CountCategoryItems(ctx context.Context, categoryID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, countCategoryItems, categoryID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countItemOrders = `-- name: CountItemOrders :one
+select count(*) from order_items where menu_item_id = $1
+`
+
+func (q *Queries) CountItemOrders(ctx context.Context, menuItemID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, countItemOrders, menuItemID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const createAdmin = `-- name: CreateAdmin :one
+insert into admins (email, name, password_hash) values ($1, $2, $3) returning id
+`
+
+type CreateAdminParams struct {
+	Email        string
+	Name         string
+	PasswordHash string
+}
+
+func (q *Queries) CreateAdmin(ctx context.Context, arg CreateAdminParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createAdmin, arg.Email, arg.Name, arg.PasswordHash)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const createCategory = `-- name: CreateCategory :one
+insert into categories (slug, name, position)
+values ($1, $2, (select coalesce(max(position), 0) + 1 from categories))
+returning id, slug, name, position
+`
+
+type CreateCategoryParams struct {
+	Slug string
+	Name string
+}
+
+func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, createCategory, arg.Slug, arg.Name)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Name,
+		&i.Position,
+	)
+	return i, err
+}
+
+const createMenuItem = `-- name: CreateMenuItem :one
+insert into menu_items (category_id, name, description, price, tags, image, available, position)
+values ($1, $2, $3, $4, $5, $6, $7, (select coalesce(max(position), 0) + 1 from menu_items where category_id = $1))
+returning id, category_id, name, description, price, tags, image, available, position
+`
+
+type CreateMenuItemParams struct {
+	CategoryID  int64
+	Name        string
+	Description string
+	Price       int64
+	Tags        []string
+	Image       *string
+	Available   bool
+}
+
+func (q *Queries) CreateMenuItem(ctx context.Context, arg CreateMenuItemParams) (MenuItem, error) {
+	row := q.db.QueryRow(ctx, createMenuItem,
+		arg.CategoryID,
+		arg.Name,
+		arg.Description,
+		arg.Price,
+		arg.Tags,
+		arg.Image,
+		arg.Available,
+	)
+	var i MenuItem
+	err := row.Scan(
+		&i.ID,
+		&i.CategoryID,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.Tags,
+		&i.Image,
+		&i.Available,
+		&i.Position,
+	)
+	return i, err
+}
+
+const createSession = `-- name: CreateSession :exec
+insert into sessions (token_hash, admin_id, expires_at) values ($1, $2, $3)
+`
+
+type CreateSessionParams struct {
+	TokenHash []byte
+	AdminID   int64
+	ExpiresAt pgtype.Timestamptz
+}
+
+func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) error {
+	_, err := q.db.Exec(ctx, createSession, arg.TokenHash, arg.AdminID, arg.ExpiresAt)
+	return err
+}
+
+const deleteCategory = `-- name: DeleteCategory :execrows
+delete from categories where id = $1
+`
+
+func (q *Queries) DeleteCategory(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteCategory, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteExpiredSessions = `-- name: DeleteExpiredSessions :exec
+delete from sessions where expires_at <= now()
+`
+
+func (q *Queries) DeleteExpiredSessions(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteExpiredSessions)
+	return err
+}
+
+const deleteMenuItem = `-- name: DeleteMenuItem :execrows
+delete from menu_items where id = $1
+`
+
+func (q *Queries) DeleteMenuItem(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteMenuItem, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteOpeningHours = `-- name: DeleteOpeningHours :exec
+delete from opening_hours
+`
+
+func (q *Queries) DeleteOpeningHours(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, deleteOpeningHours)
+	return err
+}
+
+const deleteSession = `-- name: DeleteSession :exec
+delete from sessions where token_hash = $1
+`
+
+func (q *Queries) DeleteSession(ctx context.Context, tokenHash []byte) error {
+	_, err := q.db.Exec(ctx, deleteSession, tokenHash)
+	return err
+}
+
+const getAdminByEmail = `-- name: GetAdminByEmail :one
+select id, email, name, password_hash, created_at from admins where email = $1
+`
+
+func (q *Queries) GetAdminByEmail(ctx context.Context, email string) (Admin, error) {
+	row := q.db.QueryRow(ctx, getAdminByEmail, email)
+	var i Admin
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.PasswordHash,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getMenuItems = `-- name: GetMenuItems :many
 select id, category_id, name, description, price, tags, image, available, position from menu_items where id = any($1::bigint[])
 `
@@ -125,6 +311,53 @@ func (q *Queries) GetRestaurant(ctx context.Context) (Restaurant, error) {
 	return i, err
 }
 
+const getSessionAdmin = `-- name: GetSessionAdmin :one
+select a.id, a.email, a.name
+from sessions s join admins a on a.id = s.admin_id
+where s.token_hash = $1 and s.expires_at > now()
+`
+
+type GetSessionAdminRow struct {
+	ID    int64
+	Email string
+	Name  string
+}
+
+func (q *Queries) GetSessionAdmin(ctx context.Context, tokenHash []byte) (GetSessionAdminRow, error) {
+	row := q.db.QueryRow(ctx, getSessionAdmin, tokenHash)
+	var i GetSessionAdminRow
+	err := row.Scan(&i.ID, &i.Email, &i.Name)
+	return i, err
+}
+
+const getSiteContent = `-- name: GetSiteContent :one
+
+select data from site_content where id = 1
+`
+
+// ---- CMS
+func (q *Queries) GetSiteContent(ctx context.Context) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getSiteContent)
+	var data []byte
+	err := row.Scan(&data)
+	return data, err
+}
+
+const insertOpeningHours = `-- name: InsertOpeningHours :exec
+insert into opening_hours (weekday, opens, closes) values ($1, $2, $3)
+`
+
+type InsertOpeningHoursParams struct {
+	Weekday int16
+	Opens   pgtype.Time
+	Closes  pgtype.Time
+}
+
+func (q *Queries) InsertOpeningHours(ctx context.Context, arg InsertOpeningHoursParams) error {
+	_, err := q.db.Exec(ctx, insertOpeningHours, arg.Weekday, arg.Opens, arg.Closes)
+	return err
+}
+
 const insertOrder = `-- name: InsertOrder :execrows
 insert into orders (id, mode, customer_name, phone, address, note, subtotal, delivery_fee, total)
 values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -212,6 +445,35 @@ func (q *Queries) InsertReservation(ctx context.Context, arg InsertReservationPa
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const listCategories = `-- name: ListCategories :many
+select id, slug, name, position from categories order by position
+`
+
+func (q *Queries) ListCategories(ctx context.Context) ([]Category, error) {
+	rows, err := q.db.Query(ctx, listCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Category
+	for rows.Next() {
+		var i Category
+		if err := rows.Scan(
+			&i.ID,
+			&i.Slug,
+			&i.Name,
+			&i.Position,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listMenu = `-- name: ListMenu :many
@@ -319,4 +581,251 @@ func (q *Queries) ListOrderItems(ctx context.Context, orderID pgtype.UUID) ([]Or
 		return nil, err
 	}
 	return items, nil
+}
+
+const listOrderItemsFor = `-- name: ListOrderItemsFor :many
+select order_id, menu_item_id, name, unit_price, qty from order_items where order_id = any($1::uuid[]) order by name
+`
+
+func (q *Queries) ListOrderItemsFor(ctx context.Context, ids []pgtype.UUID) ([]OrderItem, error) {
+	rows, err := q.db.Query(ctx, listOrderItemsFor, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []OrderItem
+	for rows.Next() {
+		var i OrderItem
+		if err := rows.Scan(
+			&i.OrderID,
+			&i.MenuItemID,
+			&i.Name,
+			&i.UnitPrice,
+			&i.Qty,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOrders = `-- name: ListOrders :many
+select id, number, mode, status, payment, customer_name, phone, address, note, subtotal, delivery_fee, total, created_at from orders
+where ($1::order_status is null or status = $1)
+order by created_at desc
+limit 200
+`
+
+func (q *Queries) ListOrders(ctx context.Context, status *OrderStatus) ([]Order, error) {
+	rows, err := q.db.Query(ctx, listOrders, status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Order
+	for rows.Next() {
+		var i Order
+		if err := rows.Scan(
+			&i.ID,
+			&i.Number,
+			&i.Mode,
+			&i.Status,
+			&i.Payment,
+			&i.CustomerName,
+			&i.Phone,
+			&i.Address,
+			&i.Note,
+			&i.Subtotal,
+			&i.DeliveryFee,
+			&i.Total,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReservations = `-- name: ListReservations :many
+select id, customer_name, phone, guests, starts_at, note, status, created_at from reservations
+where starts_at >= now() - interval '1 day' or status = 'requested'
+order by starts_at
+limit 200
+`
+
+func (q *Queries) ListReservations(ctx context.Context) ([]Reservation, error) {
+	rows, err := q.db.Query(ctx, listReservations)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Reservation
+	for rows.Next() {
+		var i Reservation
+		if err := rows.Scan(
+			&i.ID,
+			&i.CustomerName,
+			&i.Phone,
+			&i.Guests,
+			&i.StartsAt,
+			&i.Note,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateCategory = `-- name: UpdateCategory :execrows
+update categories set name = $2, slug = $3, position = $4 where id = $1
+`
+
+type UpdateCategoryParams struct {
+	ID       int64
+	Name     string
+	Slug     string
+	Position int32
+}
+
+func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateCategory,
+		arg.ID,
+		arg.Name,
+		arg.Slug,
+		arg.Position,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const updateMenuItem = `-- name: UpdateMenuItem :execrows
+update menu_items set category_id = $2, name = $3, description = $4, price = $5, tags = $6,
+	image = $7, available = $8, position = $9
+where id = $1
+`
+
+type UpdateMenuItemParams struct {
+	ID          int64
+	CategoryID  int64
+	Name        string
+	Description string
+	Price       int64
+	Tags        []string
+	Image       *string
+	Available   bool
+	Position    int32
+}
+
+func (q *Queries) UpdateMenuItem(ctx context.Context, arg UpdateMenuItemParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateMenuItem,
+		arg.ID,
+		arg.CategoryID,
+		arg.Name,
+		arg.Description,
+		arg.Price,
+		arg.Tags,
+		arg.Image,
+		arg.Available,
+		arg.Position,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const updateOrderStatus = `-- name: UpdateOrderStatus :execrows
+update orders set status = $2 where id = $1
+`
+
+type UpdateOrderStatusParams struct {
+	ID     pgtype.UUID
+	Status OrderStatus
+}
+
+func (q *Queries) UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateOrderStatus, arg.ID, arg.Status)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const updateReservationStatus = `-- name: UpdateReservationStatus :execrows
+update reservations set status = $2 where id = $1
+`
+
+type UpdateReservationStatusParams struct {
+	ID     pgtype.UUID
+	Status string
+}
+
+func (q *Queries) UpdateReservationStatus(ctx context.Context, arg UpdateReservationStatusParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateReservationStatus, arg.ID, arg.Status)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const updateRestaurant = `-- name: UpdateRestaurant :exec
+update restaurant set name = $1, area = $2, address = $3, phone = $4, whatsapp = $5, email = $6,
+	delivery_fee = $7, free_delivery_over = $8, delivery_areas = $9, delivery_eta = $10, pickup_eta = $11
+where id = 1
+`
+
+type UpdateRestaurantParams struct {
+	Name             string
+	Area             string
+	Address          string
+	Phone            string
+	Whatsapp         string
+	Email            string
+	DeliveryFee      int64
+	FreeDeliveryOver int64
+	DeliveryAreas    string
+	DeliveryEta      string
+	PickupEta        string
+}
+
+func (q *Queries) UpdateRestaurant(ctx context.Context, arg UpdateRestaurantParams) error {
+	_, err := q.db.Exec(ctx, updateRestaurant,
+		arg.Name,
+		arg.Area,
+		arg.Address,
+		arg.Phone,
+		arg.Whatsapp,
+		arg.Email,
+		arg.DeliveryFee,
+		arg.FreeDeliveryOver,
+		arg.DeliveryAreas,
+		arg.DeliveryEta,
+		arg.PickupEta,
+	)
+	return err
+}
+
+const updateSiteContent = `-- name: UpdateSiteContent :exec
+update site_content set data = $1, updated_at = now() where id = 1
+`
+
+func (q *Queries) UpdateSiteContent(ctx context.Context, data []byte) error {
+	_, err := q.db.Exec(ctx, updateSiteContent, data)
+	return err
 }

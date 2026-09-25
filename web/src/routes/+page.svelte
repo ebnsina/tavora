@@ -3,19 +3,12 @@
 	import {
 		Calendar03Icon,
 		Call02Icon,
-		ChickenThighsIcon,
-		DrinkIcon,
 		Facebook01Icon,
 		FireIcon,
-		FrenchFries01Icon,
-		Hamburger01Icon,
 		InstagramIcon,
 		Leaf01Icon,
 		Mail01Icon,
-		RiceBowl01Icon,
-		SandwichIcon,
 		ShoppingBag01Icon,
-		SoupIcon,
 		StarIcon
 	} from '@hugeicons/core-free-icons';
 	import { onMount } from 'svelte';
@@ -24,12 +17,13 @@
 	import Building from '$lib/Building.svelte';
 	import Cart from '$lib/Cart.svelte';
 	import Storefront from '$lib/Storefront.svelte';
-	import { groupHours, openState, price, time, type Tag } from '$lib/api';
+	import { asset, groupHours, openState, price, time, type Tag } from '$lib/api';
+	import { foodIcons } from '$lib/icons';
 	import { cart, clock, count, subtotal, load, save } from '$lib/order.svelte';
-	import { site } from '$lib/site';
 
 	let { data } = $props();
 	const r = $derived(data.restaurant);
+	const site = $derived(data.site);
 	const menu = $derived(data.menu);
 	const all = $derived(menu.flatMap((c) => c.items));
 	const items = $derived(new Map(all.map((i) => [i.id, i])));
@@ -51,60 +45,49 @@
 		spicy: { label: 'Spicy', icon: FireIcon },
 		veg: { label: 'Vegetarian', icon: Leaf01Icon }
 	};
-	const ticker = [
-		{ label: 'Burger', icon: Hamburger01Icon },
-		{ label: 'Kacchi', icon: RiceBowl01Icon },
-		{ label: 'Bhuna', icon: SoupIcon },
-		{ label: 'Fried chicken', icon: ChickenThighsIcon },
-		{ label: 'Shawarma', icon: SandwichIcon },
-		{ label: 'Fries', icon: FrenchFries01Icon },
-		{ label: 'Borhani', icon: DrinkIcon }
-	];
-	const doodles = [
-		Hamburger01Icon,
-		RiceBowl01Icon,
-		ChickenThighsIcon,
-		FrenchFries01Icon,
-		DrinkIcon,
-		SandwichIcon,
-		SoupIcon,
-		Hamburger01Icon
-	];
-	const slogans = [
-		{ text: 'Slow-cooked, fast-served.', tone: 'red' },
-		{ text: 'Big plates. Bigger smiles.', tone: 'black' }
-	];
+	const ticker = $derived(site.ticker.map((t) => ({ label: t.label, icon: foodIcons[t.icon] })));
+	// Background doodles reuse the ticker's food icons.
+	const doodles = $derived(Array.from({ length: 8 }, (_, i) => ticker[i % ticker.length].icon));
+	const slogans = $derived([
+		{ text: site.slogans[0], tone: 'red' },
+		{ text: site.slogans[1], tone: 'black' }
+	]);
 	const tilt = [-3, 2, -2, 3];
 	const rings = [230, 186, 142];
 
+	const ogImage = $derived(
+		site.seo.image.startsWith('/uploads/')
+			? asset(site.seo.image)
+			: `${site.seo.url}${site.seo.image}`
+	);
 	const ld = $derived(
 		JSON.stringify({
 			'@context': 'https://schema.org',
 			'@type': 'Restaurant',
 			name: r.name,
-			description: site.description,
-			url: site.url,
-			image: `${site.url}${site.heroImage}`,
+			description: site.hero.description,
+			url: site.seo.url,
+			image: ogImage,
 			telephone: r.phone,
 			email: r.email,
 			address: r.address,
 			servesCuisine: ['Fast food', 'Bangladeshi'],
-			hasMenu: `${site.url}/#menu`,
+			hasMenu: `${site.seo.url}/#menu`,
 			acceptsReservations: true
 		}).replace(/</g, '\\u003c')
 	);
 </script>
 
 <svelte:head>
-	<title>{r.name} · {site.tagline}</title>
-	<meta name="description" content={site.description} />
-	<link rel="canonical" href={site.url} />
+	<title>{r.name} · {site.hero.tagline}</title>
+	<meta name="description" content={site.hero.description} />
+	<link rel="canonical" href={site.seo.url} />
 	<meta property="og:type" content="restaurant" />
 	<meta property="og:site_name" content={r.name} />
-	<meta property="og:title" content="{r.name} · {site.tagline}" />
-	<meta property="og:description" content={site.description} />
-	<meta property="og:url" content={site.url} />
-	<meta property="og:image" content="{site.url}{site.heroImage}" />
+	<meta property="og:title" content="{r.name} · {site.hero.tagline}" />
+	<meta property="og:description" content={site.hero.description} />
+	<meta property="og:url" content={site.seo.url} />
+	<meta property="og:image" content={ogImage} />
 	<meta name="twitter:card" content="summary_large_image" />
 	{@html `<script type="application/ld+json">${ld}</script>`}
 </svelte:head>
@@ -132,7 +115,7 @@
 	<section class="hero">
 		<div class="wrap hero-in">
 			<h1 class="enter" style="--d: 0.06s">{r.name}</h1>
-			<p class="sub poster enter" style="--d: 0.12s">{site.tagline}</p>
+			<p class="sub poster enter" style="--d: 0.12s">{site.hero.tagline}</p>
 			{#if status}
 				<p class="status" class:closed={!status.open}>
 					<span class="dot" aria-hidden="true"></span>
@@ -154,9 +137,7 @@
 	<!-- 2. Giant scrolling line -->
 	<div class="crave marquee" aria-hidden="true" style="--speed: 38s">
 		{#each [0, 1] as i (i)}
-			<span class="poster"
-				>Smash burgers · Crispy chicken · Loaded fries · Handi kacchi ·&nbsp;</span
-			>
+			<span class="poster">{site.marquee} ·&nbsp;</span>
 		{/each}
 	</div>
 
@@ -173,7 +154,7 @@
 					</li>
 				{/if}
 				<li class="dish">
-					<img src={item.image} alt={item.name} width="800" height="600" loading="lazy" />
+					<img src={asset(item.image)} alt={item.name} width="800" height="600" loading="lazy" />
 					<div class="dish-info">
 						<strong class="poster">{item.name}</strong>
 						<span class="price">{price(item.price)}</span>
@@ -214,7 +195,7 @@
 					</g>
 				{/each}
 				<image
-					href="/img/kacchi.jpg"
+					href={asset(site.story.image)}
 					x="154"
 					y="154"
 					width="192"
@@ -223,23 +204,20 @@
 					clip-path="url(#plate)"
 				/>
 			</svg>
-			<span class="sticker s1 poster">Kacchiii!</span>
-			<span class="sticker s2 poster">Borhaniii</span>
-			<span class="sticker s3 poster">Extra jhal!</span>
+			{#each site.story.stickers as label, i (i)}<span class="sticker s{i + 1} poster">{label}</span
+				>{/each}
 		</div>
 		<div class="story">
-			<h2 id="story-title" class="poster">Nothing on the menu is rushed</h2>
-			{#each site.story as p (p)}<p>{p}</p>{/each}
+			<h2 id="story-title" class="poster">{site.story.title}</h2>
+			{#each site.story.paragraphs as p, i (i)}<p>{p}</p>{/each}
 		</div>
 	</section>
 
 	<!-- 5. Menu -->
 	<section id="menu" class="menu" aria-labelledby="menu-title">
 		<div class="wrap">
-			<h2 id="menu-title" class="section-title">The menu</h2>
-			<p class="menu-sub">
-				Tap <strong>+</strong> on anything you fancy. Cash on delivery, always.
-			</p>
+			<h2 id="menu-title" class="section-title">{site.menu.title}</h2>
+			<p class="menu-sub">{site.menu.subtitle}</p>
 			<ul class="legend" aria-label="What the icons mean">
 				{#each Object.entries(tags) as [key, t] (key)}
 					<li class="tag {key}"><HugeiconsIcon icon={t.icon} size={16} />{t.label}</li>
@@ -291,24 +269,22 @@
 			{/each}
 		</div>
 		<div class="wrap adv-in">
-			<h2 id="book-title" class="section-title">Bring the whole gang</h2>
-			<p class="adv-sub poster">Save a seat. Fill in the blanks and we'll hold your table.</p>
+			<h2 id="book-title" class="section-title">{site.booking.title}</h2>
+			<p class="adv-sub poster">{site.booking.subtitle}</p>
 			<div class="book-card"><Booking restaurant={r} /></div>
 		</div>
 	</section>
 
 	<!-- 7. Round food stickers over a big scrolling line -->
 	<section class="collage" aria-labelledby="tawa-title">
-		<h2 id="tawa-title" class="sr">Fresh off the tawa</h2>
+		<h2 id="tawa-title" class="sr">{site.tawa}</h2>
 		<div class="tawa marquee" aria-hidden="true" style="--speed: 28s">
-			{#each [0, 1] as k (k)}<span class="poster"
-					>Fresh off the tawa ✦ Fresh off the tawa ✦&nbsp;</span
-				>{/each}
+			{#each [0, 1] as k (k)}<span class="poster">{site.tawa} ✦ {site.tawa} ✦&nbsp;</span>{/each}
 		</div>
 		<ul class="cuts">
 			{#each loved.slice(-3) as item, i (item.id)}
 				<li style="--r: {[-8, 5, -4][i]}deg; --d: {i * -1.4}s">
-					<img src={item.image} alt={item.name} width="800" height="600" loading="lazy" />
+					<img src={asset(item.image)} alt={item.name} width="800" height="600" loading="lazy" />
 					<span class="tag-price poster">{item.name} · {price(item.price)}</span>
 				</li>
 			{/each}
@@ -316,24 +292,26 @@
 	</section>
 
 	<!-- 8. Reviews on receipt slips -->
-	<section class="reviews" aria-labelledby="reviews-title">
-		<div class="wrap reviews-head">
-			<h2 id="reviews-title" class="section-title">What our<br />regulars say</h2>
-		</div>
-		<div class="slips marquee" style="--speed: 50s">
-			{#each [0, 1] as k (k)}
-				<ul aria-hidden={k === 1}>
-					{#each site.reviews as rv, i (i)}
-						<li class="slip" class:dark={i % 2 === 1} style="--r: {tilt[i]}deg">
-							<span class="stars" aria-label="5 stars">★★★★★</span>
-							<p class="poster">{rv.text}</p>
-							<span class="by">{rv.by}</span>
-						</li>
-					{/each}
-				</ul>
-			{/each}
-		</div>
-	</section>
+	{#if site.reviews.items.length}
+		<section class="reviews" aria-labelledby="reviews-title">
+			<div class="wrap reviews-head">
+				<h2 id="reviews-title" class="section-title">{site.reviews.title}</h2>
+			</div>
+			<div class="slips marquee" style="--speed: 50s">
+				{#each [0, 1] as k (k)}
+					<ul aria-hidden={k === 1}>
+						{#each site.reviews.items as rv, i (i)}
+							<li class="slip" class:dark={i % 2 === 1} style="--r: {tilt[i % tilt.length]}deg">
+								<span class="stars" aria-label="5 stars">★★★★★</span>
+								<p class="poster">{rv.text}</p>
+								<span class="by">{rv.by}</span>
+							</li>
+						{/each}
+					</ul>
+				{/each}
+			</div>
+		</section>
+	{/if}
 
 	<!-- 9. Crossing ticker bands -->
 	<div class="bands" aria-hidden="true">
@@ -353,9 +331,9 @@
 
 	<!-- 10. Call-to-order tower -->
 	<section class="call" aria-labelledby="call-title">
-		<p class="poster small-top">Too hungry to scroll?</p>
-		<h2 id="call-title" class="poster fuel">Dinner is one call away</h2>
-		<Building phone={r.phone} freeOver={price(r.delivery.free_over)} />
+		<p class="poster small-top">{site.call.kicker}</p>
+		<h2 id="call-title" class="poster fuel">{site.call.title}</h2>
+		<Building phone={r.phone} freeOver={price(r.delivery.free_over)} call={site.call} />
 	</section>
 </main>
 
@@ -389,12 +367,16 @@
 				>
 			</p>
 			<span class="social">
-				<a href={site.facebook} target="_blank" rel="noopener" aria-label="Facebook"
-					><HugeiconsIcon icon={Facebook01Icon} size={20} /></a
-				>
-				<a href={site.instagram} target="_blank" rel="noopener" aria-label="Instagram"
-					><HugeiconsIcon icon={InstagramIcon} size={20} /></a
-				>
+				{#if site.social.facebook}
+					<a href={site.social.facebook} target="_blank" rel="noopener" aria-label="Facebook"
+						><HugeiconsIcon icon={Facebook01Icon} size={20} /></a
+					>
+				{/if}
+				{#if site.social.instagram}
+					<a href={site.social.instagram} target="_blank" rel="noopener" aria-label="Instagram"
+						><HugeiconsIcon icon={InstagramIcon} size={20} /></a
+					>
+				{/if}
 				<a href="mailto:{r.email}" aria-label="Email"
 					><HugeiconsIcon icon={Mail01Icon} size={20} /></a
 				>
