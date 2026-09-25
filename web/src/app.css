@@ -1,0 +1,235 @@
+@font-face {
+	font-family: 'PolySans';
+	src: url('./lib/fonts/PolySans_Neutral.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'PolySans';
+	src: url('./lib/fonts/PolySans_NeutralItalic.woff2') format('woff2');
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'PolySans';
+	src: url('./lib/fonts/PolySans_Median.woff2') format('woff2');
+	font-weight: 500 600;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'PolySans';
+	src: url('./lib/fonts/PolySans_Bulky.woff2') format('woff2');
+	font-weight: 700 900;
+	font-style: normal;
+	font-display: swap;
+}
+
+:root {
+	--brand: #d5161a;
+	--brand-dark: #a90f13;
+	--chili-red: #d5161a;
+	--cream: #fff9e7;
+	--black: #000000;
+	--charcoal: #171717;
+
+	--bg: var(--cream);
+	--soft: #f5e9cf;
+	--ink: var(--black);
+	--muted: #6a6155;
+	--line: #e6d9bd;
+	--accent: var(--brand);
+	--accent-soft: #fbe0dc;
+	--mustard: #f4b400;
+	--green: #2e8b57;
+	--chili: var(--chili-red);
+	--paper: #fffaf0;
+
+	--display: 'PolySans', system-ui, sans-serif;
+	--sans: 'PolySans', system-ui, sans-serif;
+	--hand: var(--display);
+	--mono: var(--display);
+	--wrap: min(1200px, 100% - 32px);
+	--shadow: 0 12px 40px rgb(20 20 20 / 0.12);
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
+	scroll-padding-top: 150px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--ink);
+	font-family: var(--sans);
+	font-size: 1.0625rem;
+	line-height: 1.55;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Poster type: heavy, condensed, uppercase. */
+h1,
+h2,
+h3,
+.poster {
+	font-family: var(--display);
+	font-weight: 800;
+	font-stretch: 85%;
+	text-transform: uppercase;
+	line-height: 0.9;
+	letter-spacing: -0.01em;
+	margin: 0;
+}
+
+img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+}
+
+a {
+	color: inherit;
+}
+
+:focus-visible {
+	outline: 3px solid var(--mustard);
+	outline-offset: 3px;
+	border-radius: 6px;
+}
+
+.wrap {
+	width: var(--wrap);
+	margin-inline: auto;
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 50px;
+	padding: 12px 24px;
+	border: 0;
+	border-radius: 14px;
+	background: var(--black);
+	color: var(--cream);
+	font: 800 1rem var(--display);
+	font-stretch: 85%;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		transform 0.15s,
+		background 0.15s;
+}
+
+.btn:hover {
+	transform: translateY(-2px) rotate(-1deg);
+}
+
+.btn:disabled {
+	opacity: 0.6;
+	cursor: progress;
+	transform: none;
+}
+
+.btn.primary {
+	background: var(--brand);
+	color: var(--cream);
+}
+
+.btn.cream {
+	background: var(--cream);
+	color: var(--brand);
+}
+
+.price {
+	font-weight: 800;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	color: var(--brand);
+}
+
+.pill {
+	display: inline-block;
+	padding: 6px 14px;
+	border-radius: 999px;
+	background: var(--black);
+	color: var(--cream);
+	font-weight: 800;
+	font-stretch: 85%;
+	font-size: 0.8125rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	margin: 0 0 14px;
+}
+
+.section-title {
+	font-size: clamp(2.5rem, 7vw, 5rem);
+}
+
+/* Page-load entrance; `--d` staggers siblings. */
+.enter {
+	animation: enter 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+	animation-delay: var(--d, 0s);
+}
+
+@keyframes enter {
+	from {
+		opacity: 0;
+		translate: 0 28px;
+	}
+}
+
+/* Scroll reveal with native scroll-driven animations; unsupported browsers just show content. */
+@supports (animation-timeline: view()) {
+	.reveal {
+		animation: enter linear both;
+		animation-timeline: view();
+		animation-range: entry 0% entry 35%;
+	}
+}
+
+/* Endless horizontal ticker: content is rendered twice and slides by its own width. */
+.marquee {
+	display: flex;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.marquee > * {
+	flex: none;
+	animation: marquee var(--speed, 30s) linear infinite;
+}
+
+@keyframes marquee {
+	to {
+		translate: -100% 0;
+	}
+}
