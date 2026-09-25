@@ -80,16 +80,23 @@
 				>{/if}
 		</label>
 		<p class="muted">Tell them their PIN in person. It can't be looked up later, only changed.</p>
-		<button class="btn primary"
-			>{#if p}<HugeiconsIcon icon={FloppyDiskIcon} size={18} /> Save{:else}<HugeiconsIcon
-					icon={Add01Icon}
-					size={18}
-				/> Add staff{/if}</button
-		>
+		<div class="form-actions">
+			{#if p}<button type="submit" class="link-danger push" form="remove-staff"
+					>Remove {p.name}</button
+				>{/if}
+			<button class="btn ghost small" type="button" onclick={() => (open = null)}>Cancel</button>
+			<button class="btn primary small"
+				>{#if p}<HugeiconsIcon icon={FloppyDiskIcon} size={16} /> Save{:else}<HugeiconsIcon
+						icon={Add01Icon}
+						size={16}
+					/> Add staff{/if}</button
+			>
+		</div>
 	</form>
 	{#if p}
 		<form
 			method="POST"
+			id="remove-staff"
 			action="?/remove"
 			use:enhance={({ cancel }) => {
 				if (!confirm(`Remove ${p.name}? They'll be signed out straight away.`)) return cancel();
@@ -97,7 +104,6 @@
 			}}
 		>
 			<input type="hidden" name="id" value={p.id} />
-			<button class="remove">Remove {p.name}</button>
 		</form>
 	{/if}
 </Dialog>
@@ -131,15 +137,5 @@
 	.bad {
 		color: var(--brand);
 		font-weight: 600;
-	}
-	.remove {
-		margin-top: 12px;
-		padding: 0;
-		border: 0;
-		background: none;
-		color: var(--brand);
-		font: 600 0.875rem var(--sans);
-		text-decoration: underline;
-		cursor: pointer;
 	}
 </style>

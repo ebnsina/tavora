@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Forms and focus
+- One focus style everywhere: the field border stays light and a 2px brand ring sits 2px outside it.
+- Page tabs are shadcn-style: a muted track with the current tab as a raised white pill.
+- Dialog buttons sit on the right, with any delete or remove link on the left of the same row (dish, category, table, staff).
+- Dish form: labels and "On the menu" each have their own section.
+
 ### Phones
 - Page tabs, dashboard and website tab bars share one design: a floating rounded bar with grey icons and labels; the current tab sits on a soft tile with a small red pill under it.
 - Website on phones: the spinning name rings, stickers, food photo circles, review cards and the corner-shop building are sized to fit the screen; nothing is clipped or piled on top of each other.

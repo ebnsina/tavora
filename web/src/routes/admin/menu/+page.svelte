@@ -139,10 +139,17 @@
 >
 	{#if open?.kind === 'dish'}
 		{#if form?.error}<p class="flash bad" role="alert">{form.error}</p>{/if}
-		<DishForm item={open.item} categoryId={open.categoryId} categories={cats} done={close} />
+		<DishForm
+			item={open.item}
+			categoryId={open.categoryId}
+			categories={cats}
+			done={close}
+			deleteForm={open.item ? 'delete-dish' : undefined}
+		/>
 		{#if open.item}
 			{@const item = open.item}
 			<form
+				id="delete-dish"
 				method="POST"
 				action="?/deleteItem"
 				use:enhance={({ cancel }) => {
@@ -151,7 +158,6 @@
 				}}
 			>
 				<input type="hidden" name="id" value={item.id} />
-				<button class="link-danger">Delete this dish</button>
 			</form>
 		{/if}
 	{/if}
@@ -187,12 +193,15 @@
 					autofocus
 				/>
 			</label>
-			<button class="btn primary"
-				>{#if cat}<HugeiconsIcon icon={FloppyDiskIcon} size={18} /> Save{:else}<HugeiconsIcon
-						icon={Add01Icon}
-						size={18}
-					/> Add category{/if}</button
-			>
+			<div class="form-actions">
+				<button class="btn ghost small" type="button" onclick={close}>Cancel</button>
+				<button class="btn primary small"
+					>{#if cat}<HugeiconsIcon icon={FloppyDiskIcon} size={16} /> Save{:else}<HugeiconsIcon
+							icon={Add01Icon}
+							size={16}
+						/> Add category{/if}</button
+				>
+			</div>
 		</form>
 	{/if}
 </Dialog>
@@ -253,14 +262,5 @@
 	.meta span {
 		color: var(--muted);
 		font-size: 0.875rem;
-	}
-	.link-danger {
-		padding: 0;
-		border: 0;
-		background: none;
-		color: var(--brand);
-		font: 600 0.875rem var(--sans);
-		text-decoration: underline;
-		cursor: pointer;
 	}
 </style>

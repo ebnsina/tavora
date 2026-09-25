@@ -215,8 +215,9 @@
 	}
 	.blank:hover,
 	.blank:focus {
-		outline: none;
-		border-bottom-color: var(--brand);
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
+		border-bottom-color: #e2e8f0;
 		background: var(--soft);
 		rotate: -1deg;
 	}

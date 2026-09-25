@@ -8,12 +8,15 @@
 		item,
 		categoryId,
 		categories,
-		done
+		done,
+		deleteForm
 	}: {
 		item?: Item;
 		categoryId: number;
 		categories: { id: number; name: string }[];
 		done?: () => void;
+		// id of a separate delete form; its button sits at the left of this form's footer.
+		deleteForm?: string;
 	} = $props();
 
 	let preview = $state('');
@@ -79,7 +82,7 @@
 			Short description
 			<textarea name="description" maxlength="200">{item?.description ?? ''}</textarea>
 		</label>
-		<label>
+		<label class="wide">
 			Category
 			<select name="category_id">
 				{#each categories as c (c.id)}
@@ -89,8 +92,11 @@
 				{/each}
 			</select>
 		</label>
-		<fieldset>
-			<legend>Labels</legend>
+	</div>
+
+	<div class="section" role="group" aria-labelledby="labels-h">
+		<p class="legend" id="labels-h">Labels</p>
+		<div class="chips">
 			{#each Object.entries(tagLabels) as [value, label] (value)}
 				<label class="check">
 					<input
@@ -102,21 +108,27 @@
 					{label}
 				</label>
 			{/each}
-			<label class="check">
-				<input class="switch" type="checkbox" name="available" checked={item?.available ?? true} /> On
-				the menu
-			</label>
-		</fieldset>
+		</div>
 	</div>
 
-	<div class="row actions">
+	<label class="section avail">
+		<input class="switch" type="checkbox" name="available" checked={item?.available ?? true} />
+		<span
+			><strong>On the menu</strong><small>Customers can order it online and at the till.</small
+			></span
+		>
+	</label>
+
+	<div class="form-actions">
+		{#if deleteForm}<button class="link-danger push" form={deleteForm}>Delete this dish</button
+			>{/if}
+		{#if done}<button class="btn ghost small" type="button" onclick={done}
+				><HugeiconsIcon icon={Cancel01Icon} size={16} /> Close</button
+			>{/if}
 		<button class="btn primary small" type="submit" disabled={busy}>
 			<HugeiconsIcon icon={FloppyDiskIcon} size={16} />
 			{busy ? 'Saving…' : item ? 'Save dish' : 'Add dish'}
 		</button>
-		{#if done}<button class="btn ghost small" type="button" onclick={done}
-				><HugeiconsIcon icon={Cancel01Icon} size={16} /> Close</button
-			>{/if}
 	</div>
 </form>
 
@@ -159,26 +171,44 @@
 		opacity: 0;
 	}
 	.pick:focus-within {
-		outline: 3px solid var(--mustard);
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
 	}
 	.fields {
 		display: grid;
 		gap: 12px;
 		align-items: start;
 	}
-	fieldset {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px 16px;
+	/* Labels and availability each get their own full-width block. */
+	.section {
 		margin: 0;
-		padding: 0;
+		padding: 14px 16px;
 		border: 0;
+		border-radius: 12px;
+		background: var(--soft);
 	}
-	legend {
-		width: 100%;
-		margin-bottom: 6px;
+	.legend {
+		margin: 0 0 10px;
 		font-weight: 600;
 		font-size: 0.875rem;
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 20px;
+	}
+	.avail {
+		display: flex !important;
+		align-items: center;
+		gap: 12px;
+	}
+	.avail span {
+		display: grid;
+		gap: 2px;
+	}
+	.avail small {
+		color: var(--muted);
+		font-weight: 400;
 	}
 	.check {
 		display: flex;

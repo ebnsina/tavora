@@ -274,8 +274,9 @@
 		font-variant-numeric: tabular-nums;
 	}
 	input:focus {
-		outline: none;
-		box-shadow: inset 0 0 0 2px var(--black);
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
+		box-shadow: inset 0 0 0 1px #e2e8f0;
 	}
 	.change {
 		margin: 0;

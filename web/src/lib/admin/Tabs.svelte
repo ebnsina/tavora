@@ -68,7 +68,7 @@
 			onclick={() => select(t.id)}
 			onkeydown={(e) => key(e, i)}
 		>
-			{#if t.icon}<HugeiconsIcon icon={t.icon as never} size={18} />{/if}
+			{#if t.icon}<HugeiconsIcon icon={t.icon as never} size={16} />{/if}
 			<span class="lbl"
 				>{t.label}{#if t.count !== undefined}<span class="count">{t.count}</span>{/if}</span
 			>
@@ -78,14 +78,17 @@
 </div>
 
 <style>
-	/* Desktop and tablet: a quiet underline bar. Phones: the floating tab bar (see below). */
+	/* shadcn-style tabs: a muted track, the current tab raised as a white pill. */
 	.tabs {
 		display: flex;
-		gap: 4px;
+		gap: 2px;
+		width: fit-content;
 		max-width: 100%;
-		margin: -4px 0 20px;
+		margin: 0 0 20px;
+		padding: 4px;
 		overflow-x: auto;
-		border-bottom: 1px solid var(--line);
+		border-radius: 12px;
+		background: color-mix(in srgb, var(--soft) 70%, #d9ccb0);
 		scrollbar-width: none;
 		overscroll-behavior-x: contain;
 	}
@@ -96,45 +99,46 @@
 		mask-image: linear-gradient(to left, #000 calc(100% - 48px), transparent);
 	}
 	.fade-l.fade-r {
-		mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent);
+		mask-image: linear-gradient(
+			to right,
+			transparent,
+			#000 48px,
+			#000 calc(100% - 48px),
+			transparent
+		);
 	}
 	button {
-		position: relative;
 		display: flex;
 		flex: none;
 		align-items: center;
-		gap: 8px;
-		padding: 12px 14px;
+		gap: 6px;
+		height: 34px;
+		padding: 0 12px;
 		border: 0;
+		border-radius: 8px;
 		background: none;
 		color: var(--muted);
-		font: 600 0.9375rem var(--sans);
+		font: 500 0.875rem var(--sans);
 		white-space: nowrap;
 		cursor: pointer;
-		transition: color 0.2s;
+		transition:
+			background 0.15s,
+			color 0.15s,
+			box-shadow 0.15s;
 	}
-	button:hover,
-	button[aria-selected='true'] {
+	button:hover {
 		color: var(--ink);
 	}
-	button[aria-selected='true']::after {
-		content: '';
-		position: absolute;
-		inset: auto 8px -1px;
-		height: 2px;
-		border-radius: 2px;
-		background: var(--brand);
-		animation: line 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-	}
-	@keyframes line {
-		from {
-			scale: 0 1;
-		}
+	button[aria-selected='true'] {
+		background: #fffdf6;
+		color: var(--ink);
+		box-shadow:
+			0 1px 2px rgb(0 0 0 / 0.08),
+			0 1px 3px rgb(0 0 0 / 0.06);
 	}
 	button:focus-visible {
 		outline: 2px solid var(--brand);
-		outline-offset: -4px;
-		border-radius: 8px;
+		outline-offset: 2px;
 	}
 	.lbl {
 		display: inline-flex;
@@ -142,13 +146,13 @@
 		gap: 6px;
 	}
 	.count {
-		min-width: 20px;
+		min-width: 18px;
 		padding: 0 6px;
 		border-radius: 999px;
-		background: var(--soft);
+		background: rgb(0 0 0 / 0.06);
 		color: var(--muted);
-		font-size: 0.75rem;
-		line-height: 20px;
+		font-size: 0.6875rem;
+		line-height: 18px;
 		text-align: center;
 	}
 	[aria-selected='true'] .count {
@@ -156,60 +160,9 @@
 		color: var(--cream);
 	}
 	.dot {
-		width: 8px;
-		height: 8px;
+		width: 7px;
+		height: 7px;
 		border-radius: 50%;
 		background: var(--brand);
-	}
-
-	/* Phones: the same floating bar as the bottom navigation. */
-	@media (max-width: 759px) {
-		.tabs {
-			width: fit-content;
-			padding: 6px;
-			border-bottom: 0;
-			border-radius: 20px;
-			background: #fffdf6;
-			box-shadow:
-				0 0 0 1px var(--line),
-				0 8px 24px -12px rgb(40 20 0 / 0.2);
-		}
-		button {
-			display: grid;
-			justify-items: center;
-			align-content: center;
-			gap: 4px;
-			min-width: 84px;
-			padding: 10px 14px 14px;
-			border-radius: 14px;
-			font-size: 0.8125rem;
-			transition:
-				background 0.2s,
-				color 0.2s;
-		}
-		button[aria-selected='true'] {
-			background: var(--soft);
-		}
-		button[aria-selected='true']::after {
-			inset: auto auto 5px;
-			width: 18px;
-			height: 4px;
-			animation-name: pill;
-		}
-		.dot {
-			position: absolute;
-			top: 8px;
-			right: 12px;
-		}
-	}
-	@keyframes pill {
-		from {
-			width: 0;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		button[aria-selected='true']::after {
-			animation: none;
-		}
 	}
 </style>

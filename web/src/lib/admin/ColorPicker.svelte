@@ -176,7 +176,12 @@
 		box-shadow: inset 0 0 0 1px var(--line);
 	}
 	.hex:focus-within {
-		box-shadow: inset 0 0 0 2px var(--ink);
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
+		box-shadow: inset 0 0 0 1px #e2e8f0;
+	}
+	.hex input:focus-visible {
+		outline: none;
 	}
 	.chip {
 		width: 24px;

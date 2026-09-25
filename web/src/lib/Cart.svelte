@@ -703,7 +703,8 @@
 		opacity: 0;
 	}
 	.modes label:has(input:focus-visible) {
-		outline: 3px solid var(--mustard);
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
 	}
 	.modes span,
 	.pay span {
@@ -764,8 +765,9 @@
 	}
 	input:focus,
 	textarea:focus {
-		outline: none;
-		box-shadow: inset 0 0 0 3px var(--brand);
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
+		box-shadow: inset 0 0 0 1px #e2e8f0;
 	}
 	input:user-invalid,
 	textarea:user-invalid {

@@ -84,16 +84,23 @@
 				maxlength="30"
 			/></label
 		>
-		<button class="btn primary"
-			>{#if t}<HugeiconsIcon icon={FloppyDiskIcon} size={18} /> Save{:else}<HugeiconsIcon
-					icon={Add01Icon}
-					size={18}
-				/> Add table{/if}</button
-		>
+		<div class="form-actions">
+			{#if t}<button type="submit" class="link-danger push" form="remove-table"
+					>Remove this table</button
+				>{/if}
+			<button class="btn ghost small" type="button" onclick={() => (open = null)}>Cancel</button>
+			<button class="btn primary small"
+				>{#if t}<HugeiconsIcon icon={FloppyDiskIcon} size={16} /> Save{:else}<HugeiconsIcon
+						icon={Add01Icon}
+						size={16}
+					/> Add table{/if}</button
+			>
+		</div>
 	</form>
 	{#if t}
 		<form
 			method="POST"
+			id="remove-table"
 			action="?/remove"
 			use:enhance={({ cancel }) => {
 				if (!confirm(`Remove table ${t.name}?`)) return cancel();
@@ -104,7 +111,6 @@
 			}}
 		>
 			<input type="hidden" name="id" value={t.id} />
-			<button class="remove">Remove this table</button>
 		</form>
 	{/if}
 </Dialog>
@@ -131,15 +137,5 @@
 	}
 	.muted {
 		color: var(--muted);
-	}
-	.remove {
-		margin-top: 12px;
-		padding: 0;
-		border: 0;
-		background: none;
-		color: var(--brand);
-		font: 600 0.875rem var(--sans);
-		text-decoration: underline;
-		cursor: pointer;
 	}
 </style>

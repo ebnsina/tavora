@@ -117,9 +117,17 @@ a {
 }
 
 :focus-visible {
-	outline: 3px solid var(--mustard);
-	outline-offset: 3px;
-	border-radius: 6px;
+	outline: 2px solid var(--brand);
+	outline-offset: 2px;
+}
+
+/* Focus: the field's border stays light, a 2px brand ring sits 2px outside it. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+	outline: 2px solid var(--brand);
+	outline-offset: 2px;
+	border-color: #e2e8f0;
 }
 
 .wrap {

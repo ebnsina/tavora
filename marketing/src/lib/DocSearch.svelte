@@ -108,7 +108,12 @@
 		}
 	}
 	.search:focus-within {
-		box-shadow: 0 0 0 2px var(--brand);
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
+		box-shadow: inset 0 0 0 1px #e2e8f0;
+	}
+	.search input:focus-visible {
+		outline: none;
 	}
 	input {
 		flex: 1;

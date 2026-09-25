@@ -575,10 +575,9 @@
 	main :global(input:focus-visible),
 	main :global(textarea:focus-visible),
 	main :global(select:focus-visible) {
-		outline: none;
-		box-shadow:
-			inset 0 0 0 2px var(--black),
-			0 0 0 3px rgb(244 180 0 / 0.5);
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
+		box-shadow: inset 0 0 0 1px #e2e8f0;
 	}
 	main :global(input:user-invalid),
 	main :global(textarea:user-invalid) {
@@ -650,7 +649,7 @@
 	}
 	main :global(input[type='checkbox']:focus-visible),
 	main :global(input[type='radio']:focus-visible) {
-		outline: 3px solid var(--mustard);
+		outline: 2px solid var(--brand);
 		outline-offset: 2px;
 	}
 	/* On/off switch: a checkbox with class="switch". */
@@ -906,6 +905,29 @@
 		from {
 			opacity: 0;
 		}
+	}
+	/* Form footers: actions on the right; a destructive link, if any, pushed to the left. */
+	main :global(.form-actions) {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 10px;
+		margin-top: 4px;
+		padding-top: 16px;
+		border-top: 1px solid var(--line);
+	}
+	main :global(.link-danger) {
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--brand);
+		font: 600 0.875rem var(--sans);
+		text-decoration: underline;
+		cursor: pointer;
+	}
+	main :global(.form-actions .push) {
+		margin-right: auto;
 	}
 	/* Printing: only the page content, never the app's navigation. */
 	@media print {

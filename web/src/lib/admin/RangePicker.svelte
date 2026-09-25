@@ -242,8 +242,9 @@
 	}
 	.trigger[aria-expanded='true'],
 	.trigger:focus-visible {
-		outline: none;
-		box-shadow: inset 0 0 0 2px var(--ink);
+		outline: 2px solid var(--brand);
+		outline-offset: 2px;
+		box-shadow: inset 0 0 0 1px #e2e8f0;
 	}
 	.trigger :global(svg:first-child) {
 		color: var(--brand);
@@ -414,7 +415,7 @@
 	.nav:focus-visible,
 	.presets button:focus-visible {
 		outline: 2px solid var(--brand);
-		outline-offset: -2px;
+		outline-offset: 2px;
 	}
 	.hint {
 		margin: 10px 0 0;
