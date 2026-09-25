@@ -180,6 +180,24 @@ func (q *Queries) CreateTable(ctx context.Context, arg CreateTableParams) (Dinin
 	return i, err
 }
 
+const customerOrderStats = `-- name: CustomerOrderStats :one
+select count(*)::int as orders, coalesce(sum(total), 0)::bigint as spent, max(created_at)::timestamptz as last_at
+from orders where phone = $1 and status not in ('cancelled', 'open')
+`
+
+type CustomerOrderStatsRow struct {
+	Orders int32
+	Spent  int64
+	LastAt pgtype.Timestamptz
+}
+
+func (q *Queries) CustomerOrderStats(ctx context.Context, phone *string) (CustomerOrderStatsRow, error) {
+	row := q.db.QueryRow(ctx, customerOrderStats, phone)
+	var i CustomerOrderStatsRow
+	err := row.Scan(&i.Orders, &i.Spent, &i.LastAt)
+	return i, err
+}
+
 const dailySales = `-- name: DailySales :many
 
 select (created_at at time zone 'Asia/Dhaka')::date as day,
@@ -1024,6 +1042,44 @@ limit 200
 
 func (q *Queries) ListReservations(ctx context.Context) ([]Reservation, error) {
 	rows, err := q.db.Query(ctx, listReservations)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Reservation
+	for rows.Next() {
+		var i Reservation
+		if err := rows.Scan(
+			&i.ID,
+			&i.CustomerName,
+			&i.Phone,
+			&i.Guests,
+			&i.StartsAt,
+			&i.Note,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReservationsByPhone = `-- name: ListReservationsByPhone :many
+select id, customer_name, phone, guests, starts_at, note, status, created_at from reservations where phone = $1 and id <> $2 order by starts_at desc limit 10
+`
+
+type ListReservationsByPhoneParams struct {
+	Phone string
+	ID    pgtype.UUID
+}
+
+func (q *Queries) ListReservationsByPhone(ctx context.Context, arg ListReservationsByPhoneParams) ([]Reservation, error) {
+	rows, err := q.db.Query(ctx, listReservationsByPhone, arg.Phone, arg.ID)
 	if err != nil {
 		return nil, err
 	}

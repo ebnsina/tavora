@@ -130,6 +130,13 @@ where starts_at >= now() - interval '1 day' or status = 'requested'
 order by starts_at
 limit 200;
 
+-- name: ListReservationsByPhone :many
+select * from reservations where phone = @phone and id <> @id order by starts_at desc limit 10;
+
+-- name: CustomerOrderStats :one
+select count(*)::int as orders, coalesce(sum(total), 0)::bigint as spent, max(created_at)::timestamptz as last_at
+from orders where phone = @phone and status not in ('cancelled', 'open');
+
 -- name: UpdateReservationStatus :execrows
 update reservations set status = $2 where id = $1;
 

@@ -51,6 +51,7 @@
 					<span class="badge {b.status}">{labels[b.status]}</span>
 					<form method="POST" action="?/status" use:enhance class="row">
 						<input type="hidden" name="id" value={b.id} />
+						<a class="btn ghost small" href="/admin/bookings/{b.id}">Details</a>
 						{#if b.status !== 'confirmed'}
 							<button class="btn primary small" name="status" value="confirmed">Confirm</button>
 						{/if}

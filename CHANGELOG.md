@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Dashboard
+- Booking details page: date, guests, contact, note and when it was made, plus the guest's other bookings and past orders found by phone number. Open it with the Details button on each booking.
 - Breadcrumbs at the top of every page (Dashboard › Online orders › Order TV-1001) in place of the date.
 - Each order card has a Details button that opens the order's full page.
 - Adding or editing a dish, category or table opens in a dialog instead of expanding inside the list.

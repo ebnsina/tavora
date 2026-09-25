@@ -490,6 +490,43 @@ func (s *server) listReservations(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
+// One booking plus what we know about the guest from their phone number.
+func (s *server) getReservation(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(r.PathValue("id"))
+	if !ok {
+		fail(w, r, notFoundErr("reservation"))
+		return
+	}
+	ctx := r.Context()
+	res, err := s.q.GetReservation(ctx, id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		fail(w, r, notFoundErr("reservation"))
+		return
+	}
+	if err != nil {
+		fail(w, r, err)
+		return
+	}
+	others, err := s.q.ListReservationsByPhone(ctx, store.ListReservationsByPhoneParams{Phone: res.Phone, ID: id})
+	if err != nil {
+		fail(w, r, err)
+		return
+	}
+	stats, err := s.q.CustomerOrderStats(ctx, &res.Phone)
+	if err != nil {
+		fail(w, r, err)
+		return
+	}
+	history := make([]map[string]any, len(others))
+	for i, o := range others {
+		history[i] = reservationView(o)
+	}
+	v := reservationView(res)
+	v["history"] = history
+	v["orders"] = map[string]any{"count": stats.Orders, "spent": stats.Spent, "last_at": stats.LastAt}
+	writeJSON(w, http.StatusOK, v)
+}
+
 func (s *server) patchReservation(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUUID(r.PathValue("id"))
 	var req struct {
