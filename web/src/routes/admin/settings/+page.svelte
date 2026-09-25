@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { FloppyDiskIcon } from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import TimePicker from '$lib/admin/TimePicker.svelte';
@@ -55,7 +57,9 @@
 				<h2>Opening hours</h2>
 				<p class="hint">Online orders and bookings are only accepted while you're open.</p>
 			</div>
-			<button class="btn primary small">Save hours</button>
+			<button class="btn primary small"
+				><HugeiconsIcon icon={FloppyDiskIcon} size={16} /> Save hours</button
+			>
 		</div>
 		<ul class="hours">
 			{#each week as d (d)}
@@ -85,7 +89,9 @@
 	<form method="POST" action="?/info" use:enhance={keep} class="card">
 		<div class="card-head">
 			<h2>Restaurant details</h2>
-			<button class="btn primary small">Save details</button>
+			<button class="btn primary small"
+				><HugeiconsIcon icon={FloppyDiskIcon} size={16} /> Save details</button
+			>
 		</div>
 		<div class="stack">
 			<div class="grid2">
@@ -186,7 +192,9 @@
 	<form method="POST" action="?/theme" use:enhance={keep} class="card">
 		<div class="card-head">
 			<h2>Brand colour</h2>
-			<button class="btn primary small">Save colour</button>
+			<button class="btn primary small"
+				><HugeiconsIcon icon={FloppyDiskIcon} size={16} /> Save colour</button
+			>
 		</div>
 		<p class="hint">
 			Used for buttons, highlights and the website. Only colours dark enough to read light text on
@@ -212,7 +220,9 @@
 	<form method="POST" action="?/vat" use:enhance={keep} class="card">
 		<div class="card-head">
 			<h2>VAT</h2>
-			<button class="btn primary small">Save VAT</button>
+			<button class="btn primary small"
+				><HugeiconsIcon icon={FloppyDiskIcon} size={16} /> Save VAT</button
+			>
 		</div>
 		<div class="stack">
 			<p class="hint">

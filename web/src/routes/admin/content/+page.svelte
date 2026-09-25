@@ -3,6 +3,17 @@
 	import { asset, type SiteContent, type TickerIcon } from '$lib/api';
 	import { foodIcons } from '$lib/icons';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import {
+		Add01Icon,
+		BookOpen01Icon,
+		Call02Icon,
+		FloppyDiskIcon,
+		Home01Icon,
+		Link01Icon,
+		Rocket01Icon,
+		StarIcon,
+		TextIcon
+	} from '@hugeicons/core-free-icons';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 
 	let { data, form } = $props();
@@ -21,17 +32,18 @@
 
 	// One tab per homepage section; `keys` are the error paths that belong to it.
 	const tabs = [
-		{ id: 'top', label: 'Top of the page', keys: ['hero', 'marquee', 'slogans'] },
-		{ id: 'story', label: 'Our story', keys: ['story'] },
+		{ id: 'top', icon: Home01Icon, label: 'Top of the page', keys: ['hero', 'marquee', 'slogans'] },
+		{ id: 'story', icon: BookOpen01Icon, label: 'Our story', keys: ['story'] },
 		{
 			id: 'headings',
+			icon: TextIcon,
 			label: 'Section headings',
 			keys: ['menu', 'booking', 'tawa', 'reviews.title']
 		},
-		{ id: 'reviews', label: 'Reviews', keys: ['reviews.items'] },
-		{ id: 'ticker', label: 'Food ticker', keys: ['ticker'] },
-		{ id: 'call', label: 'Call-to-order building', keys: ['call'] },
-		{ id: 'links', label: 'Links and sharing', keys: ['social', 'seo'] }
+		{ id: 'reviews', icon: StarIcon, label: 'Reviews', keys: ['reviews.items'] },
+		{ id: 'ticker', icon: Rocket01Icon, label: 'Food ticker', keys: ['ticker'] },
+		{ id: 'call', icon: Call02Icon, label: 'Call-to-order building', keys: ['call'] },
+		{ id: 'links', icon: Link01Icon, label: 'Links and sharing', keys: ['social', 'seo'] }
 	];
 	let tab = $state('top');
 	const hasError = (keys: string[]) =>
@@ -60,6 +72,7 @@
 		{#if form?.error}<p class="flash bad" role="alert">{form.error}</p>{/if}
 		{#if form?.ok}<p class="flash" role="status">{form.ok}</p>{/if}
 		<button class="btn primary" type="submit" form="content-form" disabled={busy}>
+			<HugeiconsIcon icon={FloppyDiskIcon} size={18} />
 			{busy ? 'Saving…' : 'Save changes'}
 		</button>
 	{/snippet}
@@ -91,6 +104,7 @@
 				aria-controls="panel-{t.id}"
 				onclick={() => (tab = t.id)}
 			>
+				<HugeiconsIcon icon={t.icon} size={18} />
 				{t.label}
 				{#if hasError(t.keys)}<span class="err-dot" aria-label="has mistakes"></span>{/if}
 			</button>
@@ -165,7 +179,7 @@
 					class="btn ghost small add"
 					onclick={() => site.story.paragraphs.push('')}
 				>
-					Add a paragraph
+					<HugeiconsIcon icon={Add01Icon} size={16} /> Add a paragraph
 				</button>
 			{/if}
 			<div class="grid3">
@@ -267,7 +281,7 @@
 					class="btn ghost small add"
 					onclick={() => site.reviews.items.push({ text: '', by: '' })}
 				>
-					Add a review
+					<HugeiconsIcon icon={Add01Icon} size={16} /> Add a review
 				</button>
 			{/if}
 		</div>
@@ -308,7 +322,7 @@
 					class="btn ghost small add"
 					onclick={() => site.ticker.push({ label: '', icon: 'burger' })}
 				>
-					Add a word
+					<HugeiconsIcon icon={Add01Icon} size={16} /> Add a word
 				</button>
 			{/if}
 		</div>
@@ -428,8 +442,8 @@
 		flex: none;
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		gap: 8px;
+		justify-content: flex-start;
+		gap: 10px;
 		padding: 10px 14px;
 		border: 0;
 		border-radius: 10px;
@@ -451,6 +465,7 @@
 		outline-offset: -3px;
 	}
 	.err-dot {
+		margin-left: auto;
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;

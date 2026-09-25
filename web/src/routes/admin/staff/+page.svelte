@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { Add01Icon, FloppyDiskIcon, PencilEdit02Icon } from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import Dialog from '$lib/admin/Dialog.svelte';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
@@ -25,7 +27,9 @@
 
 <PageHeader title="Staff" sub="Staff sign in on the till with their own PIN">
 	{#snippet actions()}
-		<button class="btn primary" type="button" onclick={() => (open = {})}>Add staff</button>
+		<button class="btn primary" type="button" onclick={() => (open = {})}
+			><HugeiconsIcon icon={Add01Icon} size={18} /> Add staff</button
+		>
 	{/snippet}
 </PageHeader>
 
@@ -37,7 +41,8 @@
 		<li>
 			<strong>{person.name}</strong>
 			<span class="muted">Added {since.format(new Date(person.created_at))}</span>
-			<button class="btn ghost small" type="button" onclick={() => (open = { person })}>Edit</button
+			<button class="btn ghost small" type="button" onclick={() => (open = { person })}
+				><HugeiconsIcon icon={PencilEdit02Icon} size={16} /> Edit</button
 			>
 		</li>
 	{:else}
@@ -75,7 +80,12 @@
 				>{/if}
 		</label>
 		<p class="muted">Tell them their PIN in person. It can't be looked up later, only changed.</p>
-		<button class="btn primary">{p ? 'Save' : 'Add staff'}</button>
+		<button class="btn primary"
+			>{#if p}<HugeiconsIcon icon={FloppyDiskIcon} size={18} /> Save{:else}<HugeiconsIcon
+					icon={Add01Icon}
+					size={18}
+				/> Add staff{/if}</button
+		>
 	</form>
 	{#if p}
 		<form

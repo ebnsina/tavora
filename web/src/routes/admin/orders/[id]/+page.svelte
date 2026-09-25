@@ -1,4 +1,12 @@
 <script lang="ts">
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import {
+		ArrowLeft01Icon,
+		ArrowRight01Icon,
+		Cancel01Icon,
+		Cashier02Icon,
+		PrinterIcon
+	} from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import { price, vatPct } from '$lib/api';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
@@ -68,17 +76,25 @@
 		: 'Ordered online'}"
 >
 	{#snippet actions()}
-		<a class="btn ghost small" href="/admin/orders">All orders</a>
-		<button class="btn ghost small" type="button" onclick={() => print()}>Print receipt</button>
+		<a class="btn ghost small" href="/admin/orders"
+			><HugeiconsIcon icon={ArrowLeft01Icon} size={16} /> All orders</a
+		>
+		<button class="btn ghost small" type="button" onclick={() => print()}
+			><HugeiconsIcon icon={PrinterIcon} size={16} /> Print receipt</button
+		>
 		{#if o.source === 'pos' && o.status === 'open'}
-			<a class="btn primary small" href="/admin/pos/ticket/{o.id}">Open at the till</a>
+			<a class="btn primary small" href="/admin/pos/ticket/{o.id}"
+				><HugeiconsIcon icon={Cashier02Icon} size={16} /> Open at the till</a
+			>
 		{/if}
 		{#if o.source === 'online' && (next || !closed)}
 			<form method="POST" action="/admin/orders?/status" use:enhance class="row">
 				<input type="hidden" name="id" value={o.id} />
-				{#if next}<button class="btn primary small" name="status" value={next[0]}>{next[1]}</button
+				{#if next}<button class="btn primary small" name="status" value={next[0]}
+						>{next[1]} <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></button
 					>{/if}
-				{#if !closed}<button class="btn ghost small" name="status" value="cancelled">Cancel</button
+				{#if !closed}<button class="btn ghost small" name="status" value="cancelled"
+						><HugeiconsIcon icon={Cancel01Icon} size={16} /> Cancel</button
 					>{/if}
 			</form>
 		{/if}

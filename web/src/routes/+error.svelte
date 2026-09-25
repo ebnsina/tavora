@@ -1,4 +1,11 @@
 <script lang="ts">
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import {
+		DashboardSquare01Icon,
+		Home01Icon,
+		Menu01Icon,
+		Refresh01Icon
+	} from '@hugeicons/core-free-icons';
 	import { page } from '$app/state';
 	import Storefront from '$lib/Storefront.svelte';
 
@@ -35,13 +42,19 @@
 	<p>{message}</p>
 	<div class="actions">
 		{#if inDashboard}
-			<a class="btn cream" href="/admin">Back to the dashboard</a>
+			<a class="btn cream" href="/admin"
+				><HugeiconsIcon icon={DashboardSquare01Icon} size={18} /> Back to the dashboard</a
+			>
 		{:else}
-			<a class="btn cream" href="/">Go to the homepage</a>
-			<a class="btn ghost-cream" href="/#menu">See the menu</a>
+			<a class="btn cream" href="/"
+				><HugeiconsIcon icon={Home01Icon} size={18} /> Go to the homepage</a
+			>
+			<a class="btn ghost-cream" href="/#menu"
+				><HugeiconsIcon icon={Menu01Icon} size={18} /> See the menu</a
+			>
 		{/if}
 		{#if !lost}<button class="btn ghost-cream" type="button" onclick={() => location.reload()}
-				>Try again</button
+				><HugeiconsIcon icon={Refresh01Icon} size={18} /> Try again</button
 			>{/if}
 	</div>
 	<span class="code">Error {page.status}</span>

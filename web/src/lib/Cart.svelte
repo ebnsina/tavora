@@ -2,13 +2,16 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		ArrowLeft01Icon,
+		ArrowRight01Icon,
 		Cancel01Icon,
 		Cash01Icon,
+		CheckmarkCircle02Icon,
+		Menu01Icon,
 		MotorbikeIcon,
+		PrinterIcon,
 		ShoppingBag01Icon,
 		Store01Icon,
-		WhatsappIcon,
-		PrinterIcon
+		WhatsappIcon
 	} from '@hugeicons/core-free-icons';
 	import {
 		api,
@@ -213,7 +216,9 @@
 				<button class="btn" type="button" onclick={() => print()}>
 					<HugeiconsIcon icon={PrinterIcon} size={18} /> Print receipt
 				</button>
-				<button class="btn" type="button" onclick={close}>Back to the menu</button>
+				<button class="btn" type="button" onclick={close}
+					><HugeiconsIcon icon={ArrowLeft01Icon} size={18} /> Back to the menu</button
+				>
 			</div>
 		</div>
 	{:else if !lines.length}
@@ -221,7 +226,9 @@
 			<span class="bag"><HugeiconsIcon icon={ShoppingBag01Icon} size={40} /></span>
 			<h3>Your order is empty</h3>
 			<p>Add a few dishes from the menu and they'll show up here.</p>
-			<a class="btn primary" href="#menu" onclick={close}>Browse the menu</a>
+			<a class="btn primary" href="#menu" onclick={close}
+				><HugeiconsIcon icon={Menu01Icon} size={18} /> Browse the menu</a
+			>
 		</div>
 	{:else if step === 'cart'}
 		<div class="body">
@@ -268,6 +275,7 @@
 				onclick={() => (step = 'checkout')}
 			>
 				{closed ? 'Ordering is closed right now' : `Go to checkout · ${price(sub)}`}
+				{#if !closed}<HugeiconsIcon icon={ArrowRight01Icon} size={18} />{/if}
 			</button>
 		</footer>
 	{:else}
@@ -358,6 +366,7 @@
 		<footer>
 			{#if error}<p class="error" role="alert">{error}</p>{/if}
 			<button class="btn primary wide" type="submit" form="checkout" disabled={busy || closed}>
+				<HugeiconsIcon icon={CheckmarkCircle02Icon} size={18} />
 				{busy ? 'Placing your order…' : `Place order · ${price(total)}`}
 			</button>
 			<p class="fine">Nothing is charged online. You pay in cash.</p>

@@ -137,7 +137,9 @@
 								: 'Closed today'
 					}}
 				/>
-				<a class="btn primary find" href="#menu">Order now</a>
+				<a class="btn primary find" href="#menu"
+					><HugeiconsIcon icon={ShoppingBag01Icon} size={18} /> Order now</a
+				>
 			</div>
 		</div>
 	</section>

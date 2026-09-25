@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
+	import {
+		ArrowLeft01Icon,
+		ArrowRight01Icon,
+		ArrowUpRight01Icon,
+		Cancel01Icon,
+		Tick02Icon
+	} from '@hugeicons/core-free-icons';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import { price, time } from '$lib/api';
 
@@ -44,15 +50,23 @@
 
 <PageHeader title={b.name} sub="{day.format(date(b.date))} at {time(b.time)}">
 	{#snippet actions()}
-		<a class="btn ghost small" href="/admin/bookings">All bookings</a>
+		<a class="btn ghost small" href="/admin/bookings"
+			><HugeiconsIcon icon={ArrowLeft01Icon} size={16} /> All bookings</a
+		>
 		<form method="POST" action="?/status" use:enhance class="row">
 			{#if b.status !== 'confirmed'}
-				<button class="btn primary small" name="status" value="confirmed">Confirm</button>
+				<button class="btn primary small" name="status" value="confirmed"
+					><HugeiconsIcon icon={Tick02Icon} size={16} /> Confirm</button
+				>
 			{/if}
 			{#if b.status === 'requested'}
-				<button class="btn ghost small" name="status" value="declined">Decline</button>
+				<button class="btn ghost small" name="status" value="declined"
+					><HugeiconsIcon icon={Cancel01Icon} size={16} /> Decline</button
+				>
 			{:else if b.status === 'confirmed'}
-				<button class="btn ghost small" name="status" value="cancelled">Cancel</button>
+				<button class="btn ghost small" name="status" value="cancelled"
+					><HugeiconsIcon icon={Cancel01Icon} size={16} /> Cancel</button
+				>
 			{/if}
 		</form>
 	{/snippet}

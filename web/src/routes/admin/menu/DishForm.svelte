@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { Cancel01Icon, FloppyDiskIcon } from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import { asset, type Item } from '$lib/api';
 
@@ -109,9 +111,12 @@
 
 	<div class="row actions">
 		<button class="btn primary small" type="submit" disabled={busy}>
+			<HugeiconsIcon icon={FloppyDiskIcon} size={16} />
 			{busy ? 'Saving…' : item ? 'Save dish' : 'Add dish'}
 		</button>
-		{#if done}<button class="btn ghost small" type="button" onclick={done}>Close</button>{/if}
+		{#if done}<button class="btn ghost small" type="button" onclick={done}
+				><HugeiconsIcon icon={Cancel01Icon} size={16} /> Close</button
+			>{/if}
 	</div>
 </form>
 

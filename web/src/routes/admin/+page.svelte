@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons';
+	import {
+		ArrowDown01Icon,
+		ArrowRight01Icon,
+		ArrowUp01Icon,
+		ChartColumnIcon,
+		Search01Icon,
+		Table01Icon
+	} from '@hugeicons/core-free-icons';
 	import ColumnChart from '$lib/admin/ColumnChart.svelte';
 	import DatePicker from '$lib/admin/DatePicker.svelte';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
@@ -65,8 +72,7 @@
 		{
 			label: 'Revenue',
 			value: price(s.totals.revenue),
-			delta: delta(s.totals.revenue, s.previous.revenue),
-			hero: true
+			delta: delta(s.totals.revenue, s.previous.revenue)
 		},
 		{
 			label: 'Orders',
@@ -133,7 +139,7 @@
 			<DatePicker name="from" value={s.from} label="From" max={s.to} />
 			<span aria-hidden="true">–</span>
 			<DatePicker name="to" value={s.to} label="To" />
-			<button class="btn small">Show</button>
+			<button class="btn small"><HugeiconsIcon icon={Search01Icon} size={16} /> Show</button>
 		</form>
 	{/snippet}
 </PageHeader>
@@ -142,7 +148,7 @@
 
 <section class="tiles" aria-label="Key numbers">
 	{#each tiles as t (t.label)}
-		<div class="card tile" class:hero={t.hero}>
+		<div class="card tile">
 			<span class="label">{t.label}</span>
 			<strong class="value">{t.value}</strong>
 			{#if t.delta}
@@ -169,13 +175,13 @@
 				</div>
 				{#if s.totals.orders}
 					<div class="seg" role="tablist" aria-label="Show revenue as">
-						{#each [['chart', 'Chart'], ['table', 'Table']] as const as [v, label] (v)}
+						{#each [['chart', 'Chart', ChartColumnIcon], ['table', 'Table', Table01Icon]] as const as [v, label, icon] (v)}
 							<button
 								type="button"
 								role="tab"
 								aria-selected={view === v}
 								aria-current={view === v ? 'true' : undefined}
-								onclick={() => (view = v)}>{label}</button
+								onclick={() => (view = v)}><HugeiconsIcon {icon} size={16} /> {label}</button
 							>
 						{/each}
 					</div>
@@ -243,7 +249,9 @@
 		<section class="card">
 			<div class="card-head">
 				<h2>Right now</h2>
-				<a class="btn small" href="/admin/orders">Open orders</a>
+				<a class="btn small" href="/admin/orders"
+					>Open orders <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></a
+				>
 			</div>
 			{#if openTotal}
 				<ul class="chips">
@@ -394,18 +402,6 @@
 		font-weight: 800;
 		font-variant-numeric: proportional-nums;
 	}
-	.tile.hero {
-		background: var(--black);
-		color: var(--cream);
-	}
-	.hero .label,
-	.hero .vs {
-		color: rgb(255 249 231 / 0.65);
-	}
-	.hero .value {
-		font-size: clamp(2.25rem, 4vw, 3rem);
-		line-height: 1;
-	}
 	.delta {
 		display: inline-flex;
 		align-items: center;
@@ -419,12 +415,6 @@
 	}
 	.delta.bad {
 		color: var(--brand);
-	}
-	.hero .delta.good {
-		color: #7dd3a0;
-	}
-	.hero .delta.bad {
-		color: #ff8a80;
 	}
 	.vs {
 		font-weight: 500;

@@ -1,4 +1,12 @@
 <script lang="ts">
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import {
+		Add01Icon,
+		CheckmarkCircle02Icon,
+		FloppyDiskIcon,
+		PencilEdit02Icon,
+		UnavailableIcon
+	} from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import { asset, price, type Category, type Item } from '$lib/api';
 	import Dialog from '$lib/admin/Dialog.svelte';
@@ -30,7 +38,7 @@
 >
 	{#snippet actions()}
 		<button class="btn primary" type="button" onclick={() => (open = { kind: 'category' })}>
-			Add category
+			<HugeiconsIcon icon={Add01Icon} size={18} /> Add category
 		</button>
 	{/snippet}
 </PageHeader>
@@ -48,7 +56,7 @@
 					class="btn ghost small"
 					type="button"
 					onclick={() => (open = { kind: 'category', category: c, position: ci + 1 })}
-					>Rename</button
+					><HugeiconsIcon icon={PencilEdit02Icon} size={16} /> Rename</button
 				>
 			</div>
 
@@ -68,13 +76,17 @@
 							<form method="POST" action="?/toggle" use:enhance class="row">
 								<input type="hidden" name="id" value={item.id} />
 								<button class="btn small" class:primary={!item.available}>
-									{item.available ? 'Sold out' : 'Back on menu'}
+									{#if item.available}<HugeiconsIcon icon={UnavailableIcon} size={16} /> Sold out{:else}<HugeiconsIcon
+											icon={CheckmarkCircle02Icon}
+											size={16}
+										/> Back on menu{/if}
 								</button>
 							</form>
 							<button
 								class="btn ghost small"
 								type="button"
-								onclick={() => (open = { kind: 'dish', categoryId: c.id, item })}>Edit</button
+								onclick={() => (open = { kind: 'dish', categoryId: c.id, item })}
+								><HugeiconsIcon icon={PencilEdit02Icon} size={16} /> Edit</button
 							>
 						</div>
 					</li>
@@ -87,7 +99,7 @@
 					type="button"
 					onclick={() => (open = { kind: 'dish', categoryId: c.id })}
 				>
-					Add a dish to {c.name}
+					<HugeiconsIcon icon={Add01Icon} size={16} /> Add a dish to {c.name}
 				</button>
 				{#if !c.items.length}
 					<form
@@ -161,7 +173,12 @@
 					autofocus
 				/>
 			</label>
-			<button class="btn primary">{cat ? 'Save' : 'Add category'}</button>
+			<button class="btn primary"
+				>{#if cat}<HugeiconsIcon icon={FloppyDiskIcon} size={18} /> Save{:else}<HugeiconsIcon
+						icon={Add01Icon}
+						size={18}
+					/> Add category{/if}</button
+			>
 		</form>
 	{/if}
 </Dialog>

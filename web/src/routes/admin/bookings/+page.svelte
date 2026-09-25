@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
+	import {
+		ArrowLeft01Icon,
+		ArrowRight01Icon,
+		ArrowUpRight01Icon,
+		Cancel01Icon,
+		Tick02Icon
+	} from '@hugeicons/core-free-icons';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import { time, type Reservation } from '$lib/api';
 
@@ -51,14 +57,22 @@
 					<span class="badge {b.status}">{labels[b.status]}</span>
 					<form method="POST" action="?/status" use:enhance class="row">
 						<input type="hidden" name="id" value={b.id} />
-						<a class="btn ghost small" href="/admin/bookings/{b.id}">Details</a>
+						<a class="btn ghost small" href="/admin/bookings/{b.id}"
+							>Details <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></a
+						>
 						{#if b.status !== 'confirmed'}
-							<button class="btn primary small" name="status" value="confirmed">Confirm</button>
+							<button class="btn primary small" name="status" value="confirmed"
+								><HugeiconsIcon icon={Tick02Icon} size={16} /> Confirm</button
+							>
 						{/if}
 						{#if b.status === 'requested'}
-							<button class="btn ghost small" name="status" value="declined">Decline</button>
+							<button class="btn ghost small" name="status" value="declined"
+								><HugeiconsIcon icon={Cancel01Icon} size={16} /> Decline</button
+							>
 						{:else if b.status === 'confirmed'}
-							<button class="btn ghost small" name="status" value="cancelled">Cancel</button>
+							<button class="btn ghost small" name="status" value="cancelled"
+								><HugeiconsIcon icon={Cancel01Icon} size={16} /> Cancel</button
+							>
 						{/if}
 					</form>
 				</div>

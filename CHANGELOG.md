@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### VAT, printing, brand colour, error pages
+- Icons on buttons and tabs across the dashboard, POS sign-in and website (add, edit, save, cancel, print, next step and more).
+- Overview cards all look the same (no black first card).
 - VAT settings (rate, whether menu prices include it, BIN). Off until you set a rate. Each order keeps the VAT it was made with.
 - VAT shows on the checkout, the customer's receipt, the POS bill, order details and the end-of-day report ("VAT collected").
 - With a BIN set, bills print as a Mushak-6.3 VAT invoice with unit prices, VAT rate and amount.

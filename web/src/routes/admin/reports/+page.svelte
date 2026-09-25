@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { HugeiconsIcon } from '@hugeicons/svelte';
+	import { PrinterIcon, Search01Icon } from '@hugeicons/core-free-icons';
 	import DatePicker from '$lib/admin/DatePicker.svelte';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import { price } from '$lib/api';
@@ -38,9 +40,11 @@
 		{#snippet actions()}
 			<form method="GET" class="pick">
 				<DatePicker name="date" value={r.date} label="Day" />
-				<button class="btn small">Show</button>
+				<button class="btn small"><HugeiconsIcon icon={Search01Icon} size={16} /> Show</button>
 			</form>
-			<button class="btn primary small" type="button" onclick={() => print()}>Print</button>
+			<button class="btn primary small" type="button" onclick={() => print()}
+				><HugeiconsIcon icon={PrinterIcon} size={16} /> Print</button
+			>
 		{/snippet}
 	</PageHeader>
 

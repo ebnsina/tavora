@@ -2,7 +2,12 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowLeft02Icon } from '@hugeicons/core-free-icons';
+	import {
+		ArrowLeft02Icon,
+		Key01Icon,
+		Login01Icon,
+		UserGroupIcon
+	} from '@hugeicons/core-free-icons';
 	import { tick } from 'svelte';
 
 	let { form } = $props();
@@ -47,13 +52,13 @@
 		<h1>Tavora<span>Dashboard</span></h1>
 		<div class="tabs" role="tablist" aria-label="Sign in as">
 			<button type="button" role="tab" aria-selected={mode === 'pin'} onclick={() => (mode = 'pin')}
-				>Staff</button
+				><HugeiconsIcon icon={UserGroupIcon} size={16} /> Staff</button
 			>
 			<button
 				type="button"
 				role="tab"
 				aria-selected={mode === 'owner'}
-				onclick={() => (mode = 'owner')}>Owner</button
+				onclick={() => (mode = 'owner')}><HugeiconsIcon icon={Key01Icon} size={16} /> Owner</button
 			>
 		</div>
 		{#if form?.error && form.mode === mode}<p class="err" role="alert">{form.error}</p>{/if}
@@ -96,7 +101,7 @@
 					<input name="password" type="password" autocomplete="current-password" required />
 				</label>
 				<button class="btn primary" type="submit" disabled={busy}
-					>{busy ? 'Signing in…' : 'Sign in'}</button
+					><HugeiconsIcon icon={Login01Icon} size={18} /> {busy ? 'Signing in…' : 'Sign in'}</button
 				>
 			</form>
 		{/if}
