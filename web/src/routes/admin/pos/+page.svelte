@@ -146,10 +146,10 @@
 	}
 	/* Free tables step back; a busy table is the solid card with the red outline. */
 	.table.busy {
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow:
 			inset 0 0 0 2px var(--brand),
-			0 8px 20px -12px rgb(40 20 0 / 0.35);
+			0 8px 20px -12px rgb(15 23 42 / 0.35);
 		color: var(--ink);
 	}
 	.name {

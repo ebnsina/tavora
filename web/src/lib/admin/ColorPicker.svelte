@@ -172,7 +172,7 @@
 		height: 40px;
 		padding: 0 12px 0 8px;
 		border-radius: 10px;
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow: inset 0 0 0 1px var(--line);
 	}
 	.hex:focus-within {

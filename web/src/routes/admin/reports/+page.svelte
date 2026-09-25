@@ -76,29 +76,31 @@
 		</p>
 	{/if}
 
-	<section class="tiles" aria-label="Totals">
-		<div class="card tile">
+	<!-- The drawer figure is what you act on; the rest are grouped in one card. -->
+	<section class="summary" aria-label="Totals">
+		<div class="card drawer">
 			<span class="label">Cash that should be in the drawer</span>
 			<strong class="value">{price(r.drawer)}</strong>
-			<span class="small">Till cash + cash tips + online orders paid in cash</span>
+			<span class="sub">Till cash, cash tips and online orders paid in cash</span>
 		</div>
-		<div class="card tile">
-			<span class="label">Taken in total</span>
-			<strong class="value">{price(taken)}</strong>
-		</div>
-		<div class="card tile">
-			<span class="label">Card, bKash and Nagad</span>
-			<strong class="value">{price(other)}</strong>
-		</div>
-		<div class="card tile">
-			<span class="label">Tips</span>
-			<strong class="value">{price(tips)}</strong>
-		</div>
-		<div class="card tile">
-			<span class="label">VAT collected</span>
-			<strong class="value">{price(r.vat)}</strong>
-			<span class="small">On bills closed this day</span>
-		</div>
+		<dl class="card stats">
+			<div>
+				<dt>Taken in total</dt>
+				<dd>{price(taken)}</dd>
+			</div>
+			<div>
+				<dt>Card, bKash and Nagad</dt>
+				<dd>{price(other)}</dd>
+			</div>
+			<div>
+				<dt>Tips</dt>
+				<dd>{price(tips)}</dd>
+			</div>
+			<div>
+				<dt>VAT collected</dt>
+				<dd>{price(r.vat)}</dd>
+			</div>
+		</dl>
 	</section>
 
 	<Tabs
@@ -302,30 +304,72 @@
 </article>
 
 <style>
-	.tiles {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-		gap: 14px;
-		margin-bottom: 14px;
+	@media (min-width: 1000px) {
 	}
-	.tile {
+	.summary {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+		gap: 14px;
+		margin-bottom: 20px;
+	}
+	.drawer {
+		display: grid;
+		align-content: center;
 		gap: 6px;
-		align-content: start;
 	}
 	.label {
 		color: var(--muted);
-		font-weight: 600;
 		font-size: 0.875rem;
+		font-weight: 600;
 	}
 	.value {
-		font-size: 1.75rem;
+		font-size: 2.25rem;
 		font-weight: 800;
+		font-variant-numeric: tabular-nums;
+		line-height: 1.1;
 	}
-	.small {
+	.sub {
+		color: var(--muted);
 		font-size: 0.8125rem;
 	}
-	@media (min-width: 1000px) {
+	/* Four figures in one card, split by hairlines. */
+	.card.stats {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 1px;
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+		background: var(--line);
+	}
+	.stats div {
+		display: grid;
+		align-content: center;
+		gap: 6px;
+		padding: 20px;
+		background: var(--cream);
+	}
+	.stats dt {
+		color: var(--muted);
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+	.stats dd {
+		margin: 0;
+		text-align: left;
+		font-size: 1.375rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+	}
+	@media (max-width: 1000px) {
+		.summary {
+			grid-template-columns: 1fr;
+		}
+	}
+	@media (max-width: 640px) {
+		.stats {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
 	}
 	.panel {
 		max-width: 860px;

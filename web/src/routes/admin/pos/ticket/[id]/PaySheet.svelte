@@ -268,7 +268,7 @@
 		padding: 10px 14px;
 		border: 0;
 		border-radius: 12px;
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow: inset 0 0 0 2px var(--line);
 		font: 700 1.25rem var(--sans);
 		font-variant-numeric: tabular-nums;

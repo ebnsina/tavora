@@ -88,7 +88,7 @@
 		padding: 4px;
 		overflow-x: auto;
 		border-radius: 12px;
-		background: color-mix(in srgb, var(--soft) 70%, #d9ccb0);
+		background: #e2e8f0;
 		scrollbar-width: none;
 		overscroll-behavior-x: contain;
 	}
@@ -130,7 +130,7 @@
 		color: var(--ink);
 	}
 	button[aria-selected='true'] {
-		background: #fffdf6;
+		background: #ffffff;
 		color: var(--ink);
 		box-shadow:
 			0 1px 2px rgb(0 0 0 / 0.08),

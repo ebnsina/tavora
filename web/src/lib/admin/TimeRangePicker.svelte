@@ -110,7 +110,7 @@
 		padding: 0 12px;
 		border: 0;
 		border-radius: 10px;
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow: inset 0 0 0 1px var(--line);
 		color: var(--ink);
 		font: 500 0.9375rem var(--sans);
@@ -119,7 +119,7 @@
 		cursor: pointer;
 	}
 	.trigger:hover {
-		box-shadow: inset 0 0 0 1px #d4c4a4;
+		box-shadow: inset 0 0 0 1px #cbd5e1;
 	}
 	.trigger[aria-expanded='true'],
 	.trigger:focus-visible {
@@ -146,10 +146,10 @@
 		width: 280px;
 		padding: 10px;
 		border-radius: 14px;
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow:
 			0 0 0 1px var(--line),
-			0 24px 48px -16px rgb(40 20 0 / 0.3);
+			0 24px 48px -16px rgb(15 23 42 / 0.3);
 		animation: pop 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 	}
 	@keyframes pop {

@@ -239,6 +239,14 @@
 		clip-path: inset(50%);
 	}
 	.shell {
+		/* Neutral work surfaces (slate): white cards on a light grey page. */
+		--cream: #ffffff;
+		--soft: #f1f5f9;
+		--line: #e2e8f0;
+		--ink: #0f172a;
+		--muted: #64748b;
+		--paper: #ffffff;
+		--accent-soft: color-mix(in srgb, var(--brand) 10%, white);
 		--pad: clamp(16px, 3vw, 32px);
 		display: grid;
 		min-height: 100dvh;
@@ -308,7 +316,7 @@
 		font-weight: 700;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		color: rgb(255 249 231 / 0.45);
+		color: rgb(255 255 255 / 0.45);
 	}
 	.group:first-child {
 		margin-top: 0;
@@ -326,7 +334,7 @@
 	}
 	aside nav a:hover,
 	.site:hover {
-		background: rgb(255 249 231 / 0.08);
+		background: rgb(255 255 255 / 0.08);
 	}
 	aside nav a[aria-current='page'] {
 		background: var(--brand);
@@ -334,7 +342,7 @@
 	.site {
 		margin-top: auto;
 		gap: 6px;
-		color: rgb(255 249 231 / 0.75);
+		color: rgb(255 255 255 / 0.75);
 	}
 	.site + .site {
 		margin-top: 0;
@@ -576,7 +584,7 @@
 	main :global(.btn.ghost) {
 		background: transparent;
 		color: var(--ink);
-		box-shadow: inset 0 0 0 1px #d4c4a4;
+		box-shadow: inset 0 0 0 1px #cbd5e1;
 	}
 	main :global(.empty) {
 		padding: 40px 20px;
@@ -598,7 +606,7 @@
 		padding: 10px 12px;
 		border: 0;
 		border-radius: 10px;
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow: inset 0 0 0 2px var(--line);
 		color: var(--ink);
 		font: 400 1rem var(--sans);
@@ -613,7 +621,7 @@
 	main :global(input:hover:not([type='checkbox'], [type='radio'], [type='file'])),
 	main :global(textarea:hover),
 	main :global(select:hover) {
-		box-shadow: inset 0 0 0 2px #d4c4a4;
+		box-shadow: inset 0 0 0 2px #cbd5e1;
 	}
 	main :global(input:focus-visible),
 	main :global(textarea:focus-visible),
@@ -630,7 +638,7 @@
 	main :global(select) {
 		appearance: none;
 		padding-right: 40px;
-		background: #fffdf6
+		background: #ffffff
 			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23141414' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E")
 			no-repeat right 14px center;
 		cursor: pointer;
@@ -641,7 +649,7 @@
 		position: relative;
 		font-variant-numeric: tabular-nums;
 		padding-right: 40px;
-		background: #fffdf6 no-repeat right 12px center / 18px;
+		background: #ffffff no-repeat right 12px center / 18px;
 		cursor: pointer;
 	}
 	main :global(input[type='date']) {
@@ -668,7 +676,7 @@
 		height: 20px;
 		margin: 0;
 		border-radius: 6px;
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow: inset 0 0 0 2px var(--black);
 		cursor: pointer;
 		transition:
@@ -688,7 +696,7 @@
 		background: var(--brand);
 		box-shadow:
 			inset 0 0 0 2px var(--brand),
-			inset 0 0 0 5px #fffdf6;
+			inset 0 0 0 5px #ffffff;
 	}
 	main :global(input[type='checkbox']:focus-visible),
 	main :global(input[type='radio']:focus-visible) {
@@ -881,10 +889,10 @@
 			gap: 4px;
 			padding: 6px;
 			border-radius: 22px;
-			background: #fffdf6;
+			background: #ffffff;
 			box-shadow:
 				0 0 0 1px var(--line),
-				0 12px 32px -8px rgb(40 20 0 / 0.22);
+				0 12px 32px -8px rgb(15 23 42 / 0.22);
 		}
 		.bottom a,
 		.bottom button {

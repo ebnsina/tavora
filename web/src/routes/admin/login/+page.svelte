@@ -178,7 +178,7 @@
 		min-height: 64px;
 		border: 0;
 		border-radius: 16px;
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow: inset 0 0 0 2px var(--line);
 		font: 800 1.5rem var(--sans);
 		cursor: pointer;
@@ -211,7 +211,7 @@
 		padding: 10px 14px;
 		border: 0;
 		border-radius: 12px;
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow: inset 0 0 0 2px var(--black);
 		font: 1rem var(--sans);
 	}

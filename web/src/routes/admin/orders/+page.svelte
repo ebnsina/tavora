@@ -265,7 +265,6 @@
 		gap: 12px;
 		margin-top: auto;
 		padding-top: 16px;
-		border-top: 1px solid var(--line);
 	}
 	.total {
 		display: flex;

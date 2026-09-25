@@ -239,7 +239,7 @@
 		gap: 10px;
 		padding: 10px;
 		border-radius: 12px;
-		background: #fffdf6;
+		background: #ffffff;
 	}
 	.dishes > li.off .meta {
 		opacity: 0.55;

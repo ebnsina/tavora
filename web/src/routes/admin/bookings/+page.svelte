@@ -158,7 +158,7 @@
 		width: 52px;
 		padding: 8px 0 7px;
 		border-radius: 10px;
-		background: #fffdf6;
+		background: #ffffff;
 		box-shadow: inset 0 0 0 1px var(--line);
 		text-align: center;
 		line-height: 1;
@@ -283,7 +283,6 @@
 		gap: 8px;
 		margin-top: auto;
 		padding-top: 16px;
-		border-top: 1px solid var(--line);
 	}
 	.acts .grow {
 		flex: 1;

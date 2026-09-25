@@ -147,10 +147,10 @@
 		margin: 28px 0 10px;
 		font-size: 0.875rem;
 		letter-spacing: 0.1em;
-		color: rgb(255 249 231 / 0.5);
+		color: rgb(255 255 255 / 0.5);
 	}
 	.muted {
-		color: rgb(255 249 231 / 0.6);
+		color: rgb(255 255 255 / 0.6);
 		font-weight: 600;
 	}
 	.err {
@@ -162,7 +162,7 @@
 	.empty {
 		padding: 60px 0;
 		text-align: center;
-		color: rgb(255 249 231 / 0.6);
+		color: rgb(255 255 255 / 0.6);
 		font-size: 1.125rem;
 	}
 	.board {
@@ -263,8 +263,8 @@
 		gap: 12px;
 		padding: 10px 14px;
 		border-radius: 12px;
-		background: rgb(255 249 231 / 0.06);
-		color: rgb(255 249 231 / 0.7);
+		background: rgb(255 255 255 / 0.06);
+		color: rgb(255 255 255 / 0.7);
 	}
 	.recent button {
 		flex: none;
@@ -272,7 +272,7 @@
 		padding: 0 14px;
 		border: 0;
 		border-radius: 10px;
-		background: rgb(255 249 231 / 0.12);
+		background: rgb(255 255 255 / 0.12);
 		color: var(--cream);
 		font: 700 0.875rem var(--sans);
 		cursor: pointer;

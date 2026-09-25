@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Neutral dashboard
+- Dashboard and till use neutral surfaces (white cards on a light slate background, slate borders and text); the public website keeps its warm cream.
+- End of day: the drawer figure has its own card, and the other four totals share one card with thin dividers, instead of five separate cards.
+- Order and booking cards: no divider line above the footer.
+
 ### Calmer cards
 - Card and dialog headings are sentence case and modest in size; sub-headings are muted.
 - Overview: soft "New" tile, upcoming bookings as plain rows with a "Needs a reply" badge, thinner best-seller bars.

@@ -137,6 +137,14 @@
 
 <style>
 	.pos {
+		/* Neutral work surfaces (slate): white cards on a light grey page. */
+		--cream: #ffffff;
+		--soft: #f1f5f9;
+		--line: #e2e8f0;
+		--ink: #0f172a;
+		--muted: #64748b;
+		--paper: #ffffff;
+		--accent-soft: color-mix(in srgb, var(--brand) 10%, white);
 		height: 100dvh;
 		display: grid;
 		grid-template-rows: auto 1fr;
@@ -161,7 +169,7 @@
 		color: var(--cream);
 	}
 	.back:hover {
-		background: rgb(255 249 231 / 0.1);
+		background: rgb(255 255 255 / 0.1);
 	}
 	.brand {
 		font: 800 1.25rem var(--display);
@@ -199,7 +207,7 @@
 		padding: 0 14px;
 		border: 0;
 		border-radius: 999px;
-		background: rgb(255 249 231 / 0.12);
+		background: rgb(255 255 255 / 0.12);
 		color: var(--cream);
 		font: 700 0.875rem var(--sans);
 		cursor: pointer;
@@ -275,7 +283,7 @@
 		padding: 0 12px;
 		border: 0;
 		border-radius: 12px;
-		background: rgb(255 249 231 / 0.12);
+		background: rgb(255 255 255 / 0.12);
 		color: var(--cream);
 		font: 700 0.875rem var(--sans);
 		cursor: pointer;
@@ -285,7 +293,7 @@
 		cursor: not-allowed;
 	}
 	.who {
-		color: rgb(255 249 231 / 0.65);
+		color: rgb(255 255 255 / 0.65);
 		font-size: 0.875rem;
 	}
 	.screen {
