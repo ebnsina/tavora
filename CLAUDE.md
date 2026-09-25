@@ -5,6 +5,8 @@ Website + dashboard + till for restaurants in Bangladesh. Single restaurant for 
 ## Layout
 - `api/` Go (net/http mux), pgx, sqlc, goose migrations embedded and run at boot. Queries in `db/query.sql` → `sqlc generate` → `store/`. Handlers: `api.go` (public), `admin.go` (CMS, VAT, theme), `auth.go` (sessions, PIN, staff), `pos.go` (till, kitchen), `reports.go` (alerts, end of day), `stats.go`, `rules.go` (pricing, VAT, opening hours).
 - `web/` SvelteKit 2 + Svelte 5 runes, adapter-node. Public site at `/`, dashboard `/admin`, till `/admin/pos` (client-only, own layout `+layout@.svelte`, offline store `src/lib/offline.svelte.ts`).
+- Dashboard building blocks in `web/src/lib/admin/`: `Tabs` (hash-persisted, sliding underline; panels use `hidden` so unsaved edits survive), `Dialog` (all forms open in one), `PageHeader`, `MenuSelect`, `RangePicker`, `TimeRangePicker`, `ColorPicker` + `ColorPanel`. Reuse these before writing new ones. Motion: Svelte `fade`/`fly` with `ms()` from `lib/motion.ts` (zero when reduced motion is on).
+- Dashboard and till use a neutral slate palette (overrides on `.shell`/`.pos`); the public site keeps warm cream.
 - `marketing/` SvelteKit static site: one page `/` (hero, features, pricing from `src/lib/pricing.ts`) and docs `/docs` (content in `src/lib/docs.ts`, own layout with search, sidebar, on-this-page). Its design uses the tokens in `marketing/src/app.css` (type scale `--t-*`, spacing `--s1..s9`, PolySans + Geist Mono); icons 16 inline, 20 in buttons, 24 in tiles. Screenshots in `static/shots/*.webp`.
 
 ## Rules that bite
@@ -18,6 +20,9 @@ Website + dashboard + till for restaurants in Bangladesh. Single restaurant for 
 - Offline mode and the service worker only work in a production build, not `pnpm dev`.
 - Print layouts: portal the printable node to `<body>` (`lib/portal.ts`) and hide `body > *:not(.x)`; don't use `size: 80mm auto` (invalid).
 - User-facing copy is plain language, no jargon. Icons are Hugeicons (free set only; check the name exists).
+- Svelte scopes component CSS with `:where()`, so a scoped `.foo` loses to the admin layout's `main :global(.card)`, `.btn.ghost`, `.row` etc. Add a parent class (`.orders .order`) to win; don't reuse global class names (`.row`, `.small`, `.card`) for something else.
+- No left-border accent stripes on cards or notes; use a full thin outline, tint or badge.
+- Fonts in `web/`: `--sans` (UI), `--code` (Geist Mono: codes, order numbers, hex), `--display`; `--mono` is display type on the public site, not monospace.
 
 ## Working here
 - Dev: API on :8080 (`cd api && set -a && . ./.env && set +a && go run .`), web on :5173, marketing on :5180. Local admin: see README (create with `go run . create-admin`).

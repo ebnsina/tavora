@@ -113,9 +113,11 @@ The product site builds to `marketing/build`. Serve it with any web server and s
 
 **VAT:** off until a rate is set (in basis points, 500 = 5%). VAT applies to food, not delivery. Each order keeps its own `vat`, `vat_rate` and `vat_inclusive`, so changing the setting never rewrites old bills. With a BIN set, receipts print as a Mushak-6.3 VAT invoice. The rate is the owner's (and their accountant's) decision; nothing is hard-coded.
 
-**Printing:** receipts, kitchen tickets and the customer's online receipt print alone, black on white, at the receipt printer's own paper width (`web/src/lib/Slip.svelte`). The end-of-day report prints its own A4 page. Pair the tablet with an 80 mm printer through Android's print service.
+**Printing:** receipts, kitchen tickets and the customer's online receipt print alone, black on white, at the receipt printer's own paper width (`web/src/lib/Slip.svelte`). The end-of-day report prints its own A4 page. Bills, receipts and the end-of-day sheet end with a small "Made with Tavora" line. Pair the tablet with an 80 mm printer through Android's print service.
 
-**Brand colour:** saved on the restaurant (`theme`, `#rrggbb`) and used as `--brand` everywhere. The API refuses colours too light to read cream text on (under 4.5:1 contrast).
+**Brand colour:** picked in the dashboard (preset swatches or a custom colour panel with an eyedropper), saved on the restaurant (`theme`, `#rrggbb`) and used as `--brand` everywhere. The API refuses colours too light to read cream text on (under 4.5:1 contrast).
+
+**Kitchen screen:** `/admin/pos/kitchen` shows every sent ticket as a docket with a timer that turns yellow at 10 minutes and red at 20. Tap Done to clear it; finished tickets stay for 30 minutes with "Bring back".
 
 **Uploads:** images are saved to `UPLOAD_DIR` and served from `/uploads/`.
 
