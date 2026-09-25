@@ -11,6 +11,7 @@
 	import { asset, price, type Category, type Item } from '$lib/api';
 	import Dialog from '$lib/admin/Dialog.svelte';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
+	import Tabs from '$lib/admin/Tabs.svelte';
 	import DishForm from './DishForm.svelte';
 
 	let { data, form } = $props();
@@ -20,6 +21,11 @@
 		| { kind: 'dish'; categoryId: number; item?: Item }
 		| { kind: 'category'; category?: Category; position?: number };
 	let open = $state<Open | null>(null);
+	// One category at a time; falls back to the first if the chosen one was deleted.
+	let cat = $state('');
+	const shown = $derived(
+		data.categories.some((c) => String(c.id) === cat) ? cat : String(data.categories[0]?.id ?? '')
+	);
 	const close = () => (open = null);
 	const cats = $derived(data.categories.map((c) => ({ id: c.id, name: c.name })));
 	// Close the dialog only when the save worked; errors stay in it.
@@ -46,9 +52,17 @@
 {#if form?.error && !open}<p class="flash bad" role="alert">{form.error}</p>{/if}
 {#if form?.ok}<p class="flash" role="status">{form.ok}</p>{/if}
 
+{#if data.categories.length}
+	<Tabs
+		label="Categories"
+		bind:active={() => shown, (v) => (cat = v)}
+		tabs={data.categories.map((c) => ({ id: String(c.id), label: c.name, count: c.items.length }))}
+	/>
+{/if}
+
 <div class="stack">
 	{#each data.categories as c, ci (c.id)}
-		<section class="card">
+		<section class="card" id="panel-{c.id}" hidden={String(c.id) !== shown}>
 			<div class="cat-head">
 				<h2>{c.name}</h2>
 				<span class="count">{c.items.length} dishes</span>

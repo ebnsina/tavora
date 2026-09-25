@@ -1,9 +1,17 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { FloppyDiskIcon } from '@hugeicons/core-free-icons';
+	import {
+		Clock01Icon,
+		FloppyDiskIcon,
+		Invoice03Icon,
+		PaintBoardIcon,
+		Store01Icon
+	} from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import TimePicker from '$lib/admin/TimePicker.svelte';
+	import ColorPicker from '$lib/admin/ColorPicker.svelte';
+	import Tabs from '$lib/admin/Tabs.svelte';
 
 	let { data, form } = $props();
 	const r = $derived(data.r);
@@ -18,16 +26,8 @@
 	const hoursFor = (d: number) => r.hours.find((h) => h.weekday === d);
 	// The phone is stored as +8801…; the form shows the local 01… form.
 	const local = (p: string) => p.replace(/^\+?88/, '');
-	const presets = [
-		['#d5161a', 'Chili red'],
-		['#c2410c', 'Tomato'],
-		['#be185d', 'Berry'],
-		['#7e22ce', 'Plum'],
-		['#1d4ed8', 'Royal blue'],
-		['#0f766e', 'Teal'],
-		['#1f7a3f', 'Leaf green'],
-		['#262626', 'Charcoal']
-	];
+	let tab = $state('hours');
+	let colorOk = $state(true);
 	// svelte-ignore state_referenced_locally
 	let color = $state(r.theme);
 	const keep =
@@ -50,8 +50,27 @@
 	{/snippet}
 </PageHeader>
 
+<Tabs
+	label="Settings"
+	bind:active={tab}
+	tabs={[
+		{ id: 'hours', label: 'Opening hours', icon: Clock01Icon },
+		{ id: 'info', label: 'Details & delivery', icon: Store01Icon },
+		{ id: 'vat', label: 'VAT', icon: Invoice03Icon },
+		{ id: 'theme', label: 'Brand colour', icon: PaintBoardIcon }
+	]}
+/>
+
 <div class="layout">
-	<form method="POST" action="?/hours" use:enhance={keep} class="card">
+	<form
+		hidden={tab !== 'hours'}
+		id="panel-hours"
+		aria-labelledby="tab-hours"
+		method="POST"
+		action="?/hours"
+		use:enhance={keep}
+		class="card"
+	>
 		<div class="card-head">
 			<div>
 				<h2>Opening hours</h2>
@@ -86,7 +105,15 @@
 		</ul>
 	</form>
 
-	<form method="POST" action="?/info" use:enhance={keep} class="card">
+	<form
+		hidden={tab !== 'info'}
+		id="panel-info"
+		aria-labelledby="tab-info"
+		method="POST"
+		action="?/info"
+		use:enhance={keep}
+		class="card"
+	>
 		<div class="card-head">
 			<h2>Restaurant details</h2>
 			<button class="btn primary small"
@@ -189,35 +216,37 @@
 		</div>
 	</form>
 
-	<form method="POST" action="?/theme" use:enhance={keep} class="card">
+	<form
+		hidden={tab !== 'theme'}
+		id="panel-theme"
+		aria-labelledby="tab-theme"
+		method="POST"
+		action="?/theme"
+		use:enhance={keep}
+		class="card"
+	>
 		<div class="card-head">
 			<h2>Brand colour</h2>
-			<button class="btn primary small"
+			<button class="btn primary small" disabled={!colorOk}
 				><HugeiconsIcon icon={FloppyDiskIcon} size={16} /> Save colour</button
 			>
 		</div>
 		<p class="hint">
-			Used for buttons, highlights and the website. Only colours dark enough to read light text on
-			are allowed.
+			Used for buttons, highlights and the website. Pick a swatch or your own colour.
 		</p>
-		<div class="swatches" role="radiogroup" aria-label="Brand colour">
-			{#each presets as [hex, name] (hex)}
-				<label class="swatch" style="--c: {hex}">
-					<input type="radio" name="color" value={hex} bind:group={color} />
-					<span aria-hidden="true"></span>{name}
-				</label>
-			{/each}
-			<label class="swatch custom">
-				<input type="color" bind:value={color} aria-label="Pick any colour" />
-				Your own
-			</label>
-		</div>
-		<input type="hidden" name="color" value={color} />
-		<p class="preview" style="--c: {color}"><span>Preview</span> {color}</p>
+		<ColorPicker name="color" bind:value={color} bind:ok={colorOk} />
 		{@render err('color')}
 	</form>
 
-	<form method="POST" action="?/vat" use:enhance={keep} class="card">
+	<form
+		hidden={tab !== 'vat'}
+		id="panel-vat"
+		aria-labelledby="tab-vat"
+		method="POST"
+		action="?/vat"
+		use:enhance={keep}
+		class="card"
+	>
 		<div class="card-head">
 			<h2>VAT</h2>
 			<button class="btn primary small"
@@ -270,62 +299,6 @@
 </div>
 
 <style>
-	.swatches {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		margin: 12px 0;
-	}
-	.swatch {
-		display: flex !important;
-		align-items: center;
-		gap: 8px;
-		padding: 6px 12px 6px 6px;
-		border-radius: 999px;
-		background: var(--soft);
-		font-weight: 600 !important;
-		cursor: pointer;
-	}
-	.swatch input[type='radio'] {
-		position: absolute;
-		opacity: 0;
-	}
-	.swatch span {
-		width: 24px;
-		height: 24px;
-		border-radius: 50%;
-		background: var(--c);
-	}
-	.swatch:has(:checked) {
-		outline: 2px solid var(--ink);
-	}
-	.swatch:has(:focus-visible) {
-		outline: 3px solid var(--ink);
-		outline-offset: 2px;
-	}
-	.custom input[type='color'] {
-		width: 28px;
-		height: 28px;
-		padding: 0;
-		border: 0;
-		border-radius: 50%;
-		background: none;
-		cursor: pointer;
-	}
-	.preview {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		margin: 0;
-		color: var(--muted);
-	}
-	.preview span {
-		padding: 8px 16px;
-		border-radius: 10px;
-		background: var(--c);
-		color: var(--cream);
-		font-weight: 700;
-	}
 	.prices {
 		display: grid;
 		gap: 8px;
@@ -347,7 +320,7 @@
 	.layout {
 		display: grid;
 		gap: 16px;
-		align-items: start;
+		max-width: 860px;
 	}
 	.card-head .hint {
 		margin: 4px 0 0;
@@ -389,9 +362,6 @@
 		grid-column: 1 / -1;
 	}
 	@media (min-width: 1200px) {
-		.layout {
-			grid-template-columns: 1fr 1fr;
-		}
 	}
 	@media (max-width: 520px) {
 		.hours li {

@@ -15,6 +15,7 @@
 		TextIcon
 	} from '@hugeicons/core-free-icons';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
+	import Tabs from '$lib/admin/Tabs.svelte';
 
 	let { data, form } = $props();
 
@@ -94,22 +95,11 @@
 >
 	<input type="hidden" name="data" value={JSON.stringify(site)} />
 
-	<div class="tablist" role="tablist" aria-orientation="vertical" aria-label="Sections">
-		{#each tabs as t (t.id)}
-			<button
-				type="button"
-				role="tab"
-				id="tab-{t.id}"
-				aria-selected={tab === t.id}
-				aria-controls="panel-{t.id}"
-				onclick={() => (tab = t.id)}
-			>
-				<HugeiconsIcon icon={t.icon} size={18} />
-				{t.label}
-				{#if hasError(t.keys)}<span class="err-dot" aria-label="has mistakes"></span>{/if}
-			</button>
-		{/each}
-	</div>
+	<Tabs
+		label="Sections"
+		bind:active={tab}
+		tabs={tabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon, dot: hasError(t.keys) }))}
+	/>
 
 	<div class="panels">
 		<div
@@ -428,58 +418,6 @@
 		display: grid;
 		gap: 16px;
 		align-items: start;
-	}
-	.tablist {
-		display: flex;
-		gap: 4px;
-		overflow-x: auto;
-		padding: 6px;
-		border-radius: 14px;
-		background: var(--cream);
-	}
-	.tablist button {
-		position: relative;
-		flex: none;
-		display: flex;
-		align-items: center;
-		justify-content: flex-start;
-		gap: 10px;
-		padding: 10px 14px;
-		border: 0;
-		border-radius: 10px;
-		background: none;
-		color: var(--ink);
-		font: 600 0.9375rem var(--sans);
-		text-align: left;
-		cursor: pointer;
-	}
-	.tablist button:hover {
-		background: var(--soft);
-	}
-	.tablist button[aria-selected='true'] {
-		background: var(--black);
-		color: var(--cream);
-	}
-	.tablist button:focus-visible {
-		outline: 3px solid var(--mustard);
-		outline-offset: -3px;
-	}
-	.err-dot {
-		margin-left: auto;
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		background: var(--brand);
-	}
-	@media (min-width: 900px) {
-		.tabbed {
-			grid-template-columns: 230px 1fr;
-		}
-		.tablist {
-			position: sticky;
-			top: 110px;
-			flex-direction: column;
-		}
 	}
 	.grid3 {
 		display: grid;
