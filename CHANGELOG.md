@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Dashboard
+- Revenue by day has Chart and Table tabs; the table lists orders, revenue and average order per day with a total row.
 - Order details page: every dish, totals, discount, customer, table, and each payment with method, time, reference and tip. Open it by tapping an order number.
 - Point of sale has its own button at the top of the sidebar.
 - Overview shows the current date and time on the right of the greeting.

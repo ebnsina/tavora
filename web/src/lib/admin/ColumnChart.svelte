@@ -76,15 +76,6 @@
 			<span>{p.tip}</span><strong>{p.display}</strong>
 		</div>
 	{/if}
-	<details class="table">
-		<summary>Show as a table</summary>
-		<table>
-			<thead><tr><th>Day</th><th>Revenue</th></tr></thead>
-			<tbody>
-				{#each points as p (p.label)}<tr><td>{p.tip}</td><td>{p.display}</td></tr>{/each}
-			</tbody>
-		</table>
-	</details>
 </figure>
 
 <style>
@@ -128,31 +119,6 @@
 	}
 	.tip strong {
 		font-size: 1rem;
-		font-variant-numeric: tabular-nums;
-	}
-	.table {
-		margin-top: 8px;
-		font-size: 0.8125rem;
-		color: var(--muted);
-	}
-	.table summary {
-		cursor: pointer;
-	}
-	table {
-		margin-top: 8px;
-		border-collapse: collapse;
-		width: 100%;
-		max-width: 360px;
-	}
-	th,
-	td {
-		padding: 4px 8px;
-		text-align: left;
-		border-bottom: 1px solid var(--line);
-	}
-	td:last-child,
-	th:last-child {
-		text-align: right;
 		font-variant-numeric: tabular-nums;
 	}
 </style>

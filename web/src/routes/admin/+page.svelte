@@ -85,6 +85,7 @@
 		}
 	]);
 
+	let view = $state<'chart' | 'table'>('chart');
 	const points = $derived(
 		s.days.map((day) => ({
 			label: fmtDay.format(d(day.date)),
@@ -162,11 +163,52 @@
 	<div class="col">
 		<section class="card">
 			<div class="card-head">
-				<h2>Revenue by day</h2>
-				<span class="hint">Cash from orders that weren’t cancelled</span>
+				<div>
+					<h2>Revenue by day</h2>
+					<span class="hint">Cash from orders that weren’t cancelled</span>
+				</div>
+				{#if s.totals.orders}
+					<div class="seg" role="tablist" aria-label="Show revenue as">
+						{#each [['chart', 'Chart'], ['table', 'Table']] as const as [v, label] (v)}
+							<button
+								type="button"
+								role="tab"
+								aria-selected={view === v}
+								aria-current={view === v ? 'true' : undefined}
+								onclick={() => (view = v)}>{label}</button
+							>
+						{/each}
+					</div>
+				{/if}
 			</div>
-			{#if s.totals.orders}
+			{#if s.totals.orders && view === 'chart'}
 				<ColumnChart {points} caption="Revenue by day, {rangeLabel}" />
+			{:else if s.totals.orders}
+				<div class="table-wrap">
+					<table class="days">
+						<thead>
+							<tr><th>Day</th><th>Orders</th><th>Revenue</th><th>Average order</th></tr>
+						</thead>
+						<tbody>
+							{#each s.days as day (day.date)}
+								<tr>
+									<td>{fmtLong.format(d(day.date))}</td>
+									<td>{count.format(day.orders)}</td>
+									<td>{price(day.revenue)}</td>
+									<td>{day.orders ? price(Math.round(day.revenue / day.orders)) : '–'}</td>
+								</tr>
+							{/each}
+						</tbody>
+						<tfoot>
+							<tr>
+								<th>Total</th>
+								<td>{count.format(s.totals.orders)}</td>
+								<td>{price(s.totals.revenue)}</td>
+								<td>{price(avg(s.totals))}</td>
+							</tr>
+						</tfoot>
+					</table>
+				</div>
 			{:else}
 				<p class="empty">No orders in this period yet.</p>
 			{/if}
@@ -274,7 +316,16 @@
 		border-radius: 12px;
 		background: var(--cream);
 	}
-	.seg a {
+	.seg a,
+	.seg button {
+		border: 0;
+		background: none;
+		font-family: inherit;
+		color: inherit;
+		cursor: pointer;
+	}
+	.seg a,
+	.seg button {
 		padding: 7px 12px;
 		border-radius: 9px;
 		font-weight: 600;
@@ -282,9 +333,41 @@
 		text-decoration: none;
 		white-space: nowrap;
 	}
-	.seg a[aria-current] {
+	.seg [aria-current] {
 		background: var(--black);
 		color: var(--cream);
+	}
+	.table-wrap {
+		overflow-x: auto;
+	}
+	.days {
+		width: 100%;
+		border-collapse: collapse;
+		font-variant-numeric: tabular-nums;
+	}
+	.days th,
+	.days td {
+		padding: 10px 12px;
+		border-bottom: 1px solid var(--line);
+		text-align: right;
+		white-space: nowrap;
+	}
+	.days th:first-child,
+	.days td:first-child {
+		text-align: left;
+	}
+	.days thead th {
+		color: var(--muted);
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+	.days tbody tr:hover {
+		background: var(--soft);
+	}
+	.days tfoot th,
+	.days tfoot td {
+		border-bottom: 0;
+		font-weight: 800;
 	}
 	.custom {
 		display: flex;
