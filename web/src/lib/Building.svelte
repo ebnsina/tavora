@@ -329,7 +329,7 @@
 		rotate: -8deg;
 		transform-origin: left top;
 	}
-	/* The loudest thing on the building: mustard pill, ringing phone, pulsing halo, black rim. */
+	/* The loudest thing on the building: mustard pill, ringing phone, pulsing halo, blinking bulbs. */
 	.bulbs {
 		position: absolute;
 		left: 7cqw;
@@ -344,8 +344,11 @@
 		text-decoration: none;
 		white-space: nowrap;
 		rotate: -4deg;
-		box-shadow: 0 0 0 max(3px, 0.45cqw) var(--black);
-		animation: halo 1.8s ease-out infinite;
+		outline: max(3px, 0.45cqw) dotted var(--cream);
+		outline-offset: max(5px, 0.7cqw);
+		animation:
+			lights 0.8s steps(2) infinite,
+			halo 1.8s ease-out infinite;
 		transition: scale 0.2s;
 	}
 	.bulbs:hover {
@@ -370,6 +373,11 @@
 		margin-top: 4px;
 		font-size: max(0.6875rem, 1.5cqw);
 		letter-spacing: 0.06em;
+	}
+	@keyframes lights {
+		50% {
+			outline-color: var(--black);
+		}
 	}
 	@keyframes halo {
 		0% {
