@@ -68,7 +68,7 @@
 			onclick={() => select(t.id)}
 			onkeydown={(e) => key(e, i)}
 		>
-			{#if t.icon}<HugeiconsIcon icon={t.icon as never} size={20} />{/if}
+			{#if t.icon}<HugeiconsIcon icon={t.icon as never} size={18} />{/if}
 			<span class="lbl"
 				>{t.label}{#if t.count !== undefined}<span class="count">{t.count}</span>{/if}</span
 			>
@@ -78,21 +78,14 @@
 </div>
 
 <style>
-	/* Same look as the phone tab bars: a floating rounded bar, grey icons with labels,
-	   the current tab on a soft tile with a small red pill under it. */
+	/* Desktop and tablet: a quiet underline bar. Phones: the floating tab bar (see below). */
 	.tabs {
 		display: flex;
 		gap: 4px;
-		width: fit-content;
 		max-width: 100%;
 		margin: -4px 0 20px;
-		padding: 6px;
 		overflow-x: auto;
-		border-radius: 20px;
-		background: #fffdf6;
-		box-shadow:
-			0 0 0 1px var(--line),
-			0 8px 24px -12px rgb(40 20 0 / 0.2);
+		border-bottom: 1px solid var(--line);
 		scrollbar-width: none;
 		overscroll-behavior-x: contain;
 	}
@@ -103,59 +96,45 @@
 		mask-image: linear-gradient(to left, #000 calc(100% - 48px), transparent);
 	}
 	.fade-l.fade-r {
-		mask-image: linear-gradient(
-			to right,
-			transparent,
-			#000 48px,
-			#000 calc(100% - 48px),
-			transparent
-		);
+		mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent);
 	}
 	button {
 		position: relative;
-		display: grid;
+		display: flex;
 		flex: none;
-		justify-items: center;
-		align-content: center;
-		gap: 4px;
-		min-width: 88px;
-		padding: 10px 16px 14px;
+		align-items: center;
+		gap: 8px;
+		padding: 12px 14px;
 		border: 0;
-		border-radius: 14px;
 		background: none;
 		color: var(--muted);
-		font: 600 0.8125rem var(--sans);
+		font: 600 0.9375rem var(--sans);
 		white-space: nowrap;
 		cursor: pointer;
-		transition:
-			background 0.2s,
-			color 0.2s;
+		transition: color 0.2s;
 	}
-	button:hover {
-		color: var(--ink);
-	}
+	button:hover,
 	button[aria-selected='true'] {
-		background: var(--soft);
 		color: var(--ink);
 	}
 	button[aria-selected='true']::after {
 		content: '';
 		position: absolute;
-		bottom: 5px;
-		width: 18px;
-		height: 4px;
+		inset: auto 8px -1px;
+		height: 2px;
 		border-radius: 2px;
 		background: var(--brand);
-		animation: pill 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+		animation: line 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 	}
-	@keyframes pill {
+	@keyframes line {
 		from {
-			width: 0;
+			scale: 0 1;
 		}
 	}
 	button:focus-visible {
 		outline: 2px solid var(--brand);
-		outline-offset: -2px;
+		outline-offset: -4px;
+		border-radius: 8px;
 	}
 	.lbl {
 		display: inline-flex;
@@ -163,13 +142,13 @@
 		gap: 6px;
 	}
 	.count {
-		min-width: 18px;
+		min-width: 20px;
 		padding: 0 6px;
 		border-radius: 999px;
 		background: var(--soft);
 		color: var(--muted);
-		font-size: 0.6875rem;
-		line-height: 18px;
+		font-size: 0.75rem;
+		line-height: 20px;
 		text-align: center;
 	}
 	[aria-selected='true'] .count {
@@ -177,13 +156,56 @@
 		color: var(--cream);
 	}
 	.dot {
-		position: absolute;
-		top: 8px;
-		right: 12px;
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
 		background: var(--brand);
+	}
+
+	/* Phones: the same floating bar as the bottom navigation. */
+	@media (max-width: 759px) {
+		.tabs {
+			width: fit-content;
+			padding: 6px;
+			border-bottom: 0;
+			border-radius: 20px;
+			background: #fffdf6;
+			box-shadow:
+				0 0 0 1px var(--line),
+				0 8px 24px -12px rgb(40 20 0 / 0.2);
+		}
+		button {
+			display: grid;
+			justify-items: center;
+			align-content: center;
+			gap: 4px;
+			min-width: 84px;
+			padding: 10px 14px 14px;
+			border-radius: 14px;
+			font-size: 0.8125rem;
+			transition:
+				background 0.2s,
+				color 0.2s;
+		}
+		button[aria-selected='true'] {
+			background: var(--soft);
+		}
+		button[aria-selected='true']::after {
+			inset: auto auto 5px;
+			width: 18px;
+			height: 4px;
+			animation-name: pill;
+		}
+		.dot {
+			position: absolute;
+			top: 8px;
+			right: 12px;
+		}
+	}
+	@keyframes pill {
+		from {
+			width: 0;
+		}
 	}
 	@media (prefers-reduced-motion: reduce) {
 		button[aria-selected='true']::after {
