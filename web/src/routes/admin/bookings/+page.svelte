@@ -49,9 +49,11 @@
 		{@const c = cal(b.date)}
 		<li class="card" class:waiting={b.status === 'requested'}>
 			<div class="top">
-				<div class="cal" class:today={c.label === 'Today'} aria-hidden="true">
-					<span class="m">{c.month}</span>
-					<strong>{c.day}</strong>
+				<div class="date" class:today={c.label === 'Today'} aria-hidden="true">
+					<div class="cal">
+						<strong>{c.day}</strong>
+						<span class="m">{c.month}</span>
+					</div>
 					<span class="w">{c.label}</span>
 				</div>
 				<div class="when">
@@ -142,18 +144,28 @@
 		align-items: center;
 		gap: 14px;
 	}
-	/* The date as a small, quiet tile: month, day, weekday. */
-	.cal {
+	/* The date: day and month in a small tile, the weekday underneath it. */
+	.date {
 		display: grid;
 		flex: none;
-		gap: 2px;
-		width: 56px;
-		padding: 8px 0;
+		justify-items: center;
+		gap: 4px;
+	}
+	.cal {
+		display: grid;
+		gap: 3px;
+		width: 52px;
+		padding: 8px 0 7px;
 		border-radius: 10px;
 		background: #fffdf6;
 		box-shadow: inset 0 0 0 1px var(--line);
 		text-align: center;
 		line-height: 1;
+	}
+	.cal strong {
+		font: 700 1.375rem var(--sans);
+		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.02em;
 	}
 	.cal .m {
 		color: var(--brand);
@@ -162,21 +174,17 @@
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
 	}
-	.cal strong {
-		font: 700 1.5rem var(--sans);
-		font-variant-numeric: tabular-nums;
-		letter-spacing: -0.02em;
-	}
-	.cal .w {
+	.w {
 		color: var(--muted);
 		font-size: 0.6875rem;
 		font-weight: 600;
+		line-height: 1;
 	}
-	.cal.today {
+	.today .cal {
 		background: var(--accent-soft);
 		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 35%, transparent);
 	}
-	.cal.today .w {
+	.today .w {
 		color: var(--brand);
 	}
 	.when {
