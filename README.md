@@ -1,9 +1,10 @@
 # Tavora
 
-Restaurant website with ordering (cash on delivery) and table booking. API first; the web app is one client of it.
+Website, dashboard and till (POS) for restaurants in Bangladesh: online orders with cash on delivery, table bookings, an offline-capable till, staff PINs, end-of-day report and VAT invoices. API first; the web app is one client of it.
 
 - `api/` — Go + PostgreSQL + sqlc. Migrations run on boot.
-- `web/` — SvelteKit (Node adapter), renders menu and hours from the API.
+- `web/` — SvelteKit (Node adapter): the restaurant's website, the dashboard (`/admin`) and the till (`/admin/pos`).
+- `marketing/` — SvelteKit (static): the product site (features, pricing) and the help centre (`/help`), with real screenshots in `static/shots/`.
 
 ## Run locally
 
@@ -14,7 +15,12 @@ go run . create-admin you@example.com "Your Name"   # asks for a password (10+ c
 go run . seed-demo                                  # optional: 30 days of sample orders and bookings, all marked "(demo)"
 go run .                                            # :8080
 cd web && cp .env.example .env && pnpm install && pnpm dev   # :5173, dashboard at /admin
+cd marketing && cp .env.example .env && pnpm install && pnpm dev   # product site and help
 ```
+
+Env vars are required; each app refuses to start (or build) without them. API: `DATABASE_URL`, `ADDR`, `CORS_ORIGIN`, `UPLOAD_DIR`. Web: `PUBLIC_API_URL`, `PUBLIC_HELP_URL`. Marketing: `PUBLIC_SITE_URL`, `PUBLIC_WHATSAPP`, `PUBLIC_EMAIL`, `PUBLIC_DEMO_URL`.
+
+Marketing builds to plain files (`pnpm build` → `marketing/build`); serve them with any web server and send unknown paths to `404.html`. Prices live in `marketing/src/lib/pricing.ts`, help guides in `marketing/src/lib/docs.ts`.
 
 Tests: `cd api && go test ./...`
 
@@ -37,7 +43,14 @@ Printing uses the tablet's normal print dialog with 80 mm receipt layouts; pair 
 - **Table bookings:** confirm, decline or cancel; call or WhatsApp the guest; a details page with the guest's other bookings and orders.
 - **Menu:** categories and dishes, photos, labels, prices, sold-out switch.
 - **Website text:** every piece of homepage copy, reviews, ticker words and icons, story photo, sharing picture.
-- **Hours & details:** opening hours per day, contact details, delivery fee and areas.
+- **Hours & details:** opening hours per day, contact details, delivery fee and areas, VAT (rate, prices include VAT or not, BIN) and the brand colour.
+- **Staff:** add staff with a 6-digit PIN.
+
+**VAT:** off until a rate is set (basis points, 500 = 5%). VAT is on food only, not delivery. Each order stores its own `vat`, `vat_rate` and `vat_inclusive`, so changing the setting never rewrites old bills. With a BIN set, receipts print as a Mushak-6.3 VAT invoice. The rate is the owner's (their accountant's) call; nothing is hard-coded.
+
+**Printing:** receipts and kitchen tickets (`web/src/lib/Slip.svelte`) and the customer's online receipt are moved to the end of `<body>` and printed alone, black on white; the printer's own paper setting picks the width. The end-of-day report prints a separate A4 document, not the screen.
+
+**Brand colour:** stored on the restaurant (`theme`, `#rrggbb`) and applied as `--brand` everywhere. The API refuses colours with less than 4.5:1 contrast against the cream text.
 
 The owner signs in with email and password. The API issues a session token (only its SHA-256 is stored); the web app keeps it in an http-only cookie scoped to `/admin`. Five wrong passwords lock that email for 15 minutes.
 

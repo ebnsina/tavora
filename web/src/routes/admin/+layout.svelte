@@ -17,6 +17,7 @@
 		Invoice03Icon
 	} from '@hugeicons/core-free-icons';
 	import { page } from '$app/state';
+	import { env } from '$env/dynamic/public';
 	import { onMount } from 'svelte';
 	import { alerts, watchAlerts } from '$lib/alerts.svelte';
 
@@ -105,6 +106,10 @@
 					{/each}
 				{/each}
 			</nav>
+			<a class="site" href={env.PUBLIC_HELP_URL} target="_blank" rel="noopener">
+				Help <HugeiconsIcon icon={ArrowUpRight01Icon} size={18} />
+				<span class="sr">(opens in a new tab)</span>
+			</a>
 			<a class="site" href="/" target="_blank" rel="noopener">
 				View website <HugeiconsIcon icon={ArrowUpRight01Icon} size={18} />
 				<span class="sr">(opens in a new tab)</span>
@@ -252,6 +257,9 @@
 		margin-top: auto;
 		gap: 6px;
 		color: rgb(255 249 231 / 0.75);
+	}
+	.site + .site {
+		margin-top: 0;
 	}
 
 	.body {

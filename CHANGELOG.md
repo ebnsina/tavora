@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Product site and help centre
+- New `marketing/` site: home, features with real screenshots, pricing (one-time setup, two monthly plans, optional care plan) and our promises.
+- Help centre with 16 plain-language guides, one per screen, searchable, with screenshots and numbered steps.
+- Dashboard sidebar has a Help link to the guides.
+
 ### VAT, printing, brand colour, error pages
 - Icons on buttons and tabs across the dashboard, POS sign-in and website (add, edit, save, cancel, print, next step and more).
 - Overview cards all look the same (no black first card).

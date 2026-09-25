@@ -3,7 +3,8 @@ import { ADMIN_COOKIE } from '$lib/server/admin';
 
 // Fail at boot, not on the first visitor, when the API address is missing.
 export const init = () => {
-	if (!env.PUBLIC_API_URL) throw new Error('missing required env var PUBLIC_API_URL');
+	for (const k of ['PUBLIC_API_URL', 'PUBLIC_HELP_URL'] as const)
+		if (!env[k]) throw new Error(`missing required env var ${k}`);
 };
 
 export async function handle({ event, resolve }) {
