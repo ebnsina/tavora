@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '@fontsource-variable/geist-mono';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		Alert02Icon,

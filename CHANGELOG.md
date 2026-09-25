@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Tabs, sidebar, colour and kitchen
+- Page tabs sit on a thin line: the open tab gets a soft tint and brand-coloured text, and one underline slides between tabs.
+- Sidebar: the current page keeps its solid brand row and gains a short bar on the sidebar's edge.
+- Brand colour: a custom colour panel (shade square, hue slider, hex and RGB fields, screen eyedropper where the browser allows) replaces the browser's picker; colour codes use Geist Mono.
+- Menu: "Delete" for an empty category sits in the category header next to "Rename".
+- Till: the in-bill count on a dish moves to the tile's bottom corner so it never covers a long name.
+- Kitchen screen: tickets look like paper dockets (order-type icon, torn divider, bold quantity chips), the timer pulses once a ticket is late, and every Done button lines up along the bottom.
+- Printed receipts, bills and the end-of-day sheet end with a small "Made with Tavora" line.
+
 ### Neutral dashboard
 - Dialogs use a nested frame: title and buttons on a soft outer frame, fields on a white panel inside it; no divider lines.
 - Pop-ups that appear and disappear (date and time pickers, status menu, payment sheet, phone menu backdrop) use Svelte's built-in fade and fly transitions, off for people who prefer less motion.

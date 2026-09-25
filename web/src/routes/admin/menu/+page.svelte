@@ -3,6 +3,7 @@
 	import {
 		Add01Icon,
 		CheckmarkCircle02Icon,
+		Delete02Icon,
 		FloppyDiskIcon,
 		PencilEdit02Icon,
 		UnavailableIcon
@@ -72,6 +73,21 @@
 					onclick={() => (open = { kind: 'category', category: c, position: ci + 1 })}
 					><HugeiconsIcon icon={PencilEdit02Icon} size={16} /> Rename</button
 				>
+				<!-- Only an empty category can go, so dishes are never deleted by accident. -->
+				{#if !c.items.length}
+					<form
+						method="POST"
+						action="?/deleteCategory"
+						use:enhance={({ cancel }) => {
+							if (!confirm(`Delete the “${c.name}” category?`)) cancel();
+						}}
+					>
+						<input type="hidden" name="id" value={c.id} />
+						<button class="btn ghost small danger"
+							><HugeiconsIcon icon={Delete02Icon} size={16} /> Delete</button
+						>
+					</form>
+				{/if}
 			</div>
 
 			<ul class="dishes">
@@ -119,18 +135,6 @@
 				>
 					<HugeiconsIcon icon={Add01Icon} size={16} /> Add a dish to {c.name}
 				</button>
-				{#if !c.items.length}
-					<form
-						method="POST"
-						action="?/deleteCategory"
-						use:enhance={({ cancel }) => {
-							if (!confirm(`Delete the “${c.name}” category?`)) cancel();
-						}}
-					>
-						<input type="hidden" name="id" value={c.id} />
-						<button class="link-danger">Delete category</button>
-					</form>
-				{/if}
 			</div>
 		</section>
 	{/each}
@@ -221,6 +225,9 @@
 	.cat-head h2 {
 		margin: 0;
 		font-size: 1.25rem;
+	}
+	.cat-head .btn.danger {
+		color: var(--brand);
 	}
 	.count {
 		margin-left: auto;

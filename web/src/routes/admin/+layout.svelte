@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '@fontsource-variable/geist-mono';
 	import { fade } from 'svelte/transition';
 	import { ms } from '$lib/motion';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
@@ -331,15 +332,30 @@
 		gap: 10px;
 		padding: 10px 12px;
 		border-radius: 10px;
-		color: var(--cream);
-		font: 600 0.9375rem var(--sans);
+		color: rgb(255 255 255 / 0.72);
+		font: 500 0.9375rem var(--sans);
 		text-decoration: none;
 	}
 	aside nav a:hover,
 	.site:hover {
-		background: rgb(255 255 255 / 0.08);
+		background: rgb(255 255 255 / 0.06);
+		color: var(--cream);
 	}
+	/* The current page: a solid brand row and a short bar on the sidebar's edge. */
 	aside nav a[aria-current='page'] {
+		position: relative;
+		background: var(--brand);
+		color: var(--cream);
+		font-weight: 600;
+	}
+	aside nav a[aria-current='page']::before {
+		content: '';
+		position: absolute;
+		left: -14px;
+		top: 8px;
+		bottom: 8px;
+		width: 3px;
+		border-radius: 0 4px 4px 0;
 		background: var(--brand);
 	}
 	.site {
@@ -811,6 +827,9 @@
 			height: 48px;
 			margin: 0;
 			padding: 0;
+		}
+		aside nav a[aria-current='page']::before {
+			left: -12px;
 		}
 		.count {
 			position: absolute;

@@ -534,10 +534,11 @@
 		color: var(--brand);
 		font-weight: 800;
 	}
+	/* Bottom corner, beside the price, so it never covers a long dish name. */
 	.qbadge {
 		position: absolute;
-		top: 8px;
-		right: 8px;
+		right: 10px;
+		bottom: 10px;
 		min-width: 26px;
 		height: 26px;
 		display: grid;

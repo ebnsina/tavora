@@ -173,6 +173,7 @@
 		<span class="stamp">{pay(order.mode).toUpperCase()}</span>
 		<div class="barcode" aria-hidden="true"></div>
 		<p class="r-thanks">*** THANK YOU ***</p>
+		<p class="r-made">Made with Tavora</p>
 	</div>
 {/snippet}
 
@@ -609,6 +610,11 @@
 		text-align: center;
 		font-weight: 800;
 		letter-spacing: 0.1em;
+	}
+	.r-made {
+		margin: 6px 0 0;
+		font-size: 10px;
+		text-align: center;
 	}
 
 	.closed {

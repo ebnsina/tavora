@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Alert02Icon, Tick02Icon } from '@hugeicons/core-free-icons';
+	import ColorPanel from './ColorPanel.svelte';
 
 	// Brand colour: curated swatches, any custom colour, and a live readability check (same 4.5:1 rule as the API).
 	let {
@@ -26,6 +27,12 @@
 		if (valid) value = hex.toLowerCase();
 	});
 	const pick = (c: string) => (hex = c);
+	// The custom colour panel, closed by a click elsewhere or Escape.
+	let panel = $state(false);
+	let wrap = $state<HTMLDivElement>();
+	function outside(e: MouseEvent) {
+		if (panel && wrap && !wrap.contains(e.target as Node)) panel = false;
+	}
 
 	function lum(c: string) {
 		const ch = (i: number) => {
@@ -43,6 +50,8 @@
 	const fmt = new Intl.NumberFormat('en', { maximumFractionDigits: 1 });
 </script>
 
+<svelte:window onclick={outside} onkeydown={(e) => e.key === 'Escape' && (panel = false)} />
+
 <div class="picker" style="--c: {value}">
 	<div class="swatches" role="radiogroup" aria-label="Brand colour">
 		{#each presets as [c, label] (c)}
@@ -59,14 +68,18 @@
 				{#if value === c}<HugeiconsIcon icon={Tick02Icon} size={16} strokeWidth={2.5} />{/if}
 			</button>
 		{/each}
-		<label class="sw custom" title="Pick any colour" class:on={!presets.some(([c]) => c === value)}>
-			<input
-				type="color"
-				{value}
-				oninput={(e) => pick(e.currentTarget.value)}
+		<div class="custom-wrap" bind:this={wrap}>
+			<button
+				type="button"
+				class="sw custom"
+				class:on={!presets.some(([c]) => c === value)}
+				title="Pick any colour"
 				aria-label="Pick any colour"
-			/>
-		</label>
+				aria-expanded={panel}
+				onclick={() => (panel = !panel)}
+			></button>
+			{#if panel}<ColorPanel bind:hex />{/if}
+		</div>
 	</div>
 
 	<div class="row">
@@ -150,13 +163,8 @@
 		overflow: hidden;
 		background: conic-gradient(#e11d48, #f59e0b, #16a34a, #0ea5e9, #7c3aed, #e11d48);
 	}
-	.custom input {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		opacity: 0;
-		cursor: pointer;
+	.custom-wrap {
+		position: relative;
 	}
 	.row {
 		display: flex;
@@ -197,10 +205,7 @@
 		border: 0 !important;
 		background: none !important;
 		box-shadow: none !important;
-		font:
-			500 0.9375rem ui-monospace,
-			'Geist Mono',
-			monospace !important;
+		font: 500 0.9375rem var(--code) !important;
 		text-transform: lowercase;
 		outline: none;
 	}

@@ -99,6 +99,7 @@
 		{/if}
 		<hr />
 		<p class="center">Thank you for eating with us!</p>
+		<p class="center made">Made with Tavora</p>
 	{/if}
 </div>
 
@@ -141,6 +142,10 @@
 	}
 	.center {
 		text-align: center;
+	}
+	.made {
+		margin-top: 6px;
+		font-size: 10px;
 	}
 	.big {
 		font-size: 20px;

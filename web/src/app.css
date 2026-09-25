@@ -54,6 +54,8 @@
 	--sans: 'PolySans', system-ui, sans-serif;
 	--hand: var(--display);
 	--mono: var(--display);
+	/* Codes and numbers in the dashboard (loaded there, not on the website). */
+	--code: 'Geist Mono Variable', ui-monospace, monospace;
 	--wrap: min(1200px, 100% - 32px);
 	--shadow: 0 12px 40px rgb(20 20 20 / 0.12);
 }

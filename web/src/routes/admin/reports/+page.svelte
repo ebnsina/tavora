@@ -301,6 +301,7 @@
 		<p>Counted by</p>
 		<p>Checked by</p>
 	</div>
+	<p class="made">Made with Tavora</p>
 </article>
 
 <style>
@@ -512,6 +513,12 @@
 			padding: 6px 8px;
 			border: 1.5px solid #000;
 			font-weight: 700;
+		}
+		.doc .made {
+			margin-top: 24px;
+			color: #666;
+			font-size: 8pt;
+			text-align: center;
 		}
 		.doc .sign {
 			display: grid;
