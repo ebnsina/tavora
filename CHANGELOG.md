@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Product page, round two
+- New look drawn from current SaaS and restaurant-POS designs: dark hero panel with the real dashboard and live-looking cards, a bento grid of features with real screens, and a red closing panel with the shopfront.
+- Three plans: Starter (website), Business (website + till, most popular) and Pro (Business plus done-for-you changes and priority help), with a Monthly/Yearly switch (yearly = 2 months free). One-time setup shown once under the plans.
+
 ### Product site and docs, redesigned
 - Features and pricing are now one short page; the separate Features and Pricing pages are gone.
 - New design: one type scale and spacing scale, sentence-case headings, quiet borders, consistent icon sizes, Geist Mono for labels and prices.
