@@ -50,7 +50,6 @@
 		<li class="card" class:waiting={b.status === 'requested'}>
 			<div class="top">
 				<div class="cal" class:today={c.label === 'Today'} aria-hidden="true">
-					<span class="rings"><i></i><i></i></span>
 					<span class="m">{c.month}</span>
 					<strong>{c.day}</strong>
 					<span class="w">{c.label}</span>
@@ -143,65 +142,40 @@
 		align-items: center;
 		gap: 14px;
 	}
-	/* A desk calendar page: binder rings, a red header, and a couple of sheets stacked behind. */
+	/* The date as a small, quiet tile: month, day, weekday. */
 	.cal {
-		position: relative;
 		display: grid;
 		flex: none;
-		width: 64px;
-		margin-top: 6px;
-		border-radius: 12px;
+		gap: 2px;
+		width: 56px;
+		padding: 8px 0;
+		border-radius: 10px;
 		background: #fffdf6;
-		box-shadow:
-			0 0 0 1px var(--line),
-			0 3px 0 -1px #fffdf6,
-			0 3px 0 0 var(--line),
-			0 6px 0 -2px #fffdf6,
-			0 6px 0 -1px var(--line),
-			0 10px 18px -10px rgb(40 20 0 / 0.35);
+		box-shadow: inset 0 0 0 1px var(--line);
 		text-align: center;
 		line-height: 1;
 	}
-	.rings {
-		position: absolute;
-		top: -6px;
-		left: 0;
-		right: 0;
-		display: flex;
-		justify-content: space-between;
-		padding: 0 14px;
-	}
-	.rings i {
-		width: 6px;
-		height: 12px;
-		border-radius: 3px;
-		background: linear-gradient(#5b524a, #2a2522);
-		box-shadow: 0 1px 0 rgb(255 255 255 / 0.4) inset;
-	}
 	.cal .m {
-		padding: 7px 0 5px;
-		border-radius: 12px 12px 0 0;
-		background: linear-gradient(var(--brand), color-mix(in srgb, var(--brand) 82%, black));
-		color: var(--cream);
+		color: var(--brand);
 		font-size: 0.625rem;
-		font-weight: 800;
-		letter-spacing: 0.14em;
+		font-weight: 700;
+		letter-spacing: 0.1em;
 		text-transform: uppercase;
 	}
 	.cal strong {
-		padding: 7px 0 2px;
-		font: 800 1.75rem var(--display);
+		font: 700 1.5rem var(--sans);
+		font-variant-numeric: tabular-nums;
 		letter-spacing: -0.02em;
 	}
 	.cal .w {
-		padding-bottom: 8px;
 		color: var(--muted);
-		font-size: 0.5625rem;
-		font-weight: 800;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		font-size: 0.6875rem;
+		font-weight: 600;
 	}
-	.cal.today strong,
+	.cal.today {
+		background: var(--accent-soft);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 35%, transparent);
+	}
 	.cal.today .w {
 		color: var(--brand);
 	}
