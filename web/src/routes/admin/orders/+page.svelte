@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowRight02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
+	import {
+		ArrowRight02Icon,
+		Call02Icon,
+		Cancel01Icon,
+		Location01Icon
+	} from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { price, type Order } from '$lib/api';
@@ -81,31 +86,47 @@
 	<ul class="orders">
 		{#each data.orders as o (o.id)}
 			{@const step = next(o)}
-			<li class="card" class:fresh={o.status === 'new'}>
-				<div class="top">
-					<a class="num" href="/admin/orders/{o.id}">TV-{o.number}</a>
+			<li class="card order" class:fresh={o.status === 'new'}>
+				<header class="head">
+					<div>
+						<a class="num" href="/admin/orders/{o.id}">TV-{o.number}</a>
+						<p class="meta">
+							{{ delivery: 'Delivery', pickup: 'Pickup', dine_in: 'Dine-in' }[o.mode]} · {since(
+								o.created_at
+							)}
+						</p>
+					</div>
 					<span class="badge {o.status}">{labels[o.status]}</span>
-					<span class="mode"
-						>{{ delivery: 'Delivery', pickup: 'Pickup', dine_in: 'Dine-in' }[o.mode]}</span
-					>
-					<span class="when">{since(o.created_at)}</span>
+				</header>
+
+				<div class="who">
+					<strong>{o.name}</strong>
+					{#if o.phone}<a class="sub" href="tel:{o.phone}"
+							><HugeiconsIcon icon={Call02Icon} size={14} /> {o.phone}</a
+						>{/if}
+					{#if o.address}<p class="sub">
+							<HugeiconsIcon icon={Location01Icon} size={14} />
+							{o.address}
+						</p>{/if}
 				</div>
-				<p class="who">
-					<strong>{o.name}</strong>{#if o.phone}&nbsp;· <a href="tel:{o.phone}">{o.phone}</a>{/if}
-					{#if o.address}<br /><span class="addr">{o.address}</span>{/if}
-				</p>
+
 				<ul class="lines">
 					{#each o.items as l (l.id)}
-						<li><span>{l.qty} × {l.name}</span><span>{price(l.amount)}</span></li>
+						<li>
+							<span class="qty">{l.qty}×</span><span class="name">{l.name}</span><span
+								>{price(l.amount)}</span
+							>
+						</li>
 					{/each}
 				</ul>
-				{#if o.note}<p class="note">Note: {o.note}</p>{/if}
+				{#if o.note}<p class="note">{o.note}</p>{/if}
+
 				<!-- Footer sits at the bottom of every card: total, then one row of actions. -->
-				<div class="bottom">
-					<span class="total">{price(o.total)} <small>cash</small></span>
+				<footer class="foot">
+					<p class="total"><span>Cash total</span><strong>{price(o.total)}</strong></p>
 					<form method="POST" action="?/status" use:enhance class="acts">
 						<input type="hidden" name="id" value={o.id} />
-						<a class="btn ghost small" href="/admin/orders/{o.id}">Details</a>
+						<a class="btn quiet small" href="/admin/orders/{o.id}">Details</a>
 						{#if step}
 							<button class="btn primary small grow" name="status" value={step[0]}
 								>{step[1]} <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></button
@@ -113,7 +134,7 @@
 						{/if}
 						{#if o.status !== 'completed' && o.status !== 'cancelled'}
 							<button
-								class="btn ghost small icon"
+								class="btn quiet small icon"
 								name="status"
 								value="cancelled"
 								aria-label="Cancel order TV-{o.number}"
@@ -122,7 +143,7 @@
 							>
 						{/if}
 					</form>
-				</div>
+				</footer>
 			</li>
 		{/each}
 	</ul>
@@ -130,94 +151,136 @@
 
 <style>
 	.orders {
-		list-style: none;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+		gap: 16px;
 		margin: 0;
 		padding: 0;
-		display: grid;
-		gap: 14px;
-		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-	}
-	.fresh {
-		box-shadow: inset 0 0 0 3px var(--brand);
-	}
-	.top {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px;
-	}
-	.num {
-		color: inherit;
-		font: 800 1.25rem var(--display);
-		text-decoration: none;
-	}
-	.num:hover {
-		text-decoration: underline;
-	}
-	.badge {
-		padding: 3px 10px;
-		border-radius: 999px;
-		background: var(--soft);
-		font-size: 0.75rem;
-		font-weight: 700;
-		text-transform: uppercase;
-	}
-	.badge.new {
-		background: var(--brand);
-		color: var(--cream);
-	}
-	.badge.ready,
-	.badge.out_for_delivery {
-		background: var(--mustard);
-	}
-	.badge.completed {
-		background: var(--green);
-		color: #fff;
-	}
-	.mode,
-	.when {
-		font-size: 0.8125rem;
-		color: var(--muted);
-	}
-	.when {
-		margin-left: auto;
-	}
-	.who {
-		margin: 12px 0;
-	}
-	.addr {
-		color: var(--muted);
-		font-size: 0.9375rem;
-	}
-	.lines {
 		list-style: none;
-		margin: 0;
-		padding: 10px 0;
-		border-block: 1px dashed var(--line);
-		display: grid;
-		gap: 4px;
 	}
-	.lines li {
+	.order {
 		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+	/* New orders: an accent stripe, not a heavy frame. */
+	.fresh {
+		box-shadow: inset 4px 0 0 var(--brand);
+	}
+	.head {
+		display: flex;
+		align-items: flex-start;
 		justify-content: space-between;
 		gap: 12px;
 	}
+	.num {
+		color: var(--ink);
+		font: 700 1.125rem var(--sans);
+		text-decoration: none;
+	}
+	.num:hover {
+		color: var(--brand);
+	}
+	.meta {
+		margin: 2px 0 0;
+		color: var(--muted);
+		font-size: 0.8125rem;
+	}
+	/* Status: a soft tint of its colour, never a loud block. */
+	.badge {
+		flex: none;
+		padding: 3px 10px;
+		border-radius: 999px;
+		background: var(--soft);
+		color: var(--muted);
+		font-size: 0.75rem;
+		font-weight: 700;
+	}
+	.badge.new {
+		background: var(--accent-soft);
+		color: var(--brand);
+	}
+	.badge.preparing {
+		background: #fff1c2;
+		color: #7a5a00;
+	}
+	.badge.ready,
+	.badge.completed {
+		background: #e3f6ec;
+		color: #1f7a45;
+	}
+	.badge.out_for_delivery {
+		background: #e3ecfb;
+		color: #1d4ed8;
+	}
+	.who {
+		display: grid;
+		gap: 4px;
+	}
+	.who strong {
+		font-weight: 600;
+	}
+	.sub {
+		display: flex;
+		align-items: flex-start;
+		gap: 6px;
+		margin: 0;
+		color: var(--muted);
+		font-size: 0.875rem;
+		text-decoration: none;
+	}
+	.sub :global(svg) {
+		flex: none;
+		margin-top: 3px;
+	}
+	a.sub:hover {
+		color: var(--ink);
+	}
+	.lines {
+		display: grid;
+		gap: 6px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: 0.9375rem;
+		font-variant-numeric: tabular-nums;
+	}
+	.lines li {
+		display: grid;
+		grid-template-columns: 28px 1fr auto;
+		gap: 8px;
+	}
+	.qty {
+		color: var(--muted);
+	}
 	.note {
-		margin: 10px 0 0;
+		margin: 0;
 		padding: 8px 12px;
 		border-radius: 8px;
-		background: #fff4cf;
-		font-size: 0.9375rem;
+		background: #fff6d6;
+		font-size: 0.875rem;
 	}
-	.orders > li {
-		display: flex;
-		flex-direction: column;
-	}
-	.bottom {
+	.foot {
 		display: grid;
 		gap: 12px;
 		margin-top: auto;
-		padding-top: 14px;
+		padding-top: 16px;
+		border-top: 1px solid var(--line);
+	}
+	.total {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		margin: 0;
+	}
+	.total span {
+		color: var(--muted);
+		font-size: 0.8125rem;
+	}
+	.total strong {
+		font-size: 1.25rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
 	}
 	.acts {
 		display: flex;
@@ -230,12 +293,5 @@
 		flex: none;
 		width: 38px;
 		padding: 0;
-	}
-	.total {
-		font: 800 1.25rem var(--display);
-	}
-	.total small {
-		font: 600 0.75rem var(--sans);
-		color: var(--muted);
 	}
 </style>

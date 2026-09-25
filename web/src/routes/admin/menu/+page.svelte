@@ -89,7 +89,11 @@
 							</div>
 							<form method="POST" action="?/toggle" use:enhance class="row">
 								<input type="hidden" name="id" value={item.id} />
-								<button class="btn small" class:primary={!item.available}>
+								<button
+									class="btn small"
+									class:ghost={item.available}
+									class:primary={!item.available}
+								>
 									{#if item.available}<HugeiconsIcon icon={UnavailableIcon} size={16} /> Sold out{:else}<HugeiconsIcon
 											icon={CheckmarkCircle02Icon}
 											size={16}
@@ -97,7 +101,7 @@
 								</button>
 							</form>
 							<button
-								class="btn ghost small"
+								class="btn quiet small"
 								type="button"
 								onclick={() => (open = { kind: 'dish', categoryId: c.id, item })}
 								><HugeiconsIcon icon={PencilEdit02Icon} size={16} /> Edit</button

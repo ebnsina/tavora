@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Calmer cards
+- Order and booking cards follow a clear hierarchy: the key facts dark and bold, secondary details muted with small icons, no dashed dividers, one soft line above the footer.
+- One solid action per card; Details and cancel are quiet buttons. New orders and waiting bookings get an accent stripe instead of a heavy frame, and status badges are soft tints.
+- Small dashboard buttons use sentence case; outline buttons have a light border. On the menu, "Sold out" is an outline button and Edit is quiet.
+
 ### Forms and focus
 - One focus style everywhere: the field border stays light and a 2px brand ring sits 2px outside it.
 - Page tabs are shadcn-style: a muted track with the current tab as a raised white pill.

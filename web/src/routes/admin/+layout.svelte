@@ -525,15 +525,30 @@
 		gap: 16px;
 		align-items: start;
 	}
+	/* Small buttons read as buttons, not shouts: sentence case, regular width. */
 	main :global(.btn.small) {
 		min-height: 38px;
 		padding: 6px 14px;
-		font-size: 0.8125rem;
+		font: 600 0.875rem var(--sans);
+		font-stretch: normal;
+		letter-spacing: 0;
+		text-transform: none;
+	}
+	/* Tertiary: text only until hovered. */
+	main :global(.btn.quiet) {
+		background: transparent;
+		color: var(--muted);
+		box-shadow: none;
+	}
+	main :global(.btn.quiet:hover) {
+		background: var(--soft);
+		color: var(--ink);
+		transform: none;
 	}
 	main :global(.btn.ghost) {
 		background: transparent;
 		color: var(--ink);
-		box-shadow: inset 0 0 0 2px var(--black);
+		box-shadow: inset 0 0 0 1px #d4c4a4;
 	}
 	main :global(.empty) {
 		padding: 40px 20px;

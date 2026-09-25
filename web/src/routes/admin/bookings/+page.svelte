@@ -83,7 +83,7 @@
 			<form method="POST" action="?/status" use:enhance class="acts">
 				<input type="hidden" name="id" value={b.id} />
 				<a
-					class="btn ghost small"
+					class="btn quiet small"
 					class:grow={b.status === 'confirmed'}
 					href="/admin/bookings/{b.id}">Details</a
 				>
@@ -94,7 +94,7 @@
 				{/if}
 				{#if b.status === 'requested'}
 					<button
-						class="btn ghost small icon"
+						class="btn quiet small icon"
 						name="status"
 						value="declined"
 						aria-label="Decline booking for {b.name}"
@@ -102,7 +102,7 @@
 					>
 				{:else if b.status === 'confirmed'}
 					<button
-						class="btn ghost small icon"
+						class="btn quiet small icon"
 						name="status"
 						value="cancelled"
 						aria-label="Cancel booking for {b.name}"
@@ -136,8 +136,9 @@
 		flex-direction: column;
 		gap: 14px;
 	}
+	/* Waiting for a reply: an accent stripe, not a frame. */
 	.waiting {
-		box-shadow: inset 0 0 0 2px var(--mustard);
+		box-shadow: inset 4px 0 0 var(--mustard);
 	}
 	.top {
 		display: flex;
@@ -243,6 +244,7 @@
 	}
 	.who strong {
 		font-size: 1.0625rem;
+		font-weight: 600;
 	}
 	.contact {
 		display: flex;
@@ -253,9 +255,9 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-		color: var(--ink);
-		font-size: 0.9375rem;
-		font-weight: 600;
+		color: var(--muted);
+		font-size: 0.875rem;
+		font-weight: 500;
 		text-decoration: none;
 	}
 	.contact a:hover {
@@ -280,7 +282,8 @@
 		display: flex;
 		gap: 8px;
 		margin-top: auto;
-		padding-top: 4px;
+		padding-top: 16px;
+		border-top: 1px solid var(--line);
 	}
 	.acts .grow {
 		flex: 1;
