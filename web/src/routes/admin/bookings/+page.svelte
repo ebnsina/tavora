@@ -136,9 +136,9 @@
 		flex-direction: column;
 		gap: 14px;
 	}
-	/* Waiting for a reply: an accent stripe, not a frame. */
+	/* Waiting for a reply: a thin tinted outline around the whole card, plus the badge. */
 	.waiting {
-		box-shadow: inset 4px 0 0 var(--mustard);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--mustard) 70%, transparent);
 	}
 	.top {
 		display: flex;

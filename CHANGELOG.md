@@ -3,8 +3,13 @@
 ## Unreleased
 
 ### Calmer cards
+- Card and dialog headings are sentence case and modest in size; sub-headings are muted.
+- Overview: soft "New" tile, upcoming bookings as plain rows with a "Needs a reply" badge, thinner best-seller bars.
+- Till floor: free tables step back; busy tables are white cards with a red outline and red table name.
+- Kitchen: no coloured top stripe; ticket age shows in a green, amber or red timer chip, and late tickets get a thin red outline.
+- No left-border or top-stripe accents anywhere.
 - Order and booking cards follow a clear hierarchy: the key facts dark and bold, secondary details muted with small icons, no dashed dividers, one soft line above the footer.
-- One solid action per card; Details and cancel are quiet buttons. New orders and waiting bookings get an accent stripe instead of a heavy frame, and status badges are soft tints.
+- One solid action per card; Details and cancel are quiet buttons. New orders and waiting bookings get a thin tinted outline instead of a heavy frame, and status badges are soft tints.
 - Small dashboard buttons use sentence case; outline buttons have a light border. On the menu, "Sold out" is an outline button and Edit is quiet.
 
 ### Forms and focus

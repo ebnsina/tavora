@@ -165,7 +165,6 @@
 		padding: var(--s3) var(--s4);
 		border-radius: 8px;
 		background: #fff6d6;
-		box-shadow: inset 3px 0 0 var(--mustard);
 		font-size: var(--t-sm);
 	}
 	.note :global(svg) {

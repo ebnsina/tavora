@@ -110,8 +110,9 @@
 			{#each o.items as l (l.id)}
 				<li>
 					<span
-						>{l.qty} × {l.name} <small>{price(l.unit_price)} each</small>{#if l.note}<small
-								class="note">Note: {l.note}</small
+						><span class="q">{l.qty}×</span>
+						{l.name} <small>{price(l.unit_price)} each</small>{#if l.note}<small class="note"
+								>Note: {l.note}</small
 							>{/if}</span
 					>
 					<span>{price(l.amount)}</span>
@@ -264,6 +265,10 @@
 		color: var(--ink);
 		font-size: 1.125rem;
 		font-weight: 800;
+	}
+	.q {
+		color: var(--muted);
+		font-weight: 500;
 	}
 	.lines .note {
 		color: var(--brand);

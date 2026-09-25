@@ -133,9 +133,9 @@
 		padding: 14px;
 		border: 0;
 		border-radius: 18px;
-		background: var(--cream);
-		box-shadow: inset 0 0 0 2px var(--line);
-		color: var(--ink);
+		background: color-mix(in srgb, var(--cream) 55%, transparent);
+		box-shadow: inset 0 0 0 1px var(--line);
+		color: var(--muted);
 		font: inherit;
 		text-align: left;
 		cursor: pointer;
@@ -144,22 +144,29 @@
 	.table:active {
 		transform: scale(0.97);
 	}
+	/* Free tables step back; a busy table is the solid card with the red outline. */
 	.table.busy {
-		background: var(--brand);
-		box-shadow: none;
-		color: var(--cream);
+		background: #fffdf6;
+		box-shadow:
+			inset 0 0 0 2px var(--brand),
+			0 8px 20px -12px rgb(40 20 0 / 0.35);
+		color: var(--ink);
 	}
 	.name {
-		font: 800 1.75rem var(--display);
+		font: 700 1.5rem var(--sans);
+		letter-spacing: -0.02em;
+	}
+	.busy .name {
+		color: var(--brand);
 	}
 	.amt {
 		font-size: 1.125rem;
 		font-variant-numeric: tabular-nums;
 	}
 	.meta {
-		font-size: 0.875rem;
-		font-weight: 600;
-		opacity: 0.8;
+		color: var(--muted);
+		font-size: 0.8125rem;
+		font-weight: 500;
 	}
 	.flag {
 		display: inline-flex;
@@ -167,8 +174,8 @@
 		gap: 4px;
 		padding: 2px 8px;
 		border-radius: 999px;
-		background: var(--mustard);
-		color: var(--black);
+		background: #fff1c2;
+		color: #7a5a00;
 		font-size: 0.75rem;
 		font-weight: 700;
 	}

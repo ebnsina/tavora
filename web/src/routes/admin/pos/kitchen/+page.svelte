@@ -82,13 +82,16 @@
 			{@const m = age(t)}
 			<li class="ticket" class:warn={m >= 10} class:late={m >= 20}>
 				<div class="thead">
-					<strong>{where(t)}</strong>
-					<span>#{t.number} · {m} min</span>
+					<div>
+						<strong>{where(t)}</strong>
+						<small>#{t.number}</small>
+					</div>
+					<span class="timer">{m} min</span>
 				</div>
 				<ul class="items">
 					{#each t.lines as l, i (i)}
 						<li>
-							<b>{l.qty}×</b>
+							<b class="q">{l.qty}×</b>
 							{l.name}
 							{#if l.note}<em class="note">{l.note}</em>{/if}
 						</li>
@@ -177,33 +180,49 @@
 		background: var(--cream);
 		color: var(--ink);
 		overflow: hidden;
-		box-shadow: inset 0 6px 0 var(--green);
 	}
-	.ticket.warn {
-		box-shadow: inset 0 6px 0 var(--mustard);
-	}
+	/* Age shows in the timer chip; a late ticket also gets a thin red outline. */
 	.ticket.late {
-		box-shadow: inset 0 6px 0 var(--brand);
+		box-shadow: 0 0 0 2px var(--brand);
+	}
+	.timer {
+		align-self: flex-start;
+		padding: 3px 10px;
+		border-radius: 999px;
+		background: #e3f6ec;
+		color: #1f7a45;
+		font-size: 0.8125rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+	}
+	.warn .timer {
+		background: #fff1c2;
+		color: #7a5a00;
+	}
+	.late .timer {
+		background: var(--accent-soft);
+		color: var(--brand);
 	}
 	.thead {
 		display: flex;
 		justify-content: space-between;
-		align-items: baseline;
+		align-items: flex-start;
 		gap: 8px;
 		padding: 16px 14px 8px;
 	}
 	.thead strong {
-		font: 800 1.375rem var(--display);
-		text-transform: uppercase;
+		display: block;
+		font: 700 1.25rem var(--sans);
+		letter-spacing: -0.01em;
 	}
-	.thead span {
+	.thead small {
 		color: var(--muted);
-		font-weight: 700;
-		font-size: 0.875rem;
-		font-variant-numeric: tabular-nums;
+		font-size: 0.8125rem;
+		font-weight: 500;
 	}
-	.late .thead span {
-		color: var(--brand);
+	.q {
+		color: var(--muted);
+		font-weight: 600;
 	}
 	.items {
 		list-style: none;
@@ -214,12 +233,14 @@
 		font-size: 1.125rem;
 	}
 	.bump {
-		min-height: 56px;
+		min-height: 52px;
+		margin: 4px 12px 12px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
 		border: 0;
+		border-radius: 12px;
 		background: var(--black);
 		color: var(--cream);
 		font: 800 1.0625rem var(--sans);

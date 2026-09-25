@@ -447,35 +447,47 @@
 		text-decoration: none;
 	}
 	.chips strong {
-		font-size: 1.5rem;
+		font-size: 1.375rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
 	}
 	.chips a.urgent {
-		background: var(--brand);
-		color: var(--cream);
+		background: var(--accent-soft);
+		color: var(--brand);
 	}
+	/* Upcoming bookings: plain rows split by hairlines, not boxes. */
 	.bookings {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 		display: grid;
-		gap: 8px;
 	}
 	.bookings li {
 		display: grid;
-		padding: 10px 12px;
-		border-radius: 10px;
-		background: var(--soft);
-		font-size: 0.9375rem;
+		gap: 2px;
+		padding: 10px 0;
+		border-top: 1px solid var(--line);
+		font-size: 0.875rem;
+		color: var(--muted);
+	}
+	.bookings li:first-child {
+		border-top: 0;
+		padding-top: 0;
 	}
 	.when {
-		font-weight: 700;
+		color: var(--ink);
+		font-weight: 600;
 	}
 	.wait {
 		justify-self: start;
 		margin-top: 4px;
-		color: var(--brand);
-		font-size: 0.8125rem;
+		padding: 2px 8px;
+		border-radius: 999px;
+		background: #fff1c2;
+		color: #7a5a00;
+		font-size: 0.75rem;
 		font-weight: 700;
+		text-decoration: none;
 	}
 	.top {
 		list-style: none;
@@ -490,15 +502,12 @@
 		gap: 12px;
 	}
 	.rank {
-		display: grid;
-		place-items: center;
 		flex: none;
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		background: var(--soft);
-		font-weight: 800;
+		width: 20px;
+		color: var(--muted);
 		font-size: 0.8125rem;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
 	}
 	.bar-wrap {
 		flex: 1;
@@ -509,7 +518,7 @@
 		display: flex;
 		justify-content: space-between;
 		gap: 10px;
-		font-weight: 600;
+		font-weight: 500;
 	}
 	.num {
 		color: var(--muted);
@@ -519,7 +528,7 @@
 		white-space: nowrap;
 	}
 	.meter {
-		height: 8px;
+		height: 6px;
 		border-radius: 99px;
 		background: var(--soft);
 	}

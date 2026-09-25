@@ -469,6 +469,34 @@
 		border-radius: 16px;
 		background: var(--cream);
 	}
+	/* Links inside detail lists read as text; they underline on hover. */
+	main :global(.card dd a) {
+		color: var(--ink);
+		text-decoration: none;
+	}
+	main :global(.card dd a:hover) {
+		color: var(--brand);
+		text-decoration: underline;
+	}
+	/* Inside cards, headings label the content rather than shout: sentence case, modest size. */
+	main :global(.card h2),
+	main :global(.card h3),
+	main :global(dialog h2) {
+		font-family: var(--sans);
+		font-stretch: normal;
+		letter-spacing: 0;
+		line-height: 1.3;
+		text-transform: none;
+	}
+	main :global(.card h2) {
+		font-size: 1.0625rem;
+		font-weight: 700;
+	}
+	main :global(.card h3) {
+		color: var(--muted);
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
 	main :global(.card-head) {
 		display: flex;
 		flex-wrap: wrap;

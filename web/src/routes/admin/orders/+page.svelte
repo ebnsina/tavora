@@ -163,9 +163,9 @@
 		flex-direction: column;
 		gap: 16px;
 	}
-	/* New orders: an accent stripe, not a heavy frame. */
+	/* New orders: a thin tinted outline around the whole card, plus the badge. */
 	.fresh {
-		box-shadow: inset 4px 0 0 var(--brand);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 45%, transparent);
 	}
 	.head {
 		display: flex;

@@ -102,7 +102,9 @@
 	}
 	h2 {
 		margin: 0;
-		font-size: 1.375rem;
+		font: 700 1.25rem var(--sans);
+		text-transform: none;
+		letter-spacing: -0.01em;
 	}
 	.x {
 		display: grid;
