@@ -53,7 +53,11 @@
 		{ text: site.slogans[1], tone: 'black' }
 	]);
 	const tilt = [-3, 2, -2, 3];
-	const rings = [230, 186, 142];
+	// Whole repeats per ring, so where the text meets its start lands on a separator.
+	const rings = [
+		{ rad: 226, size: 46, n: 6, tone: 'black' },
+		{ rad: 180, size: 38, n: 5, tone: 'red' }
+	];
 
 	const ogImage = $derived(
 		site.seo.image.startsWith('/uploads/')
@@ -175,36 +179,30 @@
 		<div class="spin" aria-hidden="true">
 			<svg viewBox="0 0 500 500">
 				<defs>
-					{#each rings as rad (rad)}
+					{#each rings as { rad } (rad)}
 						<path
 							id="ring{rad}"
 							d="M250 {250 - rad}a{rad} {rad} 0 1 1 0 {2 * rad}a{rad} {rad} 0 1 1 0 {-2 * rad}"
 						/>
 					{/each}
-					<clipPath id="plate"><circle cx="250" cy="250" r="96" /></clipPath>
+					<clipPath id="plate"><circle cx="250" cy="250" r="118" /></clipPath>
 				</defs>
-				{#each rings as rad, i (rad)}
+				{#each rings as { rad, size, n, tone }, i (rad)}
 					<g
-						class="ring"
-						style="--t: {40 + i * 12}s; animation-direction: {i % 2 ? 'reverse' : 'normal'}"
+						class="ring {tone}"
+						style="--t: {44 + i * 14}s; animation-direction: {i % 2 ? 'reverse' : 'normal'}"
 					>
-						<text style="font-size: {50 - i * 8}px">
-							<textPath
-								href="#ring{rad}"
-								textLength={2 * Math.PI * rad - 2}
-								lengthAdjust="spacingAndGlyphs"
-							>
-								{r.name.toUpperCase().repeat(7 - i)}
-							</textPath>
-						</text>
+						<!-- prettier-ignore -->
+						<text style="font-size: {size}px"><textPath href="#ring{rad}" textLength={2 * Math.PI * rad} lengthAdjust="spacingAndGlyphs">{#each { length: n }, k (k)}{r.name.toUpperCase()}<tspan class="sep">&nbsp;✺&nbsp;</tspan>{/each}</textPath></text>
 					</g>
 				{/each}
+				<circle class="plate-rim" cx="250" cy="250" r="126" />
 				<image
 					href={asset(site.story.image)}
-					x="154"
-					y="154"
-					width="192"
-					height="192"
+					x="132"
+					y="132"
+					width="236"
+					height="236"
 					preserveAspectRatio="xMidYMid slice"
 					clip-path="url(#plate)"
 				/>
@@ -664,6 +662,18 @@
 		font-stretch: 85%;
 		fill: var(--black);
 	}
+	.ring.red text,
+	.ring .sep {
+		fill: var(--brand);
+	}
+	.ring.red .sep {
+		fill: var(--black);
+	}
+	.plate-rim {
+		fill: var(--cream);
+		stroke: var(--black);
+		stroke-width: 5;
+	}
 	@keyframes turn {
 		to {
 			rotate: 360deg;
@@ -686,7 +696,7 @@
 	}
 	.s2 {
 		top: 52%;
-		left: -8%;
+		left: -3%;
 		rotate: -14deg;
 		animation-delay: -1s;
 	}

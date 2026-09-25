@@ -4,6 +4,7 @@
 
 ### Website
 - Open or closed now shows on a sign hanging over the shop door, with today's closing or next opening time, instead of a badge above the shop.
+- Story section: the spinning name rings are separated by stars, alternate black and red, and no longer overlap where they join; the dish photo is bigger with a plate rim.
 - The "Hot. Fresh. Yours." slogan on the building is now in capitals.
 
 ### Point of sale
