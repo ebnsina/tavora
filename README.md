@@ -50,7 +50,18 @@ pnpm dev
 
 Open http://localhost:5173 for the website and http://localhost:5173/admin to sign in with the email and password from step 2.
 
-### 4. Optional: the product site and docs
+### 4. Optional: the customer phone app
+
+Install **Expo Go** on your phone (App Store or Play Store). Then:
+
+```sh
+cd mobile
+cp .env.example .env    # on a real phone, change localhost to your computer's network address, e.g. http://192.168.0.10:8080
+pnpm install
+pnpm start              # scan the QR code with your phone
+```
+
+### 5. Optional: the product site and docs
 
 In a third terminal:
 
@@ -85,6 +96,7 @@ Every screen has a short guide in the docs (`/docs` on the product site): taking
 
 - `api/`: Go, PostgreSQL and sqlc. Database changes (migrations) run by themselves when the server starts. Tests: `cd api && go test ./...`
 - `web/`: SvelteKit on Node. The public website, the dashboard and the till.
+- `mobile/`: Expo (React Native). The customer phone app. It reads the same public API as the website and shares its rules through `web/src/lib/shared.ts`.
 - `marketing/`: SvelteKit, built to plain HTML files. The one-page product site and the docs.
 
 Project conventions and gotchas are in [CLAUDE.md](CLAUDE.md); every user-facing change is in [CHANGELOG.md](CHANGELOG.md).
@@ -97,6 +109,7 @@ Each app refuses to start (or build) if a setting is missing, so nothing silentl
 | --- | --- |
 | `api` | `DATABASE_URL`, `ADDR`, `CORS_ORIGIN`, `UPLOAD_DIR` |
 | `web` | `PUBLIC_API_URL`, `PUBLIC_HELP_URL` |
+| `mobile` | `EXPO_PUBLIC_API_URL` |
 | `marketing` | `PUBLIC_SITE_URL`, `PUBLIC_WHATSAPP`, `PUBLIC_EMAIL`, `PUBLIC_DEMO_URL` |
 
 The product site builds to `marketing/build`. Serve it with any web server and send unknown paths to `404.html`.

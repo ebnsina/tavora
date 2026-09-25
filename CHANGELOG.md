@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Customer app (first step)
+- New phone app for customers (`mobile/`, Expo): shows the restaurant, whether it's open now, and the full menu with prices and sold-out dishes. Pull down to refresh. Ordering comes next.
+
 ### Tabs, sidebar, colour and kitchen
 - Page tabs sit on a thin line: the open tab gets a soft tint and brand-coloured text, and one underline slides between tabs.
 - Sidebar: the current page keeps its solid brand row and gains a short bar on the sidebar's edge.
