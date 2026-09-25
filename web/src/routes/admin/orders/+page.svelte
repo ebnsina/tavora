@@ -4,7 +4,10 @@
 		ArrowRight02Icon,
 		Call02Icon,
 		Cancel01Icon,
-		Location01Icon
+		Location01Icon,
+		Motorbike02Icon,
+		ShoppingBag01Icon,
+		TableRoundIcon
 	} from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
@@ -50,6 +53,8 @@
 		return flow[o.status] ?? null;
 	}
 
+	const kinds = { delivery: Motorbike02Icon, pickup: ShoppingBag01Icon, dine_in: TableRoundIcon };
+
 	const ago = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 	const since = (iso: string) => {
 		const mins = Math.round((new Date(iso).getTime() - Date.now()) / 60_000);
@@ -88,7 +93,8 @@
 			{@const step = next(o)}
 			<li class="card order" class:fresh={o.status === 'new'}>
 				<header class="head">
-					<div>
+					<span class="kind {o.status}"><HugeiconsIcon icon={kinds[o.mode]} size={22} /></span>
+					<div class="id">
 						<a class="num" href="/admin/orders/{o.id}">TV-{o.number}</a>
 						<p class="meta">
 							{{ delivery: 'Delivery', pickup: 'Pickup', dine_in: 'Dine-in' }[o.mode]} · {since(
@@ -110,10 +116,13 @@
 						</p>{/if}
 				</div>
 
+				<!-- Torn-docket dividers, matching the kitchen screen. -->
+				<div class="tear" aria-hidden="true"></div>
+
 				<ul class="lines">
 					{#each o.items as l (l.id)}
 						<li>
-							<span class="qty">{l.qty}×</span><span class="name">{l.name}</span><span
+							<span class="qty">{l.qty}</span><span class="name">{l.name}</span><span
 								>{price(l.amount)}</span
 							>
 						</li>
@@ -122,6 +131,7 @@
 				{#if o.note}<p class="note">{o.note}</p>{/if}
 
 				<!-- Footer sits at the bottom of every card: total, then one row of actions. -->
+				<div class="tear foot-tear" aria-hidden="true"></div>
 				<footer class="foot">
 					<p class="total"><span>Cash total</span><strong>{price(o.total)}</strong></p>
 					<form method="POST" action="?/status" use:enhance class="acts">
@@ -169,13 +179,44 @@
 	}
 	.head {
 		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
+		align-items: center;
 		gap: 12px;
+	}
+	.id {
+		flex: 1;
+		min-width: 0;
+	}
+	.kind {
+		display: grid;
+		flex: none;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		border-radius: 14px;
+		background: var(--soft);
+		color: var(--muted);
+	}
+	.kind.new {
+		background: var(--accent-soft);
+		color: var(--brand);
+	}
+	.kind.accepted,
+	.kind.preparing {
+		background: #fff1c2;
+		color: #7a5a00;
+	}
+	.kind.ready,
+	.kind.completed {
+		background: #e3f6ec;
+		color: #1f7a45;
+	}
+	.kind.out_for_delivery {
+		background: #e3ecfb;
+		color: #1d4ed8;
 	}
 	.num {
 		color: var(--ink);
-		font: 700 1.125rem var(--sans);
+		font: 700 1.125rem var(--code);
 		text-decoration: none;
 	}
 	.num:hover {
@@ -189,6 +230,7 @@
 	/* Status: a soft tint of its colour, never a loud block. */
 	.badge {
 		flex: none;
+		align-self: flex-start;
 		padding: 3px 10px;
 		border-radius: 999px;
 		background: var(--soft);
@@ -247,11 +289,48 @@
 	}
 	.lines li {
 		display: grid;
-		grid-template-columns: 28px 1fr auto;
-		gap: 8px;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		gap: 10px;
 	}
 	.qty {
-		color: var(--muted);
+		display: grid;
+		place-items: center;
+		min-width: 26px;
+		height: 26px;
+		padding: 0 5px;
+		border-radius: 8px;
+		background: var(--black);
+		color: var(--mustard);
+		font-size: 0.875rem;
+		font-weight: 800;
+	}
+	.name {
+		font-weight: 600;
+	}
+	/* Dashed line with half-circle bites at the card's edges (card padding is 20px). */
+	.tear {
+		position: relative;
+		border-top: 2px dashed var(--line);
+	}
+	.tear::before,
+	.tear::after {
+		content: '';
+		position: absolute;
+		top: -10px;
+		width: 18px;
+		height: 18px;
+		border-radius: 50%;
+		background: var(--soft);
+	}
+	.tear::before {
+		left: -29px;
+	}
+	.tear::after {
+		right: -29px;
+	}
+	.foot-tear {
+		margin-top: auto;
 	}
 	.note {
 		margin: 0;
@@ -263,8 +342,6 @@
 	.foot {
 		display: grid;
 		gap: 12px;
-		margin-top: auto;
-		padding-top: 16px;
 	}
 	.total {
 		display: flex;
