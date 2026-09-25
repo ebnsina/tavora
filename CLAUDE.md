@@ -5,7 +5,7 @@ Website + dashboard + till for restaurants in Bangladesh. Single restaurant for 
 ## Layout
 - `api/` Go (net/http mux), pgx, sqlc, goose migrations embedded and run at boot. Queries in `db/query.sql` → `sqlc generate` → `store/`. Handlers: `api.go` (public), `admin.go` (CMS, VAT, theme), `auth.go` (sessions, PIN, staff), `pos.go` (till, kitchen), `reports.go` (alerts, end of day), `stats.go`, `rules.go` (pricing, VAT, opening hours).
 - `web/` SvelteKit 2 + Svelte 5 runes, adapter-node. Public site at `/`, dashboard `/admin`, till `/admin/pos` (client-only, own layout `+layout@.svelte`, offline store `src/lib/offline.svelte.ts`).
-- `marketing/` SvelteKit static site: home, features, pricing (`src/lib/pricing.ts`), help (`src/lib/docs.ts`). Screenshots in `static/shots/*.webp`.
+- `marketing/` SvelteKit static site: one page `/` (hero, features, pricing from `src/lib/pricing.ts`) and docs `/docs` (content in `src/lib/docs.ts`, own layout with search, sidebar, on-this-page). Its design uses the tokens in `marketing/src/app.css` (type scale `--t-*`, spacing `--s1..s9`, PolySans + Geist Mono); icons 16 inline, 20 in buttons, 24 in tiles. Screenshots in `static/shots/*.webp`.
 
 ## Rules that bite
 - Money is integer poisha (৳1 = 100). VAT rate is basis points. Format with `Intl` only.

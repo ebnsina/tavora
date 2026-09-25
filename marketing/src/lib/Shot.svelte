@@ -1,37 +1,28 @@
 <script lang="ts">
-	// A real screenshot of the app in a browser-window frame.
-	let { name, alt }: { name: string; alt: string } = $props();
+	// A real screenshot of the app.
+	let { name, alt, caption }: { name: string; alt: string; caption?: string } = $props();
 </script>
 
 <figure class="shot">
-	<div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
 	<img src="/shots/{name}.webp" {alt} width="1280" height="800" loading="lazy" />
+	{#if caption}<figcaption>{caption}</figcaption>{/if}
 </figure>
 
 <style>
 	.shot {
 		margin: 0;
-		overflow: hidden;
-		border-radius: 16px;
-		background: var(--black);
-		box-shadow:
-			0 0 0 2px var(--black),
-			8px 8px 0 var(--black);
-	}
-	.bar {
-		display: flex;
-		gap: 6px;
-		padding: 10px 12px;
-	}
-	.bar i {
-		width: 10px;
-		height: 10px;
-		border-radius: 50%;
-		background: var(--cream);
-		opacity: 0.5;
 	}
 	img {
 		width: 100%;
-		height: auto;
+		border-radius: 12px;
+		box-shadow:
+			0 0 0 1px var(--line),
+			0 24px 48px -24px rgb(40 20 0 / 0.25);
+	}
+	figcaption {
+		margin-top: var(--s3);
+		color: var(--muted);
+		font-size: var(--t-xs);
+		text-align: center;
 	}
 </style>

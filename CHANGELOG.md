@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Product site and docs, redesigned
+- Features and pricing are now one short page; the separate Features and Pricing pages are gone.
+- New design: one type scale and spacing scale, sentence-case headings, quiet borders, consistent icon sizes, Geist Mono for labels and prices.
+- Docs moved to `/docs` with a real docs layout: search (press /), grouped sidebar, "On this page", numbered steps, tip boxes, previous/next. Button and screen names show in Geist Mono.
+
 ### Product site and help centre
 - New `marketing/` site: home, features with real screenshots, pricing (one-time setup, two monthly plans, optional care plan) and our promises.
 - Help centre with 16 plain-language guides, one per screen, searchable, with screenshots and numbered steps.

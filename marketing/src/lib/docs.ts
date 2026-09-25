@@ -23,24 +23,24 @@ export const guides: Guide[] = [
 				heading: 'Signing in',
 				text: 'Open your website address and add /admin at the end, for example yourrestaurant.com/admin.',
 				steps: [
-					'Owner: tap the Owner tab, type your email and password, and tap Sign in.',
-					'Staff: stay on the Staff tab and tap your 6-digit PIN on the number pad. You go straight to the till.',
+					'Owner: tap the `Owner` tab, type your email and password, and tap `Sign in`.',
+					'Staff: stay on the `Staff` tab and tap your 6-digit PIN on the number pad. You go straight to the till.',
 					'Five wrong passwords, or too many wrong PINs, pause sign-in for 15 minutes. That keeps guessers out.'
 				]
 			},
 			{
 				heading: 'What each menu item does',
 				steps: [
-					'Point of sale (yellow button): the till. Tables, tickets, kitchen and payments.',
-					'Overview: how the restaurant is doing. Money in, number of orders, best sellers.',
-					'Online orders: orders from your website. Accept them and move them along.',
-					'Table bookings: people who want a table. Confirm or decline.',
-					'End of day: what should be in the cash drawer tonight, and who took what.',
-					'Menu: your dishes, prices, photos, and the Sold out switch.',
-					'Tables: the tables the till shows on its floor screen.',
-					'Staff: the people who use the till, each with their own PIN.',
-					'Hours & details: opening hours, phone, delivery fee, VAT and your brand colour.',
-					'Website text: every word on your website.'
+					'`Point of sale` (yellow button): the till. Tables, tickets, kitchen and payments.',
+					'`Overview`: how the restaurant is doing. Money in, number of orders, best sellers.',
+					'`Online orders`: orders from your website. Accept them and move them along.',
+					'`Table bookings`: people who want a table. Confirm or decline.',
+					'`End of day`: what should be in the cash drawer tonight, and who took what.',
+					'`Menu`: your dishes, prices, photos, and the `Sold out` switch.',
+					'`Tables`: the tables the till shows on its floor screen.',
+					'`Staff`: the people who use the till, each with their own PIN.',
+					'`Hours & details`: opening hours, phone, delivery fee, VAT and your brand colour.',
+					'`Website text`: every word on your website.'
 				]
 			},
 			{
@@ -68,15 +68,15 @@ export const guides: Guide[] = [
 				steps: [
 					'The four cards show revenue, number of orders, average order and cancelled orders.',
 					'The small arrow under each number compares with the same number of days just before.',
-					'Revenue by day shows one bar per day. Tap Table to see the same numbers as a list.',
+					'Revenue by day shows one bar per day. Tap `Table` to see the same numbers as a list.',
 					'Right now shows orders waiting for you and the next table bookings.'
 				]
 			},
 			{
 				heading: 'Choosing the days',
 				steps: [
-					'Tap Today, 7 days, 30 days or 90 days.',
-					'Or pick a start and end date and tap Show.'
+					'Tap `Today`, `7 days`, `30 days` or `90 days`.',
+					'Or pick a start and end date and tap `Show`.'
 				]
 			}
 		]
@@ -93,19 +93,19 @@ export const guides: Guide[] = [
 				text: 'New orders have a red border. The customer also gets a button to send the order to your WhatsApp.',
 				steps: [
 					'Check the dishes, name, phone and address.',
-					'Tap Accept. The order appears on the kitchen screen straight away.',
-					'Tap Start cooking, then Mark ready.',
-					'For delivery, tap Send with rider, then Delivered & paid when the rider comes back with the cash.',
-					'For pickup, tap Handed over when the customer collects.'
+					'Tap `Accept`. The order appears on the kitchen screen straight away.',
+					'Tap `Start cooking`, then `Mark ready`.',
+					'For delivery, tap `Send with rider`, then `Delivered & paid` when the rider comes back with the cash.',
+					'For pickup, tap `Handed over` when the customer collects.'
 				],
 				tips: [
-					'Can’t make it? Tap Cancel and call the customer. Their number is a tap away.',
+					'Can’t make it? Tap `Cancel` and call the customer. Their number is a tap away.',
 					'The tabs at the top filter by stage. Active shows everything still in progress.'
 				]
 			},
 			{
 				heading: 'Order details',
-				text: 'Tap Details (or the order number) to see everything about one order: each dish, VAT, who took payment, and notes. Tap Print receipt to print it.',
+				text: 'Tap `Details` (or the order number) to see everything about one order: each dish, VAT, who took payment, and notes. Tap `Print receipt` to print it.',
 				tips: ['Orders from the till show here too, so you can look up any bill later.']
 			}
 		]
@@ -121,13 +121,13 @@ export const guides: Guide[] = [
 				heading: 'Replying to a booking',
 				steps: [
 					'Bookings are grouped by day. Waiting ones are highlighted.',
-					'Tap Confirm or Decline. Call or WhatsApp the guest to let them know.',
-					'Plans changed? Tap Cancel on a confirmed booking.'
+					'Tap `Confirm` or `Decline`. Call or WhatsApp the guest to let them know.',
+					'Plans changed? Tap `Cancel` on a confirmed booking.'
 				]
 			},
 			{
 				heading: 'Knowing your regulars',
-				text: 'Tap Details on a booking to see the guest’s other bookings and how often they order, found by their phone number.'
+				text: 'Tap `Details` on a booking to see the guest’s other bookings and how often they order, found by their phone number.'
 			}
 		]
 	},
@@ -142,9 +142,9 @@ export const guides: Guide[] = [
 				heading: 'Closing up',
 				steps: [
 					'Take payment or void any ticket that is still open. A red warning tells you if any are left.',
-					'Open End of day. The first card shows the cash that should be in the drawer.',
+					'Open `End of day`. The first card shows the cash that should be in the drawer.',
 					'Count the cash and compare.',
-					'Tap Print. You get a clean A4 sheet with space to write what you counted and to sign.'
+					'Tap `Print`. You get a clean A4 sheet with space to write what you counted and to sign.'
 				]
 			},
 			{
@@ -170,7 +170,7 @@ export const guides: Guide[] = [
 			{
 				heading: 'Start a ticket',
 				steps: [
-					'Tap Point of sale. You see every table. Free tables are plain; busy ones show the bill so far.',
+					'Tap `Point of sale`. You see every table. Free tables are plain; busy ones show the bill so far.',
 					'Tap a free table, or New takeaway for someone at the counter.',
 					'Tap dishes to add them. Tap again to add one more. Use + and − on the right to change amounts.',
 					'Type the customer’s name if you like; it’s optional.'
@@ -179,9 +179,9 @@ export const guides: Guide[] = [
 			{
 				heading: 'Notes for the cook',
 				steps: [
-					'Tap + Note under a dish.',
+					'Tap `+ Note` under a dish.',
 					'Tap a quick note like No onion or Extra spicy, or type your own.',
-					'Tap Save note. It prints on the kitchen ticket and shows on the kitchen screen.'
+					'Tap `Save note`. It prints on the kitchen ticket and shows on the kitchen screen.'
 				],
 				tips: [
 					'A note can only change while some of that dish hasn’t gone to the kitchen yet. After that, tell the cook.'
@@ -189,7 +189,7 @@ export const guides: Guide[] = [
 			},
 			{
 				heading: 'Send to the kitchen',
-				text: 'Tap Send to kitchen. Only dishes the kitchen doesn’t have yet are sent, and a kitchen ticket prints. Dishes already in the kitchen can’t be quietly taken off the bill.'
+				text: 'Tap `Send to kitchen`. Only dishes the kitchen doesn’t have yet are sent, and a kitchen ticket prints. Dishes already in the kitchen can’t be quietly taken off the bill.'
 			}
 		]
 	},
@@ -203,17 +203,17 @@ export const guides: Guide[] = [
 			{
 				heading: 'Take payment',
 				steps: [
-					'Tap Pay on the ticket.',
-					'Pick Cash, Card, bKash or Nagad.',
+					'Tap `Pay` on the ticket.',
+					'Pick `Cash`, `Card`, `bKash` or `Nagad`.',
 					'Cash: tap the note the customer gave you. The change to give back shows in green.',
 					'bKash or Nagad: type the transaction ID from the customer’s phone. It’s required, so you can check it later.',
-					'Tap Take … and close. The receipt prints.'
+					'Tap `Take … and close`. The receipt prints.'
 				]
 			},
 			{
 				heading: 'Split the bill',
 				steps: [
-					'Tap ÷2, ÷3 or ÷4, or type an amount.',
+					'Tap `÷2`, `÷3` or `÷4`, or type an amount.',
 					'Take the first payment. The rest stays open.',
 					'Repeat until nothing is left; each person can pay a different way.'
 				]
@@ -221,9 +221,9 @@ export const guides: Guide[] = [
 			{
 				heading: 'Tips, discounts and voids',
 				steps: [
-					'Tip: type it in the Tip box when paying. It’s kept apart from the bill.',
-					'Discount: tap Discount on the ticket and type the amount off.',
-					'Void: tap Void to cancel a ticket nobody has paid anything on. The owner sees who voided it.'
+					'Tip: type it in the `Tip` box when paying. It’s kept apart from the bill.',
+					'Discount: tap `Discount` on the ticket and type the amount off.',
+					'Void: tap `Void` to cancel a ticket nobody has paid anything on. The owner sees who voided it.'
 				]
 			}
 		]
@@ -238,10 +238,10 @@ export const guides: Guide[] = [
 			{
 				heading: 'Using it',
 				steps: [
-					'Put a tablet in the kitchen and open Point of sale, then Kitchen.',
+					'Put a tablet in the kitchen and open `Point of sale`, then `Kitchen`.',
 					'Each card is one ticket: table or takeaway, dishes, and notes in red.',
 					'The timer turns yellow at 10 minutes and red at 20.',
-					'Tap Done when it’s ready. It moves to Finished in the last 30 minutes; tap Bring back if you tapped Done by mistake.'
+					'Tap `Done` when it’s ready. It moves to Finished in the last 30 minutes; tap `Bring back` if you tapped Done by mistake.'
 				]
 			}
 		]
@@ -256,21 +256,21 @@ export const guides: Guide[] = [
 			{
 				heading: 'Adding staff (owner)',
 				steps: [
-					'Open Staff and tap Add staff.',
+					'Open `Staff` and tap `Add staff`.',
 					'Type their name and a 6-digit PIN they will remember. Two people can’t share a PIN.',
 					'Tell them the PIN in person. It can’t be looked up later, only changed.'
 				]
 			},
 			{
 				heading: 'Handing over the till',
-				steps: ['Tap Switch staff at the top of the till.', 'The next person taps their PIN.'],
+				steps: ['Tap `Switch staff` at the top of the till.', 'The next person taps their PIN.'],
 				tips: [
 					'Switch staff waits until everything on the tablet is saved, so sales are never credited to the wrong person.'
 				]
 			},
 			{
 				heading: 'Someone leaves',
-				text: 'Open Staff, tap Edit on their name, then Remove. They’re signed out straight away. Their past sales stay in your reports.'
+				text: 'Open `Staff`, tap `Edit` on their name, then `Remove`. They’re signed out straight away. Their past sales stay in your reports.'
 			}
 		]
 	},
@@ -282,12 +282,12 @@ export const guides: Guide[] = [
 		sections: [
 			{
 				heading: 'What still works',
-				text: 'Everything at the till: opening tables, adding dishes, sending to the kitchen, taking payment and printing. The top bar says No internet and counts the changes waiting to be sent.'
+				text: 'Everything at the till: opening tables, adding dishes, sending to the kitchen, taking payment and printing. The top bar says `No internet` and counts the changes waiting to be sent.'
 			},
 			{
 				heading: 'When it comes back',
 				steps: [
-					'Changes send by themselves in the order they happened. The top bar says All saved when done.',
+					'Changes send by themselves in the order they happened. The top bar says `All saved` when done.',
 					'If something couldn’t be saved, for example two tablets opened the same table, the top bar turns red. Tap it to see what happened and what to do.'
 				],
 				tips: [
@@ -306,16 +306,16 @@ export const guides: Guide[] = [
 		sections: [
 			{
 				heading: 'Sold out for today',
-				text: 'Tap Sold out next to a dish. It disappears from online ordering and greys out on the till. Tap Back on menu when it’s available again.'
+				text: 'Tap `Sold out` next to a dish. It disappears from online ordering and greys out on the till. Tap `Back on menu` when it’s available again.'
 			},
 			{
 				heading: 'Add or change a dish',
 				steps: [
-					'Tap Add a dish to a category, or Edit on a dish.',
+					'Tap `Add a dish` to a category, or Edit on a dish.',
 					'Fill in the name, price and a short description.',
-					'Tap Add photo to upload a picture (JPG, PNG or WebP, up to 5 MB).',
+					'Tap `Add photo` to upload a picture (JPG, PNG or WebP, up to 5 MB).',
 					'Tick labels like Most loved or Spicy if they fit.',
-					'Tap Save dish.'
+					'Tap `Save dish`.'
 				],
 				tips: [
 					'Price changes don’t touch bills already open; they keep the price they were rung up at.'
@@ -323,7 +323,7 @@ export const guides: Guide[] = [
 			},
 			{
 				heading: 'Categories',
-				text: 'Tap Add category at the top, or Rename on a category. An empty category can be deleted.'
+				text: 'Tap `Add category` at the top, or Rename on a category. An empty category can be deleted.'
 			}
 		]
 	},
@@ -337,7 +337,7 @@ export const guides: Guide[] = [
 			{
 				heading: 'Setting up tables',
 				steps: [
-					'Tap Add table.',
+					'Tap `Add table`.',
 					'Give it a short name people say out loud, like T1 or Rooftop 2.',
 					'Set the number of seats and, if you like, the area (Window, Family, Rooftop).'
 				],
@@ -374,7 +374,7 @@ export const guides: Guide[] = [
 			},
 			{
 				heading: 'Brand colour',
-				text: 'Pick one of eight colours, or your own, and tap Save colour. Your website, dashboard and till change straight away. Colours too light to read text on are not allowed.'
+				text: 'Pick one of eight colours, or your own, and tap `Save colour`. Your website, dashboard and till change straight away. Colours too light to read text on are not allowed.'
 			}
 		]
 	},
@@ -390,7 +390,7 @@ export const guides: Guide[] = [
 				steps: [
 					'Pick a part of the website on the left, like Top of the page or Reviews.',
 					'Change the words in the boxes.',
-					'Tap Save changes. The website updates immediately.'
+					'Tap `Save changes`. The website updates immediately.'
 				],
 				tips: [
 					'A red dot on a tab means something there needs fixing before it can save.',
@@ -416,10 +416,10 @@ export const guides: Guide[] = [
 			{
 				heading: 'What prints',
 				steps: [
-					'Kitchen ticket: when you tap Send to kitchen.',
-					'Receipt: when a bill is fully paid, or any time with the Bill button.',
-					'Receipt for any past order: Online orders → Details → Print receipt.',
-					'End of day: Print on the End of day page gives a clean A4 sheet.'
+					'Kitchen ticket: when you tap `Send to kitchen`.',
+					'Receipt: when a bill is fully paid, or any time with the `Bill` button.',
+					'Receipt for any past order: `Online orders` → `Details` → `Print receipt`.',
+					'End of day: Print on the `End of day` page gives a clean A4 sheet.'
 				],
 				tips: [
 					'Only the receipt or report prints: no menus, buttons or colours, just black on white.'
@@ -443,7 +443,7 @@ export const guides: Guide[] = [
 			},
 			{
 				heading: 'A staff member forgot their PIN',
-				text: 'Owner: open Staff, tap Edit on their name, type a new PIN and save.'
+				text: 'Owner: open `Staff`, tap `Edit` on their name, type a new PIN and save.'
 			},
 			{
 				heading: 'The website says Closed but we’re open',
@@ -456,3 +456,10 @@ export const guides: Guide[] = [
 		]
 	}
 ];
+
+export const slugify = (s: string) =>
+	s
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-|-$/g, '');
+export const plain = (s: string) => s.replaceAll('`', '');

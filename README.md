@@ -4,7 +4,7 @@ Website, dashboard and till (POS) for restaurants in Bangladesh: online orders w
 
 - `api/` — Go + PostgreSQL + sqlc. Migrations run on boot.
 - `web/` — SvelteKit (Node adapter): the restaurant's website, the dashboard (`/admin`) and the till (`/admin/pos`).
-- `marketing/` — SvelteKit (static): the product site (features, pricing) and the help centre (`/help`), with real screenshots in `static/shots/`.
+- `marketing/` — SvelteKit (static): a one-page product site (features and pricing) and the docs (`/docs`), with real screenshots in `static/shots/`.
 
 ## Run locally
 
@@ -20,7 +20,7 @@ cd marketing && cp .env.example .env && pnpm install && pnpm dev   # product sit
 
 Env vars are required; each app refuses to start (or build) without them. API: `DATABASE_URL`, `ADDR`, `CORS_ORIGIN`, `UPLOAD_DIR`. Web: `PUBLIC_API_URL`, `PUBLIC_HELP_URL`. Marketing: `PUBLIC_SITE_URL`, `PUBLIC_WHATSAPP`, `PUBLIC_EMAIL`, `PUBLIC_DEMO_URL`.
 
-Marketing builds to plain files (`pnpm build` → `marketing/build`); serve them with any web server and send unknown paths to `404.html`. Prices live in `marketing/src/lib/pricing.ts`, help guides in `marketing/src/lib/docs.ts`.
+Marketing builds to plain files (`pnpm build` → `marketing/build`); serve them with any web server and send unknown paths to `404.html`. Prices live in `marketing/src/lib/pricing.ts`, docs in `marketing/src/lib/docs.ts` (wrap button and screen names in backticks; they render in Geist Mono).
 
 Tests: `cd api && go test ./...`
 
