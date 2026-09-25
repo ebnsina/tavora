@@ -1276,6 +1276,57 @@
 			text-align: left;
 		}
 	}
+	/* Phones: shapes sized to fit the screen, nothing clipped or piled up. */
+	@media (max-width: 640px) {
+		.spin {
+			width: min(500px, 84%);
+		}
+		.sticker {
+			padding: 5px 12px;
+			font-size: 0.8125rem;
+		}
+		.s1 {
+			right: -8%;
+		}
+		.s2 {
+			left: -8%;
+		}
+		.s3 {
+			right: -2%;
+		}
+		.tawa {
+			opacity: 0.25;
+		}
+		.cuts {
+			gap: 10px;
+		}
+		.cuts img {
+			width: 100%;
+			max-width: 104px;
+			border-width: 4px;
+		}
+		.tag-price {
+			max-width: 110px;
+			margin-top: 8px;
+			padding: 4px 10px;
+			font-size: 0.6875rem;
+			line-height: 1.15;
+			rotate: 0deg;
+		}
+		.slips ul {
+			gap: 18px;
+			padding: 0 28px;
+		}
+		.slip {
+			width: 250px;
+			min-height: 300px;
+			padding: 24px;
+			rotate: calc(var(--r) / 2);
+		}
+		.slip p {
+			font-size: 1.1875rem;
+		}
+	}
 	@media (min-width: 860px) {
 		.courses {
 			columns: 2;

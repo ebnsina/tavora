@@ -406,4 +406,10 @@
 			rotate: 16deg;
 		}
 	}
+	/* Phones: leave room for the side wall, which is drawn past the front. */
+	@media (max-width: 640px) {
+		.building {
+			width: 86%;
+		}
+	}
 </style>

@@ -826,50 +826,67 @@
 			display: none;
 		}
 		main {
-			padding-bottom: calc(96px + env(safe-area-inset-bottom));
+			padding-bottom: calc(112px + env(safe-area-inset-bottom));
 		}
+		/* A floating tab bar: grey icons, the current one on a soft tile with a small pill under it. */
 		.bottom {
 			position: fixed;
-			inset: auto 0 0;
+			inset: auto 12px calc(12px + env(safe-area-inset-bottom));
 			z-index: 40;
 			display: grid;
 			grid-auto-columns: 1fr;
 			grid-auto-flow: column;
-			padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-			border-top: 1px solid var(--line);
-			background: color-mix(in srgb, var(--cream) 94%, transparent);
-			backdrop-filter: blur(12px);
+			gap: 4px;
+			padding: 6px;
+			border-radius: 22px;
+			background: #fffdf6;
+			box-shadow:
+				0 0 0 1px var(--line),
+				0 12px 32px -8px rgb(40 20 0 / 0.22);
 		}
 		.bottom a,
 		.bottom button {
+			position: relative;
 			display: grid;
 			justify-items: center;
 			gap: 2px;
-			padding: 6px 0;
+			padding: 8px 0 12px;
 			border: 0;
-			border-radius: 12px;
+			border-radius: 16px;
 			background: none;
 			color: var(--muted);
 			font: 600 0.6875rem var(--sans);
 			text-decoration: none;
 			cursor: pointer;
+			transition:
+				background 0.2s,
+				color 0.2s;
 		}
 		.bottom [aria-current='page'] {
-			color: var(--brand);
-		}
-		.bottom .till {
+			background: var(--soft);
 			color: var(--ink);
 		}
-		.bottom .till .b-ic {
-			border-radius: 10px;
-			background: var(--mustard);
+		.bottom [aria-current='page']::after {
+			content: '';
+			position: absolute;
+			bottom: 4px;
+			width: 18px;
+			height: 4px;
+			border-radius: 2px;
+			background: var(--brand);
+			animation: pill 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+		}
+		@keyframes pill {
+			from {
+				width: 0;
+			}
 		}
 		.b-ic {
 			position: relative;
 			display: grid;
 			place-items: center;
 			width: 44px;
-			height: 30px;
+			height: 26px;
 		}
 		.b-count {
 			position: absolute;

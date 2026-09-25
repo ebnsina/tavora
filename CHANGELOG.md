@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Phones
+- Dashboard tab bar redesigned: a floating rounded bar with grey icons and labels; the current tab sits on a soft tile with a small red pill under it.
+- Website on phones: the spinning name rings, stickers, food photo circles, review cards and the corner-shop building are sized to fit the screen; nothing is clipped or piled on top of each other.
+- Website footer: the giant name is now a faded background shape.
+
 ### Fewer controls, same power
 - Opening hours: each day has one field ("12:00 PM – 11:00 PM") that opens a two-column picker (when you open, then when you close), and a copy button to use those hours for every open day.
 - Orders: the seven status tabs are now one "Status · Active" filter button.
