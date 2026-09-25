@@ -905,8 +905,11 @@
 		opacity: 0.7;
 	}
 	/* Motion: content eases in; menus and messages don't just blink. */
-	main {
-		view-transition-name: dash-main;
+	/* Not on phones: it would layer the page above the bottom bar and trap sheets under it. */
+	@media (min-width: 760px) {
+		main {
+			view-transition-name: dash-main;
+		}
 	}
 	:global(::view-transition-old(dash-main)),
 	:global(::view-transition-new(dash-main)) {

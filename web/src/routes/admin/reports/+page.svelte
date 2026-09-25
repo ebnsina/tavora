@@ -4,17 +4,23 @@
 		Cancel01Icon,
 		Cash01Icon,
 		PrinterIcon,
-		Search01Icon,
 		UserGroupIcon,
 		Wallet01Icon
 	} from '@hugeicons/core-free-icons';
 	import Tabs from '$lib/admin/Tabs.svelte';
-	import DatePicker from '$lib/admin/DatePicker.svelte';
+	import RangePicker from '$lib/admin/RangePicker.svelte';
+	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import { price } from '$lib/api';
 
 	let { data } = $props();
 	let tab = $state('payments');
+	const bdDay = (n: number) =>
+		new Date(Date.now() - n * 86_400_000).toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+	const presets = [
+		{ key: 'today', label: 'Today', from: bdDay(0), to: bdDay(0) },
+		{ key: 'yesterday', label: 'Yesterday', from: bdDay(1), to: bdDay(1) }
+	];
 	const r = $derived(data.report);
 
 	const names = { cash: 'Cash', card: 'Card', bkash: 'bKash', nagad: 'Nagad' };
@@ -47,10 +53,14 @@
 <div class="screen">
 	<PageHeader title="End of day" sub={long.format(new Date(`${r.date}T00:00`))}>
 		{#snippet actions()}
-			<form method="GET" class="pick">
-				<DatePicker name="date" value={r.date} label="Day" />
-				<button class="btn small"><HugeiconsIcon icon={Search01Icon} size={16} /> Show</button>
-			</form>
+			<RangePicker
+				mode="single"
+				from={r.date}
+				to={r.date}
+				{presets}
+				active={presets.find((p) => p.from === r.date)?.key}
+				onchange={(v) => goto(`?date=${v.from}`)}
+			/>
 			<button class="btn primary small" type="button" onclick={() => print()}
 				><HugeiconsIcon icon={PrinterIcon} size={16} /> Print</button
 			>
@@ -292,11 +302,6 @@
 </article>
 
 <style>
-	.pick {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
 	.tiles {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));

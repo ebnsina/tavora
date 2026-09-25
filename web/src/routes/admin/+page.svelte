@@ -5,11 +5,11 @@
 		ArrowRight02Icon,
 		ArrowUp01Icon,
 		ChartColumnIcon,
-		Search01Icon,
 		Table01Icon
 	} from '@hugeicons/core-free-icons';
 	import ColumnChart from '$lib/admin/ColumnChart.svelte';
-	import DatePicker from '$lib/admin/DatePicker.svelte';
+	import RangePicker from '$lib/admin/RangePicker.svelte';
+	import { goto } from '$app/navigation';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import { price, time } from '$lib/api';
 	import { onMount } from 'svelte';
@@ -120,27 +120,26 @@
 		return total ? { total, parts: parts.map((p) => ({ ...p, share: p.n / total })) } : null;
 	});
 	const topMax = $derived(Math.max(1, ...s.top_items.map((t) => t.qty)));
+	// Quick ranges, counted back from today (Bangladesh time) the same way the server does.
+	const bdDay = (n: number) =>
+		new Date(Date.now() - n * 86_400_000).toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
 	const presets = [
-		['1', 'Today'],
-		['7', '7 days'],
-		['30', '30 days'],
-		['90', '90 days']
+		{ key: '1', label: 'Today', from: bdDay(0), to: bdDay(0) },
+		{ key: '7', label: 'Last 7 days', from: bdDay(6), to: bdDay(0) },
+		{ key: '30', label: 'Last 30 days', from: bdDay(29), to: bdDay(0) },
+		{ key: '90', label: 'Last 90 days', from: bdDay(89), to: bdDay(0) }
 	];
 </script>
 
 <PageHeader title="{greeting}, {first}" aside={clock.format(now)}>
 	{#snippet actions()}
-		<nav class="seg" aria-label="Date range">
-			{#each presets as [v, label] (v)}
-				<a href="?range={v}" aria-current={data.preset === v ? 'true' : undefined}>{label}</a>
-			{/each}
-		</nav>
-		<form class="custom" method="GET">
-			<DatePicker name="from" value={s.from} label="From" max={s.to} />
-			<span aria-hidden="true">–</span>
-			<DatePicker name="to" value={s.to} label="To" />
-			<button class="btn small"><HugeiconsIcon icon={Search01Icon} size={16} /> Show</button>
-		</form>
+		<RangePicker
+			from={s.from}
+			to={s.to}
+			{presets}
+			active={data.preset}
+			onchange={(v) => goto(v.preset ? `?range=${v.preset}` : `?from=${v.from}&to=${v.to}`)}
+		/>
 	{/snippet}
 </PageHeader>
 
@@ -326,7 +325,6 @@
 		border-radius: 12px;
 		background: var(--cream);
 	}
-	.seg a,
 	.seg button {
 		border: 0;
 		background: none;
@@ -334,7 +332,6 @@
 		color: inherit;
 		cursor: pointer;
 	}
-	.seg a,
 	.seg button {
 		padding: 7px 12px;
 		border-radius: 9px;
@@ -378,12 +375,6 @@
 	.days tfoot td {
 		border-bottom: 0;
 		font-weight: 800;
-	}
-	.custom {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 6px;
 	}
 	.tiles {
 		display: grid;

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Date picker
+- One date button replaces the preset tabs, two date boxes and the Show button. It opens presets on the left and a two-month calendar on the right: tap a preset, or click the first day then the last (the range previews as you move). It applies straight away; future days are greyed out and ranges stop at a year.
+- End of day uses the same picker for a single day, with Today and Yesterday.
+- On phones it opens as a bottom sheet with the presets as chips.
+
 ### Phones, tablets and motion
 - Dashboard on phones: a slim top bar, a bottom bar (Overview, Orders, Bookings, Till, More) with waiting counts, and the full menu as a slide-in drawer. On tablets the sidebar becomes an icon rail. Nothing scrolls sideways at 390, 820 or 1024 px.
 - Till on phones: a compact top bar (icons, sync badge with count) and the bill as a sheet that slides up over the menu.
