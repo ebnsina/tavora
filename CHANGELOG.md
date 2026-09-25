@@ -3,7 +3,8 @@
 ## Unreleased
 
 ### Customer app (first step)
-- New phone app for customers (`mobile/`, Expo): shows the restaurant, whether it's open now, and the full menu with prices and sold-out dishes. Pull down to refresh. Ordering comes next.
+- New phone app for customers (`mobile/`, Expo): shows the restaurant, whether it's open now, and the full menu with prices and sold-out dishes. Pull down to refresh.
+- Customer app ordering: add dishes from the menu, change quantities in the cart, then check out with delivery (cash on delivery) or pickup. Shows the delivery fee, free-delivery nudge and VAT the same way as the website; wrong details are outlined in red with a plain explanation. After ordering, one tap sends the order to the restaurant's WhatsApp. Checkout is locked while the restaurant is closed.
 
 ### Tabs, sidebar, colour and kitchen
 - Page tabs sit on a thin line: the open tab gets a soft tint and brand-coloured text, and one underline slides between tabs.
