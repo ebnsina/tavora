@@ -25,5 +25,5 @@ export async function load(event) {
 				(t) => t.id === order.table_id
 			)?.name
 		: null;
-	return { order, table };
+	return { order, table, crumb: `Order TV-${order.number}` };
 }

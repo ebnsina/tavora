@@ -119,9 +119,6 @@
 	.dish-form {
 		display: grid;
 		gap: 16px;
-		padding: 16px;
-		border-radius: 14px;
-		background: var(--soft);
 	}
 	.photo {
 		display: flex;
@@ -162,6 +159,7 @@
 	.fields {
 		display: grid;
 		gap: 12px;
+		align-items: start;
 	}
 	fieldset {
 		display: flex;

@@ -1,15 +1,26 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { asset, price } from '$lib/api';
+	import { asset, price, type Category, type Item } from '$lib/api';
+	import Dialog from '$lib/admin/Dialog.svelte';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import DishForm from './DishForm.svelte';
 
 	let { data, form } = $props();
 
-	// Which dish is open for editing, or `new:<categoryId>` for the add form.
-	let open = $state<string | null>(null);
-	let addingCategory = $state(false);
+	// The one dialog showing, if any.
+	type Open =
+		| { kind: 'dish'; categoryId: number; item?: Item }
+		| { kind: 'category'; category?: Category; position?: number };
+	let open = $state<Open | null>(null);
+	const close = () => (open = null);
 	const cats = $derived(data.categories.map((c) => ({ id: c.id, name: c.name })));
+	// Close the dialog only when the save worked; errors stay in it.
+	const closeOnSuccess =
+		() =>
+		async ({ result, update }: { result: { type: string }; update: () => Promise<void> }) => {
+			await update();
+			if (result.type === 'success') close();
+		};
 </script>
 
 <PageHeader
@@ -18,51 +29,28 @@
 		.length} categories"
 >
 	{#snippet actions()}
-		<button class="btn primary" type="button" onclick={() => (addingCategory = !addingCategory)}>
-			{addingCategory ? 'Close' : 'Add category'}
+		<button class="btn primary" type="button" onclick={() => (open = { kind: 'category' })}>
+			Add category
 		</button>
 	{/snippet}
 </PageHeader>
 
-{#if form?.error}<p class="flash bad" role="alert">{form.error}</p>{/if}
+{#if form?.error && !open}<p class="flash bad" role="alert">{form.error}</p>{/if}
 {#if form?.ok}<p class="flash" role="status">{form.ok}</p>{/if}
 
 <div class="stack">
-	{#if addingCategory}
-		<form
-			method="POST"
-			action="?/addCategory"
-			use:enhance={() =>
-				async ({ result, update }) => {
-					await update();
-					if (result.type === 'success') addingCategory = false;
-				}}
-			class="card row"
-		>
-			<label class="grow">
-				New category
-				<!-- svelte-ignore a11y_autofocus -->
-				<input name="name" placeholder="e.g. Pizza" maxlength="40" required autofocus />
-			</label>
-			<button class="btn primary">Add category</button>
-		</form>
-	{/if}
 	{#each data.categories as c, ci (c.id)}
 		<section class="card">
-			<form method="POST" action="?/saveCategory" use:enhance class="cat-head">
-				<input type="hidden" name="id" value={c.id} />
-				<input type="hidden" name="position" value={ci + 1} />
-				<input
-					class="cat-name"
-					name="name"
-					value={c.name}
-					aria-label="Category name"
-					maxlength="40"
-					required
-				/>
-				<button class="btn ghost small">Rename</button>
+			<div class="cat-head">
+				<h2>{c.name}</h2>
 				<span class="count">{c.items.length} dishes</span>
-			</form>
+				<button
+					class="btn ghost small"
+					type="button"
+					onclick={() => (open = { kind: 'category', category: c, position: ci + 1 })}
+					>Rename</button
+				>
+			</div>
 
 			<ul class="dishes">
 				{#each c.items as item (item.id)}
@@ -86,52 +74,97 @@
 							<button
 								class="btn ghost small"
 								type="button"
-								onclick={() => (open = open === `${item.id}` ? null : `${item.id}`)}
+								onclick={() => (open = { kind: 'dish', categoryId: c.id, item })}>Edit</button
 							>
-								{open === `${item.id}` ? 'Close' : 'Edit'}
-							</button>
 						</div>
-						{#if open === `${item.id}`}
-							<DishForm {item} categoryId={c.id} categories={cats} done={() => (open = null)} />
-							<form
-								method="POST"
-								action="?/deleteItem"
-								use:enhance={({ cancel }) => {
-									if (!confirm(`Delete “${item.name}” for good?`)) cancel();
-								}}
-							>
-								<input type="hidden" name="id" value={item.id} />
-								<button class="link-danger">Delete this dish</button>
-							</form>
-						{/if}
 					</li>
 				{/each}
 			</ul>
 
-			{#if open === `new:${c.id}`}
-				<DishForm categoryId={c.id} categories={cats} done={() => (open = null)} />
-			{:else}
-				<div class="row">
-					<button class="btn primary small" type="button" onclick={() => (open = `new:${c.id}`)}>
-						Add a dish to {c.name}
-					</button>
-					{#if !c.items.length}
-						<form
-							method="POST"
-							action="?/deleteCategory"
-							use:enhance={({ cancel }) => {
-								if (!confirm(`Delete the “${c.name}” category?`)) cancel();
-							}}
-						>
-							<input type="hidden" name="id" value={c.id} />
-							<button class="link-danger">Delete category</button>
-						</form>
-					{/if}
-				</div>
-			{/if}
+			<div class="row">
+				<button
+					class="btn primary small"
+					type="button"
+					onclick={() => (open = { kind: 'dish', categoryId: c.id })}
+				>
+					Add a dish to {c.name}
+				</button>
+				{#if !c.items.length}
+					<form
+						method="POST"
+						action="?/deleteCategory"
+						use:enhance={({ cancel }) => {
+							if (!confirm(`Delete the “${c.name}” category?`)) cancel();
+						}}
+					>
+						<input type="hidden" name="id" value={c.id} />
+						<button class="link-danger">Delete category</button>
+					</form>
+				{/if}
+			</div>
 		</section>
 	{/each}
 </div>
+
+<Dialog
+	open={open?.kind === 'dish'}
+	title={open?.kind === 'dish' && open.item ? `Edit ${open.item.name}` : 'Add a dish'}
+	onclose={close}
+>
+	{#if open?.kind === 'dish'}
+		{#if form?.error}<p class="flash bad" role="alert">{form.error}</p>{/if}
+		<DishForm item={open.item} categoryId={open.categoryId} categories={cats} done={close} />
+		{#if open.item}
+			{@const item = open.item}
+			<form
+				method="POST"
+				action="?/deleteItem"
+				use:enhance={({ cancel }) => {
+					if (!confirm(`Delete “${item.name}” for good?`)) return cancel();
+					return closeOnSuccess();
+				}}
+			>
+				<input type="hidden" name="id" value={item.id} />
+				<button class="link-danger">Delete this dish</button>
+			</form>
+		{/if}
+	{/if}
+</Dialog>
+
+<Dialog
+	open={open?.kind === 'category'}
+	title={open?.kind === 'category' && open.category ? 'Rename category' : 'New category'}
+	onclose={close}
+>
+	{#if open?.kind === 'category'}
+		{@const cat = open.category}
+		{#if form?.error}<p class="flash bad" role="alert">{form.error}</p>{/if}
+		<form
+			method="POST"
+			action={cat ? '?/saveCategory' : '?/addCategory'}
+			use:enhance={closeOnSuccess}
+			class="stack"
+		>
+			{#if cat}
+				<input type="hidden" name="id" value={cat.id} />
+				<input type="hidden" name="position" value={open.position} />
+			{/if}
+			<label>
+				Category name
+				<!-- svelte-ignore a11y_autofocus -->
+				<input
+					name="name"
+					value={cat?.name ?? ''}
+					placeholder="e.g. Pizza"
+					maxlength="40"
+					required
+					autofocus
+				/>
+			</label>
+			<button class="btn primary">{cat ? 'Save' : 'Add category'}</button>
+		</form>
+	{/if}
+</Dialog>
 
 <style>
 	.cat-head {
@@ -141,9 +174,9 @@
 		gap: 10px;
 		margin-bottom: 12px;
 	}
-	.cat-name {
-		max-width: 320px;
-		font: 800 1.25rem var(--display) !important;
+	.cat-head h2 {
+		margin: 0;
+		font-size: 1.25rem;
 	}
 	.count {
 		margin-left: auto;
@@ -189,10 +222,6 @@
 	.meta span {
 		color: var(--muted);
 		font-size: 0.875rem;
-	}
-	.grow {
-		flex: 1;
-		min-width: 200px;
 	}
 	.link-danger {
 		padding: 0;

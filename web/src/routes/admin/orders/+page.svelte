@@ -98,15 +98,18 @@
 				{#if o.note}<p class="note">Note: {o.note}</p>{/if}
 				<div class="bottom">
 					<span class="total">{price(o.total)} <small>cash</small></span>
-					<form method="POST" action="?/status" use:enhance class="row">
-						<input type="hidden" name="id" value={o.id} />
-						{#if step}
-							<button class="btn primary small" name="status" value={step[0]}>{step[1]}</button>
-						{/if}
-						{#if o.status !== 'completed' && o.status !== 'cancelled'}
-							<button class="btn ghost small" name="status" value="cancelled">Cancel</button>
-						{/if}
-					</form>
+					<div class="row">
+						<a class="btn ghost small" href="/admin/orders/{o.id}">Details</a>
+						<form method="POST" action="?/status" use:enhance class="row">
+							<input type="hidden" name="id" value={o.id} />
+							{#if step}
+								<button class="btn primary small" name="status" value={step[0]}>{step[1]}</button>
+							{/if}
+							{#if o.status !== 'completed' && o.status !== 'cancelled'}
+								<button class="btn ghost small" name="status" value="cancelled">Cancel</button>
+							{/if}
+						</form>
+					</div>
 				</div>
 			</li>
 		{/each}

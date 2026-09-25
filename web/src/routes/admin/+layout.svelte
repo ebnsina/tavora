@@ -2,6 +2,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		ArrowDown01Icon,
+		ArrowRight01Icon,
 		ArrowUpRight01Icon,
 		Cashier02Icon,
 		TableRoundIcon,
@@ -40,13 +41,18 @@
 		}
 	];
 
-	const today = new Intl.DateTimeFormat('en-GB', {
-		weekday: 'long',
-		day: 'numeric',
-		month: 'long',
-		year: 'numeric',
-		timeZone: 'Asia/Dhaka'
-	}).format(new Date());
+	// Dashboard › section › item; a detail page names itself through `crumb` in its load data.
+	const crumbs = $derived.by(() => {
+		const out = [{ href: '/admin', label: 'Dashboard' }];
+		const path = page.url.pathname;
+		const section = groups
+			.flatMap((g) => g.links)
+			.find((l) => l.href !== '/admin' && path.startsWith(l.href));
+		if (section) out.push(section);
+		else if (path === '/admin') out.push({ href: '/admin', label: 'Overview' });
+		if (page.data.crumb) out.push({ href: path, label: page.data.crumb as string });
+		return out;
+	});
 	const initials = $derived(
 		(data.admin?.name ?? '')
 			.split(/\s+/)
@@ -87,7 +93,20 @@
 
 		<div class="body">
 			<div class="topbar">
-				<span class="today">{today}</span>
+				<nav class="crumbs" aria-label="Breadcrumb">
+					<ol>
+						{#each crumbs as c, i (i)}
+							<li>
+								{#if i === crumbs.length - 1}
+									<span aria-current="page">{c.label}</span>
+								{:else}
+									<a href={c.href}>{c.label}</a>
+									<HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+								{/if}
+							</li>
+						{/each}
+					</ol>
+				</nav>
 				<button class="account" popovertarget="account-menu" aria-label="Account menu">
 					<span class="avatar" aria-hidden="true">{initials}</span>
 					<span class="who">{data.admin.name}</span>
@@ -149,7 +168,7 @@
 		letter-spacing: 0.14em;
 		color: var(--mustard);
 	}
-	nav {
+	aside nav {
 		display: grid;
 		gap: 2px;
 	}
@@ -180,7 +199,7 @@
 	.group:first-child {
 		margin-top: 0;
 	}
-	nav a,
+	aside nav a,
 	.site {
 		display: flex;
 		align-items: center;
@@ -191,11 +210,11 @@
 		font: 600 0.9375rem var(--sans);
 		text-decoration: none;
 	}
-	nav a:hover,
+	aside nav a:hover,
 	.site:hover {
 		background: rgb(255 249 231 / 0.08);
 	}
-	nav a[aria-current='page'] {
+	aside nav a[aria-current='page'] {
 		background: var(--brand);
 	}
 	.site {
@@ -218,10 +237,33 @@
 		border-bottom: 1px solid var(--line);
 		background: var(--cream);
 	}
-	.today {
-		color: var(--muted);
+	.crumbs ol {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
 		font-size: 0.875rem;
 		font-weight: 600;
+	}
+	.crumbs li {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--muted);
+	}
+	.crumbs a {
+		color: var(--muted);
+		text-decoration: none;
+	}
+	.crumbs a:hover {
+		color: var(--ink);
+		text-decoration: underline;
+	}
+	.crumbs [aria-current] {
+		color: var(--ink);
 	}
 	.account {
 		display: flex;
@@ -562,7 +604,7 @@
 			flex-wrap: wrap;
 			align-items: center;
 		}
-		nav {
+		aside nav {
 			display: flex;
 			flex-wrap: wrap;
 		}
