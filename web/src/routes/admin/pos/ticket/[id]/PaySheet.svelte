@@ -319,4 +319,28 @@
 		background: var(--green);
 		color: #fff;
 	}
+	.scrim {
+		animation: fade-in 0.2s ease both;
+	}
+	.sheet {
+		animation: sheet-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+	}
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+	}
+	@keyframes sheet-in {
+		from {
+			opacity: 0;
+			translate: 0 24px;
+			scale: 0.98;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.scrim,
+		.sheet {
+			animation: none;
+		}
+	}
 </style>

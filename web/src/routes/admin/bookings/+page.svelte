@@ -2,23 +2,31 @@
 	import { enhance } from '$app/forms';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
-		ArrowLeft02Icon,
-		ArrowRight02Icon,
-		ArrowUpRight01Icon,
+		Call02Icon,
 		Cancel01Icon,
-		Tick02Icon
+		Note01Icon,
+		Tick02Icon,
+		UserGroupIcon,
+		WhatsappIcon
 	} from '@hugeicons/core-free-icons';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import { time, type Reservation } from '$lib/api';
 
 	let { data, form } = $props();
 
-	const day = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-	const byDay = $derived(
-		Object.entries(
-			Object.groupBy(data.bookings, (b: Reservation) => b.date) as Record<string, Reservation[]>
-		)
-	);
+	const month = new Intl.DateTimeFormat('en-GB', { month: 'short' });
+	const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'short' });
+	const bdDay = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+	const today = bdDay(new Date());
+	const tomorrow = bdDay(new Date(Date.now() + 86_400_000));
+	const cal = (iso: string) => {
+		const d = new Date(`${iso}T00:00`);
+		return {
+			month: month.format(d),
+			day: d.getDate(),
+			label: iso === today ? 'Today' : iso === tomorrow ? 'Tomorrow' : weekday.format(d)
+		};
+	};
 	const labels: Record<string, string> = {
 		requested: 'Waiting',
 		confirmed: 'Confirmed',
@@ -36,58 +44,76 @@
 	<p class="card empty">No upcoming bookings.</p>
 {/if}
 
-{#each byDay as [date, list] (date)}
-	<h2>{day.format(new Date(`${date}T00:00`))}</h2>
-	<ul class="list">
-		{#each list as b (b.id)}
-			<li class="card" class:waiting={b.status === 'requested'}>
-				<div class="time">{time(b.time)}</div>
-				<div class="info">
-					<strong>{b.name}</strong> · {b.guests}
-					{b.guests === 1 ? 'person' : 'people'}
-					<br /><a href="tel:{b.phone}">{b.phone}</a> ·
-					<a class="ext" href={wa(b.phone)} target="_blank" rel="noopener"
-						>WhatsApp <HugeiconsIcon icon={ArrowUpRight01Icon} size={14} /><span class="sr"
-							>(opens in a new tab)</span
+<ul class="list">
+	{#each data.bookings as b (b.id)}
+		{@const c = cal(b.date)}
+		<li class="card" class:waiting={b.status === 'requested'}>
+			<div class="top">
+				<div class="cal" class:today={c.label === 'Today'} aria-hidden="true">
+					<span class="m">{c.month}</span>
+					<strong>{c.day}</strong>
+					<span class="w">{c.label}</span>
+				</div>
+				<div class="when">
+					<strong class="time">{time(b.time)}</strong>
+					<span class="guests"
+						><HugeiconsIcon icon={UserGroupIcon} size={16} />
+						{b.guests}
+						{b.guests === 1 ? 'person' : 'people'}</span
+					>
+				</div>
+				<span class="badge {b.status}">{labels[b.status]}</span>
+			</div>
+
+			<div class="who">
+				<strong>{b.name}</strong>
+				<div class="contact">
+					<a href="tel:{b.phone}"><HugeiconsIcon icon={Call02Icon} size={16} /> {b.phone}</a>
+					<a href={wa(b.phone)} target="_blank" rel="noopener"
+						><HugeiconsIcon icon={WhatsappIcon} size={16} /> WhatsApp<span class="sr">
+							(opens in a new tab)</span
 						></a
 					>
-					{#if b.note}<p class="note">{b.note}</p>{/if}
 				</div>
-				<div class="side">
-					<span class="badge {b.status}">{labels[b.status]}</span>
-					<form method="POST" action="?/status" use:enhance class="row">
-						<input type="hidden" name="id" value={b.id} />
-						<a class="btn ghost small" href="/admin/bookings/{b.id}"
-							>Details <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></a
-						>
-						{#if b.status !== 'confirmed'}
-							<button class="btn primary small" name="status" value="confirmed"
-								><HugeiconsIcon icon={Tick02Icon} size={16} /> Confirm</button
-							>
-						{/if}
-						{#if b.status === 'requested'}
-							<button class="btn ghost small" name="status" value="declined"
-								><HugeiconsIcon icon={Cancel01Icon} size={16} /> Decline</button
-							>
-						{:else if b.status === 'confirmed'}
-							<button class="btn ghost small" name="status" value="cancelled"
-								><HugeiconsIcon icon={Cancel01Icon} size={16} /> Cancel</button
-							>
-						{/if}
-					</form>
-				</div>
-			</li>
-		{/each}
-	</ul>
-{/each}
+			</div>
+			{#if b.note}<p class="note"><HugeiconsIcon icon={Note01Icon} size={16} /> {b.note}</p>{/if}
+
+			<form method="POST" action="?/status" use:enhance class="acts">
+				<input type="hidden" name="id" value={b.id} />
+				<a
+					class="btn ghost small"
+					class:grow={b.status === 'confirmed'}
+					href="/admin/bookings/{b.id}">Details</a
+				>
+				{#if b.status !== 'confirmed'}
+					<button class="btn primary small grow" name="status" value="confirmed"
+						><HugeiconsIcon icon={Tick02Icon} size={16} /> Confirm</button
+					>
+				{/if}
+				{#if b.status === 'requested'}
+					<button
+						class="btn ghost small icon"
+						name="status"
+						value="declined"
+						aria-label="Decline booking for {b.name}"
+						title="Decline"><HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} /></button
+					>
+				{:else if b.status === 'confirmed'}
+					<button
+						class="btn ghost small icon"
+						name="status"
+						value="cancelled"
+						aria-label="Cancel booking for {b.name}"
+						title="Cancel booking"
+						><HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} /></button
+					>
+				{/if}
+			</form>
+		</li>
+	{/each}
+</ul>
 
 <style>
-	h2 {
-		margin-top: 24px;
-	}
-	h2:first-of-type {
-		margin-top: 0;
-	}
 	.sr {
 		position: absolute;
 		width: 1px;
@@ -96,62 +122,166 @@
 		clip-path: inset(50%);
 	}
 	.list {
-		list-style: none;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+		gap: 14px;
 		margin: 0;
 		padding: 0;
-		display: grid;
-		gap: 10px;
+		list-style: none;
 	}
-	.list li {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: 16px;
-		align-items: start;
+	.list > li {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
 	}
 	.waiting {
-		box-shadow: inset 0 0 0 3px var(--brand);
+		box-shadow: inset 0 0 0 2px var(--mustard);
+	}
+	.top {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+	}
+	/* A tear-off calendar day. */
+	.cal {
+		display: grid;
+		flex: none;
+		width: 60px;
+		overflow: hidden;
+		border-radius: 12px;
+		background: #fffdf6;
+		box-shadow: 0 0 0 1px var(--line);
+		text-align: center;
+		line-height: 1.1;
+	}
+	.cal .m {
+		padding: 3px 0;
+		background: var(--brand);
+		color: var(--cream);
+		font-size: 0.6875rem;
+		font-weight: 800;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+	.cal strong {
+		padding-top: 4px;
+		font: 800 1.5rem var(--display);
+	}
+	.cal .w {
+		padding-bottom: 5px;
+		color: var(--muted);
+		font-size: 0.6875rem;
+		font-weight: 700;
+	}
+	.cal.today .w {
+		color: var(--brand);
+	}
+	.when {
+		display: grid;
+		gap: 4px;
 	}
 	.time {
 		font: 800 1.5rem var(--display);
-		min-width: 90px;
+		line-height: 1;
 	}
-	.note {
-		margin: 8px 0 0;
-		padding: 6px 10px;
-		border-radius: 8px;
-		background: #fff4cf;
-		font-size: 0.9375rem;
-	}
-	.side {
-		grid-column: 1 / -1;
-		display: flex;
-		flex-wrap: wrap;
+	.guests {
+		display: inline-flex;
 		align-items: center;
-		gap: 10px;
+		gap: 6px;
+		color: var(--muted);
+		font-size: 0.875rem;
+		font-weight: 600;
 	}
 	.badge {
-		padding: 3px 10px;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		align-self: flex-start;
+		margin-left: auto;
+		padding: 4px 10px;
 		border-radius: 999px;
 		background: var(--soft);
+		color: var(--muted);
 		font-size: 0.75rem;
 		font-weight: 700;
-		text-transform: uppercase;
 	}
 	.badge.requested {
-		background: var(--brand);
-		color: var(--cream);
+		background: #fff1c2;
+		color: #7a5a00;
+	}
+	.badge.requested::before {
+		content: '';
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: var(--mustard);
+		animation: pulse 1.6s ease-in-out infinite;
 	}
 	.badge.confirmed {
-		background: var(--green);
-		color: #fff;
+		background: #e3f6ec;
+		color: #1f7a45;
 	}
-	@media (min-width: 760px) {
-		.list li {
-			grid-template-columns: auto 1fr auto;
+	@keyframes pulse {
+		50% {
+			opacity: 0.35;
 		}
-		.side {
-			grid-column: auto;
-			justify-content: flex-end;
+	}
+	.who {
+		display: grid;
+		gap: 6px;
+	}
+	.who strong {
+		font-size: 1.0625rem;
+	}
+	.contact {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px 16px;
+	}
+	.contact a {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--ink);
+		font-size: 0.9375rem;
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.contact a:hover {
+		color: var(--brand);
+	}
+	.note {
+		display: flex;
+		gap: 8px;
+		margin: 0;
+		padding: 10px 12px;
+		border-radius: 10px;
+		background: #fff6d6;
+		font-size: 0.9375rem;
+	}
+	.note :global(svg) {
+		flex: none;
+		margin-top: 3px;
+		color: #9a6b00;
+	}
+	/* Actions always sit at the bottom, on one line. */
+	.acts {
+		display: flex;
+		gap: 8px;
+		margin-top: auto;
+		padding-top: 4px;
+	}
+	.acts .grow {
+		flex: 1;
+	}
+	.acts .btn.icon {
+		flex: none;
+		width: 38px;
+		padding: 0;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.badge.requested::before {
+			animation: none;
 		}
 	}
 </style>

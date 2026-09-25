@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Phones, tablets and motion
+- Dashboard on phones: a slim top bar, a bottom bar (Overview, Orders, Bookings, Till, More) with waiting counts, and the full menu as a slide-in drawer. On tablets the sidebar becomes an icon rail. Nothing scrolls sideways at 390, 820 or 1024 px.
+- Till on phones: a compact top bar (icons, sync badge with count) and the bill as a sheet that slides up over the menu.
+- Tab bars scroll sideways when they don't fit, fade at the edge that has more, and keep the open tab in view.
+- Order and booking cards keep their buttons at the bottom, on one line: Details, the main action, and a compact cancel button.
+- Booking cards redesigned with a calendar-day tile, time and guests, a calmer status badge, call and WhatsApp links, and the note as a quote.
+- Animations: dialogs and menus ease in and out, tab content and messages rise in, and dashboard pages crossfade. Nothing moves for people who prefer less motion.
+- Printing from the dashboard never includes the navigation.
+
 ### Dashboard
 - Brand colour picker redesigned: round swatches with a tick, a rainbow swatch for any colour, a colour-code box, a live "easy to read / too light" check and a preview of buttons, badges and links. Save is disabled for colours too light to read.
 - Long pages use horizontal tabs: Hours & details (Opening hours, Details & delivery, VAT, Brand colour), Website text (its sections), Menu (one tab per category, with dish counts) and End of day (Payments, Cash drawer, By staff, Discounts & voids; the printed report still has everything). The open tab is kept in the address, so a reload stays on it; unsaved edits survive switching tabs.

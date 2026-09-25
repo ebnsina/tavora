@@ -52,5 +52,23 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 10px;
+		min-width: 0;
+		max-width: 100%;
+	}
+	/* Phone: title above, actions below and allowed to use the full width. */
+	@media (max-width: 759px) {
+		.page-head {
+			position: static;
+			flex-direction: column;
+			align-items: stretch;
+			margin-bottom: 12px;
+			backdrop-filter: none;
+		}
+		.aside {
+			margin: 0;
+		}
+		.actions > :global(*) {
+			max-width: 100%;
+		}
 	}
 </style>

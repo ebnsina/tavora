@@ -13,10 +13,15 @@
 		Settings02Icon,
 		ShoppingBag01Icon,
 		TextFontIcon,
+		Menu02Icon,
+		HelpCircleIcon,
+		Globe02Icon,
+		MoreHorizontalCircle01Icon,
 		UserGroupIcon,
 		Invoice03Icon
 	} from '@hugeicons/core-free-icons';
 	import { page } from '$app/state';
+	import { afterNavigate, onNavigate } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
 	import { onMount } from 'svelte';
 	import { alerts, watchAlerts } from '$lib/alerts.svelte';
@@ -24,6 +29,20 @@
 	let { data, children } = $props();
 
 	onMount(watchAlerts);
+	// Phone: the sidebar becomes a drawer, closed after every navigation.
+	let drawer = $state(false);
+	afterNavigate(() => (drawer = false));
+	// Crossfade the page content between dashboard pages, where the browser supports it.
+	onNavigate((nav) => {
+		if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches)
+			return;
+		return new Promise((done) => {
+			document.startViewTransition(async () => {
+				done();
+				await nav.complete;
+			});
+		});
+	});
 
 	const orders = { href: '/admin/orders', label: 'Online orders', icon: ShoppingBag01Icon };
 	const bookings = { href: '/admin/bookings', label: 'Table bookings', icon: Calendar03Icon };
@@ -56,6 +75,12 @@
 					}
 				]
 	);
+	// Phone bottom bar: the few places people go most, plus the till and the full menu.
+	const bottom = $derived(
+		data.admin?.role === 'staff'
+			? [orders, bookings]
+			: [{ href: '/admin', label: 'Overview', icon: DashboardSquare01Icon }, orders, bookings]
+	);
 	const badge = (href: string) =>
 		href === orders.href ? alerts.new_orders : href === bookings.href ? alerts.waiting_bookings : 0;
 
@@ -86,19 +111,33 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
+<svelte:window onkeydown={(e) => e.key === 'Escape' && (drawer = false)} />
+
 {#if data.admin}
 	<div class="shell">
-		<aside>
-			<a class="logo" href="/admin">Tavora<span>Dashboard</span></a>
-			<a class="pos-link" href="/admin/pos">
-				<HugeiconsIcon icon={Cashier02Icon} size={20} />Point of sale
+		{#if drawer}<button
+				class="scrim"
+				type="button"
+				aria-label="Close menu"
+				onclick={() => (drawer = false)}
+			></button>{/if}
+		<aside class:open={drawer} aria-label="Dashboard menu">
+			<a class="logo" href="/admin"
+				><span class="full">Tavora</span><span class="short">T</span><small>Dashboard</small></a
+			>
+			<a class="pos-link" href="/admin/pos" title="Point of sale">
+				<HugeiconsIcon icon={Cashier02Icon} size={20} /><span class="label">Point of sale</span>
 			</a>
 			<nav aria-label="Dashboard">
 				{#each groups as g (g.label)}
 					<p class="group">{g.label}</p>
 					{#each g.links as n (n.href)}
-						<a href={n.href} aria-current={page.url.pathname === n.href ? 'page' : undefined}>
-							<HugeiconsIcon icon={n.icon} size={20} />{n.label}
+						<a
+							href={n.href}
+							title={n.label}
+							aria-current={page.url.pathname === n.href ? 'page' : undefined}
+						>
+							<HugeiconsIcon icon={n.icon} size={20} /><span class="label">{n.label}</span>
 							{#if badge(n.href)}<span class="count" aria-label="{badge(n.href)} waiting"
 									>{badge(n.href)}</span
 								>{/if}
@@ -107,17 +146,26 @@
 				{/each}
 			</nav>
 			<a class="site" href={env.PUBLIC_HELP_URL} target="_blank" rel="noopener">
-				Help <HugeiconsIcon icon={ArrowUpRight01Icon} size={18} />
+				<HugeiconsIcon icon={HelpCircleIcon} size={20} /><span class="label">Help</span>
+				<span class="ext"><HugeiconsIcon icon={ArrowUpRight01Icon} size={16} /></span>
 				<span class="sr">(opens in a new tab)</span>
 			</a>
 			<a class="site" href="/" target="_blank" rel="noopener">
-				View website <HugeiconsIcon icon={ArrowUpRight01Icon} size={18} />
+				<HugeiconsIcon icon={Globe02Icon} size={20} /><span class="label">View website</span>
+				<span class="ext"><HugeiconsIcon icon={ArrowUpRight01Icon} size={16} /></span>
 				<span class="sr">(opens in a new tab)</span>
 			</a>
 		</aside>
 
 		<div class="body">
 			<div class="topbar">
+				<button
+					class="menu-btn"
+					type="button"
+					aria-label="Open menu"
+					aria-expanded={drawer}
+					onclick={() => (drawer = true)}><HugeiconsIcon icon={Menu02Icon} size={22} /></button
+				>
 				<nav class="crumbs" aria-label="Breadcrumb">
 					<ol>
 						{#each crumbs as c, i (i)}
@@ -153,6 +201,30 @@
 			</div>
 			<main>{@render children()}</main>
 		</div>
+
+		<nav class="bottom" aria-label="Quick links">
+			{#each bottom as n (n.href)}
+				<a href={n.href} aria-current={page.url.pathname === n.href ? 'page' : undefined}>
+					<span class="b-ic"
+						><HugeiconsIcon icon={n.icon} size={22} />{#if badge(n.href)}<span class="b-count"
+								>{badge(n.href)}</span
+							>{/if}</span
+					>
+					{n.label === 'Online orders'
+						? 'Orders'
+						: n.label === 'Table bookings'
+							? 'Bookings'
+							: n.label}
+				</a>
+			{/each}
+			<a href="/admin/pos" class="till"
+				><span class="b-ic"><HugeiconsIcon icon={Cashier02Icon} size={22} /></span>Till</a
+			>
+			<button type="button" onclick={() => (drawer = true)}
+				><span class="b-ic"><HugeiconsIcon icon={MoreHorizontalCircle01Icon} size={22} /></span
+				>More</button
+			>
+		</nav>
 	</div>
 {:else}
 	{@render children()}
@@ -188,10 +260,16 @@
 		text-decoration: none;
 		color: var(--brand);
 	}
-	.logo span {
+	.logo small {
 		font-size: 0.6875rem;
 		letter-spacing: 0.14em;
 		color: var(--mustard);
+	}
+	.logo .short,
+	.menu-btn,
+	.bottom,
+	.scrim {
+		display: none;
 	}
 	aside nav {
 		display: grid;
@@ -630,7 +708,8 @@
 			grid-template-columns: 1fr 1fr;
 		}
 	}
-	@media (min-width: 960px) {
+	/* Desktop: full sidebar. */
+	@media (min-width: 1100px) {
 		.shell {
 			grid-template-columns: 240px 1fr;
 		}
@@ -638,24 +717,237 @@
 			position: sticky;
 			top: 0;
 			height: 100dvh;
+			overflow-y: auto;
 		}
 	}
-	@media (max-width: 959px) {
+	/* Tablet: a slim icon rail; names show on hover. */
+	@media (min-width: 760px) and (max-width: 1099px) {
+		.shell {
+			grid-template-columns: 76px 1fr;
+		}
 		aside {
-			flex-direction: row;
-			flex-wrap: wrap;
+			position: sticky;
+			top: 0;
+			height: 100dvh;
 			align-items: center;
+			padding: 16px 10px;
+			overflow-y: auto;
+		}
+		.logo {
+			padding: 0;
+		}
+		.logo .full,
+		.logo small,
+		.label,
+		.group,
+		.site .ext {
+			display: none;
+		}
+		.logo .short {
+			display: block;
 		}
 		aside nav {
-			display: flex;
-			flex-wrap: wrap;
+			gap: 6px;
 		}
-		.group,
+		aside nav a,
+		.pos-link,
 		.site {
+			position: relative;
+			justify-content: center;
+			width: 52px;
+			height: 48px;
+			margin: 0;
+			padding: 0;
+		}
+		.count {
+			position: absolute;
+			top: 3px;
+			right: 2px;
+			min-width: 18px;
+			padding: 0 5px;
+			font-size: 0.6875rem;
+		}
+	}
+	/* Phone: a drawer for the full menu and a bottom bar for the common places. */
+	@media (max-width: 759px) {
+		.shell {
+			display: block;
+		}
+		aside {
+			position: fixed;
+			inset: 0 auto 0 0;
+			z-index: 60;
+			width: min(300px, 86vw);
+			overflow-y: auto;
+			translate: -100% 0;
+			transition: translate 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+		}
+		aside.open {
+			translate: 0 0;
+			box-shadow: 24px 0 48px rgb(0 0 0 / 0.3);
+		}
+		.scrim {
+			position: fixed;
+			inset: 0;
+			z-index: 55;
+			display: block;
+			border: 0;
+			background: rgb(0 0 0 / 0.45);
+			animation: fade 0.2s both;
+		}
+		.menu-btn {
+			display: grid;
+			flex: none;
+			place-items: center;
+			width: 40px;
+			height: 40px;
+			margin-left: -8px;
+			border: 0;
+			border-radius: 10px;
+			background: none;
+			color: var(--ink);
+			cursor: pointer;
+		}
+		.topbar {
+			position: sticky;
+			top: 0;
+			z-index: 20;
+			justify-content: flex-start;
+		}
+		.crumbs {
+			min-width: 0;
+			flex: 1;
+			overflow: hidden;
+		}
+		.crumbs li:not(:last-child) {
 			display: none;
 		}
 		.who {
 			display: none;
+		}
+		main {
+			padding-bottom: calc(96px + env(safe-area-inset-bottom));
+		}
+		.bottom {
+			position: fixed;
+			inset: auto 0 0;
+			z-index: 40;
+			display: grid;
+			grid-auto-columns: 1fr;
+			grid-auto-flow: column;
+			padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+			border-top: 1px solid var(--line);
+			background: color-mix(in srgb, var(--cream) 94%, transparent);
+			backdrop-filter: blur(12px);
+		}
+		.bottom a,
+		.bottom button {
+			display: grid;
+			justify-items: center;
+			gap: 2px;
+			padding: 6px 0;
+			border: 0;
+			border-radius: 12px;
+			background: none;
+			color: var(--muted);
+			font: 600 0.6875rem var(--sans);
+			text-decoration: none;
+			cursor: pointer;
+		}
+		.bottom [aria-current='page'] {
+			color: var(--brand);
+		}
+		.bottom .till {
+			color: var(--ink);
+		}
+		.bottom .till .b-ic {
+			border-radius: 10px;
+			background: var(--mustard);
+		}
+		.b-ic {
+			position: relative;
+			display: grid;
+			place-items: center;
+			width: 44px;
+			height: 30px;
+		}
+		.b-count {
+			position: absolute;
+			top: -4px;
+			right: 2px;
+			min-width: 18px;
+			padding: 0 5px;
+			border-radius: 999px;
+			background: var(--brand);
+			color: var(--cream);
+			font-size: 0.625rem;
+			line-height: 16px;
+			text-align: center;
+		}
+	}
+	@keyframes fade {
+		from {
+			opacity: 0;
+		}
+	}
+	/* Printing: only the page content, never the app's navigation. */
+	@media print {
+		aside,
+		.topbar,
+		.bottom,
+		.scrim {
+			display: none !important;
+		}
+	}
+	.ext {
+		display: inline-flex;
+		margin-left: auto;
+		opacity: 0.7;
+	}
+	/* Motion: content eases in; menus and messages don't just blink. */
+	main {
+		view-transition-name: dash-main;
+	}
+	:global(::view-transition-old(dash-main)),
+	:global(::view-transition-new(dash-main)) {
+		animation-duration: 0.18s;
+	}
+	main :global([id^='panel-']:not([hidden])),
+	main :global(.flash) {
+		animation: rise-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+	}
+	.menu {
+		opacity: 0;
+		translate: 0 -6px;
+		transition:
+			opacity 0.18s ease,
+			translate 0.18s ease,
+			overlay 0.18s allow-discrete,
+			display 0.18s allow-discrete;
+	}
+	.menu:popover-open {
+		opacity: 1;
+		translate: 0 0;
+	}
+	@starting-style {
+		.menu:popover-open {
+			opacity: 0;
+			translate: 0 -6px;
+		}
+	}
+	@keyframes rise-in {
+		from {
+			opacity: 0;
+			translate: 0 6px;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		main :global([id^='panel-']:not([hidden])),
+		main :global(.flash) {
+			animation: none;
+		}
+		.menu {
+			transition: none;
 		}
 	}
 </style>

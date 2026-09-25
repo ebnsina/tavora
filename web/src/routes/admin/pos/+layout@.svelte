@@ -80,15 +80,19 @@
 			class:warn={store.failed.length}
 		>
 			{#if store.failed.length}
-				<HugeiconsIcon icon={Alert02Icon} size={18} /> {store.failed.length} need attention
+				<HugeiconsIcon icon={Alert02Icon} size={18} /><span class="t"
+					>{store.failed.length} need attention</span
+				><b class="n">{store.failed.length}</b>
 			{:else if !store.online}
-				<HugeiconsIcon icon={WifiDisconnected01Icon} size={18} /> No internet{waiting
-					? ` · ${waiting} waiting`
-					: ''}
+				<HugeiconsIcon icon={WifiDisconnected01Icon} size={18} /><span class="t"
+					>No internet{waiting ? ` · ${waiting} waiting` : ''}</span
+				>{#if waiting}<b class="n">{waiting}</b>{/if}
 			{:else if waiting || store.syncing}
-				<HugeiconsIcon icon={Refresh01Icon} size={18} /> Syncing {waiting || ''}
+				<HugeiconsIcon icon={Refresh01Icon} size={18} /><span class="t"
+					>Syncing {waiting || ''}</span
+				>
 			{:else}
-				<HugeiconsIcon icon={Tick02Icon} size={18} /> All saved
+				<HugeiconsIcon icon={Tick02Icon} size={18} /><span class="t">All saved</span>
 			{/if}
 		</button>
 		<div id="sync-panel" popover class="panel">
@@ -288,11 +292,63 @@
 		min-height: 0;
 		overflow: hidden;
 	}
+	.n {
+		display: none;
+	}
 	@media (max-width: 860px) {
 		nav a span,
 		.switch span,
 		.who {
 			display: none;
+		}
+	}
+	/* Phone: icons only; the sync badge keeps its colour and count. */
+	@media (max-width: 600px) {
+		header {
+			gap: 6px;
+			padding: 6px 8px;
+		}
+		.brand,
+		.clock,
+		.sync .t {
+			display: none;
+		}
+		nav {
+			margin-left: 0;
+		}
+		nav a {
+			padding: 0 12px;
+		}
+		.sync {
+			padding: 0 10px;
+		}
+		.n {
+			display: inline;
+			font-size: 0.8125rem;
+		}
+	}
+	.panel {
+		opacity: 0;
+		translate: 0 -6px;
+		transition:
+			opacity 0.18s ease,
+			translate 0.18s ease,
+			overlay 0.18s allow-discrete,
+			display 0.18s allow-discrete;
+	}
+	.panel:popover-open {
+		opacity: 1;
+		translate: 0 0;
+	}
+	@starting-style {
+		.panel:popover-open {
+			opacity: 0;
+			translate: 0 -6px;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.panel {
+			transition: none;
 		}
 	}
 </style>

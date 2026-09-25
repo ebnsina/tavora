@@ -98,26 +98,28 @@
 					{/each}
 				</ul>
 				{#if o.note}<p class="note">Note: {o.note}</p>{/if}
+				<!-- Footer sits at the bottom of every card: total, then one row of actions. -->
 				<div class="bottom">
 					<span class="total">{price(o.total)} <small>cash</small></span>
-					<div class="row">
-						<a class="btn ghost small" href="/admin/orders/{o.id}"
-							>Details <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></a
-						>
-						<form method="POST" action="?/status" use:enhance class="row">
-							<input type="hidden" name="id" value={o.id} />
-							{#if step}
-								<button class="btn primary small" name="status" value={step[0]}
-									>{step[1]} <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></button
-								>
-							{/if}
-							{#if o.status !== 'completed' && o.status !== 'cancelled'}
-								<button class="btn ghost small" name="status" value="cancelled"
-									><HugeiconsIcon icon={Cancel01Icon} size={16} /> Cancel</button
-								>
-							{/if}
-						</form>
-					</div>
+					<form method="POST" action="?/status" use:enhance class="acts">
+						<input type="hidden" name="id" value={o.id} />
+						<a class="btn ghost small" href="/admin/orders/{o.id}">Details</a>
+						{#if step}
+							<button class="btn primary small grow" name="status" value={step[0]}
+								>{step[1]} <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></button
+							>
+						{/if}
+						{#if o.status !== 'completed' && o.status !== 'cancelled'}
+							<button
+								class="btn ghost small icon"
+								name="status"
+								value="cancelled"
+								aria-label="Cancel order TV-{o.number}"
+								title="Cancel order"
+								><HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} /></button
+							>
+						{/if}
+					</form>
 				</div>
 			</li>
 		{/each}
@@ -128,7 +130,9 @@
 	.tabs {
 		display: flex;
 		gap: 4px;
+		max-width: 100%;
 		overflow-x: auto;
+		scrollbar-width: none;
 		padding: 4px;
 		border-radius: 12px;
 		background: var(--cream);
@@ -225,13 +229,27 @@
 		background: #fff4cf;
 		font-size: 0.9375rem;
 	}
-	.bottom {
+	.orders > li {
 		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 10px;
-		margin-top: 14px;
+		flex-direction: column;
+	}
+	.bottom {
+		display: grid;
+		gap: 12px;
+		margin-top: auto;
+		padding-top: 14px;
+	}
+	.acts {
+		display: flex;
+		gap: 8px;
+	}
+	.acts .grow {
+		flex: 1;
+	}
+	.acts .btn.icon {
+		flex: none;
+		width: 38px;
+		padding: 0;
 	}
 	.total {
 		font: 800 1.25rem var(--display);

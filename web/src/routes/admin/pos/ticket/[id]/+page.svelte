@@ -33,6 +33,8 @@
 	const t = $derived(store.tickets[id] ?? null);
 	let loading = $state(true);
 	let paying = $state(false);
+	// Phones: the bill is a sheet that slides up over the menu.
+	let sheet = $state(false);
 	let askDiscount = $state(false);
 	let cat = $state<number | 'all'>('all');
 	let search = $state('');
@@ -166,7 +168,16 @@
 		</ul>
 	</section>
 
-	<section class="bill" aria-label="Ticket">
+	<section class="bill" class:open={sheet} aria-label="Ticket">
+		<button class="sheet-bar" type="button" aria-expanded={sheet} onclick={() => (sheet = !sheet)}>
+			<span class="grip" aria-hidden="true"></span>
+			<span class="sum">
+				<strong>{t?.mode === 'dine_in' ? tableName || 'Table' : 'Takeaway'}</strong>
+				{t?.items.reduce((n, l) => n + l.qty, 0) ?? 0} items
+			</span>
+			<strong class="sum-total">{price(Math.max(0, t?.due ?? 0))}</strong>
+			<span class="sheet-cta">{sheet ? 'Hide bill' : 'View bill'}</span>
+		</button>
 		<div class="bill-head">
 			<div>
 				<strong class="where">{t?.mode === 'dine_in' ? tableName || 'Table' : 'Takeaway'}</strong>
@@ -724,10 +735,77 @@
 		color: var(--cream);
 		font-size: 1.25rem;
 	}
+	.sheet-bar {
+		display: none;
+	}
 	@media (max-width: 860px) {
 		.till {
 			grid-template-columns: 1fr;
-			grid-template-rows: 1fr 1fr;
+		}
+		.menu {
+			padding-bottom: 84px;
+		}
+		.bill {
+			position: fixed;
+			inset: auto 0 0;
+			z-index: 20;
+			height: min(88dvh, 760px);
+			border-radius: 20px 20px 0 0;
+			box-shadow: 0 -12px 40px rgb(0 0 0 / 0.18);
+			translate: 0 calc(100% - 76px);
+			transition: translate 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+		}
+		.bill.open {
+			translate: 0 0;
+		}
+		/* The sheet bar already names the ticket. */
+		.bill-head > div:first-child {
+			display: none;
+		}
+		.sheet-bar {
+			position: relative;
+			display: flex;
+			flex: none;
+			align-items: center;
+			gap: 12px;
+			height: 76px;
+			padding: 14px 16px 10px;
+			border: 0;
+			border-bottom: 1px solid var(--line);
+			background: none;
+			font: 600 0.9375rem var(--sans);
+			text-align: left;
+			cursor: pointer;
+		}
+		.grip {
+			position: absolute;
+			top: 6px;
+			left: 50%;
+			width: 40px;
+			height: 4px;
+			border-radius: 2px;
+			background: var(--line);
+			translate: -50% 0;
+		}
+		.sum {
+			display: grid;
+			color: var(--muted);
+			font-size: 0.8125rem;
+		}
+		.sum strong {
+			color: var(--ink);
+			font-size: 1.0625rem;
+		}
+		.sum-total {
+			margin-left: auto;
+			font-size: 1.25rem;
+		}
+		.sheet-cta {
+			padding: 10px 14px;
+			border-radius: 12px;
+			background: var(--brand);
+			color: var(--cream);
+			font-weight: 700;
 		}
 	}
 </style>

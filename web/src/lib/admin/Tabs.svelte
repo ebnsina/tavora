@@ -11,9 +11,27 @@
 		label
 	}: { tabs: Tab[]; active: string; label: string } = $props();
 
+	let bar = $state<HTMLDivElement>();
+	let fadeL = $state(false);
+	let fadeR = $state(false);
+	// Fade the edge that has more tabs behind it, so it's clear the bar scrolls.
+	function edges() {
+		if (!bar) return;
+		fadeL = bar.scrollLeft > 4;
+		fadeR = bar.scrollLeft + bar.clientWidth < bar.scrollWidth - 4;
+	}
 	onMount(() => {
 		const id = decodeURIComponent(location.hash.slice(1));
 		if (tabs.some((t) => t.id === id)) active = id;
+		edges();
+		const ro = new ResizeObserver(edges);
+		ro.observe(bar!);
+		return () => ro.disconnect();
+	});
+	$effect(() => {
+		document
+			.getElementById(`tab-${active}`)
+			?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 	});
 	function select(id: string) {
 		active = id;
@@ -30,7 +48,15 @@
 	}
 </script>
 
-<div class="tabs" role="tablist" aria-label={label}>
+<div
+	class="tabs"
+	class:fade-l={fadeL}
+	class:fade-r={fadeR}
+	role="tablist"
+	aria-label={label}
+	bind:this={bar}
+	onscroll={edges}
+>
 	{#each tabs as t, i (t.id)}
 		<button
 			type="button"
@@ -58,6 +84,22 @@
 		overflow-x: auto;
 		border-bottom: 1px solid var(--line);
 		scrollbar-width: none;
+		overscroll-behavior-x: contain;
+	}
+	.fade-r {
+		mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+	}
+	.fade-l {
+		mask-image: linear-gradient(to left, #000 calc(100% - 48px), transparent);
+	}
+	.fade-l.fade-r {
+		mask-image: linear-gradient(
+			to right,
+			transparent,
+			#000 48px,
+			#000 calc(100% - 48px),
+			transparent
+		);
 	}
 	button {
 		position: relative;

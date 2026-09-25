@@ -50,6 +50,49 @@
 	dialog::backdrop {
 		background: rgb(0 0 0 / 0.45);
 	}
+	/* Scale and fade in and out; the backdrop fades with it. */
+	dialog {
+		opacity: 0;
+		scale: 0.97;
+		translate: 0 8px;
+		transition:
+			opacity 0.2s ease,
+			scale 0.2s ease,
+			translate 0.2s ease,
+			overlay 0.2s allow-discrete,
+			display 0.2s allow-discrete;
+	}
+	dialog[open] {
+		opacity: 1;
+		scale: 1;
+		translate: 0 0;
+	}
+	dialog::backdrop {
+		opacity: 0;
+		transition:
+			opacity 0.2s ease,
+			overlay 0.2s allow-discrete,
+			display 0.2s allow-discrete;
+	}
+	dialog[open]::backdrop {
+		opacity: 1;
+	}
+	@starting-style {
+		dialog[open] {
+			opacity: 0;
+			scale: 0.97;
+			translate: 0 8px;
+		}
+		dialog[open]::backdrop {
+			opacity: 0;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		dialog,
+		dialog::backdrop {
+			transition: none;
+		}
+	}
 	header {
 		display: flex;
 		align-items: center;

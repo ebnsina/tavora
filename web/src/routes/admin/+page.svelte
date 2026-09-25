@@ -320,6 +320,8 @@
 <style>
 	.seg {
 		display: flex;
+		max-width: 100%;
+		overflow-x: auto;
 		padding: 4px;
 		border-radius: 12px;
 		background: var(--cream);
@@ -379,6 +381,7 @@
 	}
 	.custom {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 6px;
 	}
@@ -423,6 +426,7 @@
 	.layout,
 	.col {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: 14px;
 		align-content: start;
 	}
@@ -574,7 +578,7 @@
 	}
 	@media (min-width: 1100px) {
 		.layout {
-			grid-template-columns: 2fr 1fr;
+			grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 		}
 	}
 </style>
