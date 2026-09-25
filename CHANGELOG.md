@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fewer controls, same power
+- Opening hours: each day has one field ("12:00 PM – 11:00 PM") that opens a two-column picker (when you open, then when you close), and a copy button to use those hours for every open day.
+- Orders: the seven status tabs are now one "Status · Active" filter button.
+- Date picker: hovering a day inside the selected range shows a ring instead of breaking the band.
+
 ### Date picker
 - One date button replaces the preset tabs, two date boxes and the Show button. It opens presets on the left and a two-month calendar on the right: tap a preset, or click the first day then the last (the range previews as you move). It applies straight away; future days are greyed out and ranges stop at a year.
 - End of day uses the same picker for a single day, with Today and Yesterday.

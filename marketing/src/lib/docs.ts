@@ -75,8 +75,9 @@ export const guides: Guide[] = [
 			{
 				heading: 'Choosing the days',
 				steps: [
-					'Tap `Today`, `7 days`, `30 days` or `90 days`.',
-					'Or pick a start and end date and tap `Show`.'
+					'Tap the date button at the top right.',
+					'Tap a quick range like `Last 7 days`, or click the first day and then the last day on the calendar.',
+					'The page updates as soon as you pick.'
 				]
 			}
 		]
@@ -100,7 +101,7 @@ export const guides: Guide[] = [
 				],
 				tips: [
 					'Can’t make it? Tap `Cancel` and call the customer. Their number is a tap away.',
-					'The tabs at the top filter by stage. Active shows everything still in progress.'
+					'The `Status` button at the top filters by stage. `Active` shows everything still in progress.'
 				]
 			},
 			{
@@ -356,7 +357,7 @@ export const guides: Guide[] = [
 		sections: [
 			{
 				heading: 'Opening hours',
-				text: 'Switch each day on or off and set the times. Online orders and bookings are only taken while you’re open, and the website shows Open or Closed on the shop door.'
+				text: 'Switch each day on or off, then tap its hours to pick when you open and when you close. The copy button next to a day uses those hours for every open day. Online orders and bookings are only taken while you’re open, and the website shows Open or Closed on the shop door.'
 			},
 			{
 				heading: 'Details and delivery',

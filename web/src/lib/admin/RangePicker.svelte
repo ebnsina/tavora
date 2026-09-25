@@ -381,9 +381,10 @@
 		font-variant-numeric: tabular-nums;
 		cursor: pointer;
 	}
+	/* Hover is a ring, so it never breaks the range band or hides a selected end. */
 	.day:hover:not(:disabled) {
 		border-radius: 8px;
-		background: var(--soft);
+		box-shadow: inset 0 0 0 2px var(--brand);
 	}
 	.day.today {
 		text-decoration: underline 2px var(--mustard);

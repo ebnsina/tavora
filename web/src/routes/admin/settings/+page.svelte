@@ -2,6 +2,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		Clock01Icon,
+		Copy01Icon,
 		FloppyDiskIcon,
 		Invoice03Icon,
 		PaintBoardIcon,
@@ -9,7 +10,7 @@
 	} from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
-	import TimePicker from '$lib/admin/TimePicker.svelte';
+	import TimeRangePicker from '$lib/admin/TimeRangePicker.svelte';
 	import ColorPicker from '$lib/admin/ColorPicker.svelte';
 	import Tabs from '$lib/admin/Tabs.svelte';
 
@@ -24,6 +25,18 @@
 	// svelte-ignore state_referenced_locally
 	let open = $state(Object.fromEntries(week.map((d) => [d, r.hours.some((h) => h.weekday === d)])));
 	const hoursFor = (d: number) => r.hours.find((h) => h.weekday === d);
+	// svelte-ignore state_referenced_locally
+	let times = $state(
+		Object.fromEntries(
+			week.map((d) => [
+				d,
+				{ opens: hoursFor(d)?.opens ?? '12:00', closes: hoursFor(d)?.closes ?? '23:00' }
+			])
+		)
+	);
+	// Most places keep the same hours all week: copy one day's hours to every open day.
+	const copyToAll = (from: number) =>
+		week.forEach((d) => open[d] && d !== from && (times[d] = { ...times[from] }));
 	// The phone is stored as +8801…; the form shows the local 01… form.
 	const local = (p: string) => p.replace(/^\+?88/, '');
 	let tab = $state('hours');
@@ -82,20 +95,26 @@
 		</div>
 		<ul class="hours">
 			{#each week as d (d)}
-				{@const h = hoursFor(d)}
 				<li>
 					<label class="check day">
 						<input class="switch" type="checkbox" name="open_{d}" bind:checked={open[d]} />
 						{dayName(d)}
 					</label>
 					{#if open[d]}
-						<TimePicker name="opens_{d}" value={h?.opens ?? '12:00'} label="{dayName(d)} opens" />
-						<span class="to" aria-hidden="true">to</span>
-						<TimePicker
-							name="closes_{d}"
-							value={h?.closes ?? '23:00'}
-							label="{dayName(d)} closes"
+						<TimeRangePicker
+							bind:opens={times[d].opens}
+							bind:closes={times[d].closes}
+							openName="opens_{d}"
+							closeName="closes_{d}"
+							label="{dayName(d)} hours"
 						/>
+						<button
+							type="button"
+							class="copy"
+							title="Use these hours for every open day"
+							aria-label="Use {dayName(d)}'s hours for every open day"
+							onclick={() => copyToAll(d)}><HugeiconsIcon icon={Copy01Icon} size={16} /></button
+						>
 					{:else}
 						<span class="closed">Closed</span>
 					{/if}
@@ -299,6 +318,21 @@
 </div>
 
 <style>
+	.copy {
+		display: grid;
+		place-items: center;
+		width: 36px;
+		height: 36px;
+		border: 0;
+		border-radius: 10px;
+		background: none;
+		color: var(--muted);
+		cursor: pointer;
+	}
+	.copy:hover {
+		background: var(--soft);
+		color: var(--ink);
+	}
 	.prices {
 		display: grid;
 		gap: 8px;
@@ -337,7 +371,8 @@
 	}
 	.hours li {
 		display: grid;
-		grid-template-columns: 150px 1fr auto 1fr;
+		grid-template-columns: 150px auto auto;
+		justify-content: start;
 		align-items: center;
 		gap: 10px;
 		padding: 8px 0;
@@ -348,10 +383,6 @@
 	}
 	.day {
 		font-weight: 600;
-	}
-	.to {
-		color: var(--muted);
-		font-size: 0.875rem;
 	}
 	.closed {
 		grid-column: 2 / -1;
@@ -365,7 +396,7 @@
 	}
 	@media (max-width: 520px) {
 		.hours li {
-			grid-template-columns: 1fr auto 1fr;
+			grid-template-columns: auto auto;
 		}
 		.day {
 			grid-column: 1 / -1;

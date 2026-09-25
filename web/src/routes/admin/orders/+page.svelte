@@ -6,6 +6,7 @@
 	import { price, type Order } from '$lib/api';
 	import { onMount } from 'svelte';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
+	import MenuSelect from '$lib/admin/MenuSelect.svelte';
 
 	let { data, form } = $props();
 
@@ -61,13 +62,14 @@
 
 <PageHeader title="Orders" sub="Updates by itself every 30 seconds">
 	{#snippet actions()}
-		<nav class="tabs" aria-label="Filter orders">
-			{#each filters as f (f)}
-				<a href="?status={f}" aria-current={data.status === f ? 'page' : undefined}>
-					{labels[f]}
-				</a>
-			{/each}
-		</nav>
+		<MenuSelect
+			label="Status"
+			options={filters.map((f) => ({
+				label: labels[f],
+				href: `?status=${f}`,
+				current: data.status === f
+			}))}
+		/>
 	{/snippet}
 </PageHeader>
 
@@ -127,28 +129,6 @@
 {/if}
 
 <style>
-	.tabs {
-		display: flex;
-		gap: 4px;
-		max-width: 100%;
-		overflow-x: auto;
-		scrollbar-width: none;
-		padding: 4px;
-		border-radius: 12px;
-		background: var(--cream);
-	}
-	.tabs a {
-		flex: none;
-		padding: 7px 12px;
-		border-radius: 9px;
-		text-decoration: none;
-		font-weight: 600;
-		font-size: 0.875rem;
-	}
-	.tabs a[aria-current='page'] {
-		background: var(--black);
-		color: var(--cream);
-	}
 	.orders {
 		list-style: none;
 		margin: 0;
