@@ -961,9 +961,14 @@
 		align-items: center;
 		justify-content: flex-end;
 		gap: 10px;
-		margin-top: 4px;
-		padding-top: 16px;
-		border-top: 1px solid var(--line);
+		margin-top: 8px;
+	}
+	/* In a dialog the footer drops onto the soft outer frame, so no divider is needed. */
+	main :global(dialog .form-actions) {
+		margin: 20px -20px -20px;
+		padding: 14px 20px;
+		border-top: 0;
+		background: var(--soft);
 	}
 	main :global(.link-danger) {
 		padding: 0;

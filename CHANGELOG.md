@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Neutral dashboard
+- Dialogs use a nested frame: title and buttons on a soft outer frame, fields on a white panel inside it; no divider lines.
 - Pop-ups that appear and disappear (date and time pickers, status menu, payment sheet, phone menu backdrop) use Svelte's built-in fade and fly transitions, off for people who prefer less motion.
 - Dashboard and till use neutral surfaces (white cards on a light slate background, slate borders and text); the public website keeps its warm cream.
 - End of day: the drawer figure has its own card, and the other four totals share one card with thin dividers, instead of five separate cards.

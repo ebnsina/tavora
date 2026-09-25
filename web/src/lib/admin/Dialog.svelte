@@ -33,7 +33,7 @@
 				><HugeiconsIcon icon={Cancel01Icon} size={20} /></button
 			>
 		</header>
-		{@render children()}
+		<div class="body">{@render children()}</div>
 	{/if}
 </dialog>
 
@@ -41,11 +41,19 @@
 	dialog {
 		width: min(560px, calc(100vw - 32px));
 		max-height: calc(100dvh - 32px);
-		padding: 22px;
+		/* A soft outer frame holds the title and the buttons; the fields sit on a white panel inside it. */
+		padding: 6px;
 		border: 0;
-		border-radius: 20px;
-		background: var(--cream);
+		border-radius: 22px;
+		background: var(--soft);
 		color: var(--ink);
+	}
+	.body {
+		overflow: hidden;
+		padding: 20px;
+		border-radius: 17px;
+		background: var(--cream);
+		box-shadow: 0 0 0 1px var(--line);
 	}
 	dialog::backdrop {
 		background: rgb(0 0 0 / 0.45);
@@ -98,7 +106,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
-		margin-bottom: 16px;
+		padding: 10px 10px 12px 14px;
 	}
 	h2 {
 		margin: 0;
@@ -113,7 +121,8 @@
 		height: 40px;
 		border: 0;
 		border-radius: 12px;
-		background: var(--soft);
+		background: var(--cream);
+		box-shadow: 0 0 0 1px var(--line);
 		cursor: pointer;
 	}
 </style>
