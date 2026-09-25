@@ -68,21 +68,31 @@
 			onclick={() => select(t.id)}
 			onkeydown={(e) => key(e, i)}
 		>
-			{#if t.icon}<HugeiconsIcon icon={t.icon as never} size={16} />{/if}
-			{t.label}
-			{#if t.count !== undefined}<span class="count">{t.count}</span>{/if}
+			{#if t.icon}<HugeiconsIcon icon={t.icon as never} size={20} />{/if}
+			<span class="lbl"
+				>{t.label}{#if t.count !== undefined}<span class="count">{t.count}</span>{/if}</span
+			>
 			{#if t.dot}<span class="dot" aria-label="needs fixing"></span>{/if}
 		</button>
 	{/each}
 </div>
 
 <style>
+	/* Same look as the phone tab bars: a floating rounded bar, grey icons with labels,
+	   the current tab on a soft tile with a small red pill under it. */
 	.tabs {
 		display: flex;
 		gap: 4px;
+		width: fit-content;
+		max-width: 100%;
 		margin: -4px 0 20px;
+		padding: 6px;
 		overflow-x: auto;
-		border-bottom: 1px solid var(--line);
+		border-radius: 20px;
+		background: #fffdf6;
+		box-shadow:
+			0 0 0 1px var(--line),
+			0 8px 24px -12px rgb(40 20 0 / 0.2);
 		scrollbar-width: none;
 		overscroll-behavior-x: contain;
 	}
@@ -103,44 +113,63 @@
 	}
 	button {
 		position: relative;
-		display: flex;
+		display: grid;
 		flex: none;
-		align-items: center;
-		gap: 8px;
-		padding: 12px 14px;
+		justify-items: center;
+		align-content: center;
+		gap: 4px;
+		min-width: 88px;
+		padding: 10px 16px 14px;
 		border: 0;
+		border-radius: 14px;
 		background: none;
 		color: var(--muted);
-		font: 600 0.9375rem var(--sans);
+		font: 600 0.8125rem var(--sans);
 		white-space: nowrap;
 		cursor: pointer;
+		transition:
+			background 0.2s,
+			color 0.2s;
 	}
 	button:hover {
 		color: var(--ink);
 	}
 	button[aria-selected='true'] {
+		background: var(--soft);
 		color: var(--ink);
 	}
 	button[aria-selected='true']::after {
 		content: '';
 		position: absolute;
-		inset: auto 8px -1px;
-		height: 2px;
+		bottom: 5px;
+		width: 18px;
+		height: 4px;
 		border-radius: 2px;
 		background: var(--brand);
+		animation: pill 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+	}
+	@keyframes pill {
+		from {
+			width: 0;
+		}
 	}
 	button:focus-visible {
 		outline: 2px solid var(--brand);
-		outline-offset: -4px;
-		border-radius: 8px;
+		outline-offset: -2px;
+	}
+	.lbl {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
 	}
 	.count {
-		min-width: 22px;
-		padding: 1px 7px;
+		min-width: 18px;
+		padding: 0 6px;
 		border-radius: 999px;
 		background: var(--soft);
 		color: var(--muted);
-		font-size: 0.75rem;
+		font-size: 0.6875rem;
+		line-height: 18px;
 		text-align: center;
 	}
 	[aria-selected='true'] .count {
@@ -148,9 +177,17 @@
 		color: var(--cream);
 	}
 	.dot {
+		position: absolute;
+		top: 8px;
+		right: 12px;
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
 		background: var(--brand);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		button[aria-selected='true']::after {
+			animation: none;
+		}
 	}
 </style>
