@@ -116,18 +116,23 @@
 		<div class="wrap hero-in">
 			<h1 class="enter" style="--d: 0.06s">{r.name}</h1>
 			<p class="sub poster enter" style="--d: 0.12s">{site.hero.tagline}</p>
-			{#if status}
-				<p class="status" class:closed={!status.open}>
-					<span class="dot" aria-hidden="true"></span>
-					{status.open
-						? `Open now · until ${time(status.closes)}`
-						: status.when
-							? `Closed now · opens ${status.when} at ${time(status.at)}`
-							: 'Closed today'}
-				</p>
-			{/if}
 			<div class="store enter" style="--d: 0.2s">
-				<Storefront name={r.name} />
+				<Storefront
+					name={r.name}
+					sign={status && {
+						open: status.open,
+						line: status.open
+							? `till ${time(status.closes)}`
+							: status.when
+								? `opens ${status.when} ${time(status.at)}`
+								: 'all day today',
+						label: status.open
+							? `Open now, until ${time(status.closes)}`
+							: status.when
+								? `Closed now, opens ${status.when} at ${time(status.at)}`
+								: 'Closed today'
+					}}
+				/>
 				<a class="btn primary find" href="#menu">Order now</a>
 			</div>
 		</div>
@@ -529,29 +534,6 @@
 	.sub {
 		margin-top: 18px;
 		font-size: clamp(1.125rem, 2.4vw, 1.75rem);
-	}
-	.status {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		margin: 16px 0 0;
-		padding: 6px 14px;
-		border-radius: 999px;
-		background: var(--cream);
-		color: var(--black);
-		font: 700 0.9375rem var(--sans);
-		animation: enter 0.5s both;
-	}
-	.dot {
-		width: 10px;
-		height: 10px;
-		border-radius: 50%;
-		background: var(--green);
-		box-shadow: 0 0 0 3px rgb(46 139 87 / 0.25);
-	}
-	.status.closed .dot {
-		background: var(--brand);
-		box-shadow: 0 0 0 3px rgb(213 22 26 / 0.25);
 	}
 	.store {
 		position: relative;

@@ -327,6 +327,7 @@
 		color: var(--cream);
 		text-align: left;
 		font: 800 9.5cqw / 0.86 var(--display);
+		text-transform: uppercase;
 		font-stretch: 85%;
 		rotate: -8deg;
 		transform-origin: left top;

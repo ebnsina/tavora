@@ -1,5 +1,6 @@
 <script lang="ts">
-	let { name }: { name: string } = $props();
+	type Sign = { open: boolean; line: string; label: string };
+	let { name, sign }: { name: string; sign?: Sign | false | null } = $props();
 	const stripes = Array.from({ length: 12 }, (_, i) => 118 + i * 34);
 </script>
 
@@ -52,6 +53,16 @@
 		<rect x="284" y="276" width="72" height="120" />
 		<circle cx="344" cy="340" r="4" class="dot" />
 
+		<!-- open/closed sign hanging on the awning, over the door -->
+		{#if sign}
+			<g class="sign" class:closed={!sign.open} role="status" aria-label={sign.label}>
+				<path d="M284 262v12M356 262v12" class="thin" />
+				<rect x="262" y="272" width="116" height="40" rx="8" />
+				<text class="big" x="320" y="294">{sign.open ? 'OPEN' : 'CLOSED'}</text>
+				<text class="small" x="320" y="306">{sign.line.toUpperCase()}</text>
+			</g>
+		{/if}
+
 		<!-- ground and bushes -->
 		<path d="M30 396h580" />
 		<path d="M60 396c-6-18 10-30 22-20 4-16 26-14 26 2 12-6 22 6 16 18" />
@@ -89,6 +100,41 @@
 		font: 800 56px var(--display);
 		font-stretch: 85%;
 		text-anchor: middle;
+	}
+	.sign {
+		transform-origin: 320px 262px;
+		animation: swing 3s ease-in-out infinite;
+	}
+	.line .sign rect {
+		fill: var(--brand);
+	}
+	.line .sign.closed rect {
+		fill: var(--black);
+	}
+	.sign text {
+		fill: var(--cream) !important;
+		font-stretch: 100%;
+	}
+	.sign .big {
+		font-size: 22px;
+	}
+	.sign .small {
+		font: 700 10px var(--sans);
+		letter-spacing: 0.04em;
+	}
+	@keyframes swing {
+		0%,
+		100% {
+			rotate: -3deg;
+		}
+		50% {
+			rotate: 3deg;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.sign {
+			animation: none;
+		}
 	}
 	.burger {
 		transform-origin: 442px 58px;

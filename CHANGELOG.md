@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Website
+- Open or closed now shows on a sign hanging over the shop door, with today's closing or next opening time, instead of a badge above the shop.
+- The "Hot. Fresh. Yours." slogan on the building is now in capitals.
+
 ### Point of sale
 - Works without internet: tickets, kitchen sends, payments and voids are saved on the tablet and sent in order when the connection returns, never twice.
 - Sync status in the POS top bar ("All saved", "No internet · 3 waiting", "Syncing") and a list of anything the server rejected, such as two tablets opening the same table.
