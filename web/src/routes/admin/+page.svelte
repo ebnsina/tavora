@@ -2,7 +2,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		ArrowDown01Icon,
-		ArrowRight01Icon,
+		ArrowRight02Icon,
 		ArrowUp01Icon,
 		ChartColumnIcon,
 		Search01Icon,
@@ -250,7 +250,7 @@
 			<div class="card-head">
 				<h2>Right now</h2>
 				<a class="btn small" href="/admin/orders"
-					>Open orders <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></a
+					>Open orders <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></a
 				>
 			</div>
 			{#if openTotal}

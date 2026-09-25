@@ -2,8 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
-		ArrowLeft01Icon,
-		ArrowRight01Icon,
+		ArrowLeft02Icon,
+		ArrowRight02Icon,
 		ArrowUpRight01Icon,
 		Cancel01Icon,
 		Tick02Icon
@@ -51,7 +51,7 @@
 <PageHeader title={b.name} sub="{day.format(date(b.date))} at {time(b.time)}">
 	{#snippet actions()}
 		<a class="btn ghost small" href="/admin/bookings"
-			><HugeiconsIcon icon={ArrowLeft01Icon} size={16} /> All bookings</a
+			><HugeiconsIcon icon={ArrowLeft02Icon} size={16} /> All bookings</a
 		>
 		<form method="POST" action="?/status" use:enhance class="row">
 			{#if b.status !== 'confirmed'}

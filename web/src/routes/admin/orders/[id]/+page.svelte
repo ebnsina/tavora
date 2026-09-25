@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
-		ArrowLeft01Icon,
-		ArrowRight01Icon,
+		ArrowLeft02Icon,
+		ArrowRight02Icon,
 		Cancel01Icon,
 		Cashier02Icon,
 		PrinterIcon
@@ -77,7 +77,7 @@
 >
 	{#snippet actions()}
 		<a class="btn ghost small" href="/admin/orders"
-			><HugeiconsIcon icon={ArrowLeft01Icon} size={16} /> All orders</a
+			><HugeiconsIcon icon={ArrowLeft02Icon} size={16} /> All orders</a
 		>
 		<button class="btn ghost small" type="button" onclick={() => print()}
 			><HugeiconsIcon icon={PrinterIcon} size={16} /> Print receipt</button
@@ -91,7 +91,7 @@
 			<form method="POST" action="/admin/orders?/status" use:enhance class="row">
 				<input type="hidden" name="id" value={o.id} />
 				{#if next}<button class="btn primary small" name="status" value={next[0]}
-						>{next[1]} <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></button
+						>{next[1]} <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></button
 					>{/if}
 				{#if !closed}<button class="btn ghost small" name="status" value="cancelled"
 						><HugeiconsIcon icon={Cancel01Icon} size={16} /> Cancel</button

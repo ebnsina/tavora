@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
-		ArrowLeft01Icon,
-		ArrowRight01Icon,
+		ArrowLeft02Icon,
+		ArrowRight02Icon,
 		BulbIcon,
 		Link01Icon
 	} from '@hugeicons/core-free-icons';
@@ -49,13 +49,13 @@
 		<nav class="pager" aria-label="Next and previous guides">
 			{#if data.prev}
 				<a href="/docs/{data.prev.slug}">
-					<small><HugeiconsIcon icon={ArrowLeft01Icon} size={16} /> Previous</small>
+					<small><HugeiconsIcon icon={ArrowLeft02Icon} size={16} /> Previous</small>
 					<span>{data.prev.title}</span>
 				</a>
 			{:else}<span></span>{/if}
 			{#if data.next}
 				<a class="next" href="/docs/{data.next.slug}">
-					<small>Next <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></small>
+					<small>Next <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></small>
 					<span>{data.next.title}</span>
 				</a>
 			{/if}

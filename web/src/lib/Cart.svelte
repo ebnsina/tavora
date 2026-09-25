@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
-		ArrowLeft01Icon,
-		ArrowRight01Icon,
+		ArrowLeft02Icon,
+		ArrowRight02Icon,
 		Cancel01Icon,
 		Cash01Icon,
 		CheckmarkCircle02Icon,
@@ -185,7 +185,7 @@
 				onclick={() => (step = 'cart')}
 				aria-label="Back to your order"
 			>
-				<HugeiconsIcon icon={ArrowLeft01Icon} size={22} />
+				<HugeiconsIcon icon={ArrowLeft02Icon} size={22} />
 			</button>
 		{/if}
 		<h2 id="cart-title">
@@ -217,7 +217,7 @@
 					<HugeiconsIcon icon={PrinterIcon} size={18} /> Print receipt
 				</button>
 				<button class="btn" type="button" onclick={close}
-					><HugeiconsIcon icon={ArrowLeft01Icon} size={18} /> Back to the menu</button
+					><HugeiconsIcon icon={ArrowLeft02Icon} size={18} /> Back to the menu</button
 				>
 			</div>
 		</div>
@@ -275,7 +275,7 @@
 				onclick={() => (step = 'checkout')}
 			>
 				{closed ? 'Ordering is closed right now' : `Go to checkout · ${price(sub)}`}
-				{#if !closed}<HugeiconsIcon icon={ArrowRight01Icon} size={18} />{/if}
+				{#if !closed}<HugeiconsIcon icon={ArrowRight02Icon} size={18} />{/if}
 			</button>
 		</footer>
 	{:else}

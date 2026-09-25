@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowRight01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
+	import { ArrowRight02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { price, type Order } from '$lib/api';
@@ -102,13 +102,13 @@
 					<span class="total">{price(o.total)} <small>cash</small></span>
 					<div class="row">
 						<a class="btn ghost small" href="/admin/orders/{o.id}"
-							>Details <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></a
+							>Details <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></a
 						>
 						<form method="POST" action="?/status" use:enhance class="row">
 							<input type="hidden" name="id" value={o.id} />
 							{#if step}
 								<button class="btn primary small" name="status" value={step[0]}
-									>{step[1]} <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></button
+									>{step[1]} <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></button
 								>
 							{/if}
 							{#if o.status !== 'completed' && o.status !== 'cancelled'}

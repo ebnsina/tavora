@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
-		ArrowRight01Icon,
+		ArrowRight02Icon,
 		CheckmarkCircle02Icon,
 		DeliveryTruck01Icon,
 		Invoice03Icon,
 		MinusSignIcon,
 		Notification03Icon,
-		PlusSignIcon,
+		ArrowDown01Icon,
 		SmartPhone01Icon,
 		Tick02Icon,
 		WhatsappIcon,
@@ -71,7 +71,7 @@
 			</p>
 			<div class="ctas">
 				<a class="btn primary" href="#pricing"
-					>Get started <HugeiconsIcon icon={ArrowRight01Icon} size={20} /></a
+					>Get started <HugeiconsIcon icon={ArrowRight02Icon} size={20} /></a
 				>
 				<a class="btn light" href={site.demo} target="_blank" rel="noopener">See the live demo</a>
 			</div>
@@ -271,7 +271,7 @@
 		{#each faqs as f (f.q)}
 			<details>
 				<summary
-					>{f.q}<span class="plus"><HugeiconsIcon icon={PlusSignIcon} size={16} /></span></summary
+					>{f.q}<span class="plus"><HugeiconsIcon icon={ArrowDown01Icon} size={16} /></span></summary
 				>
 				<p>{f.a}</p>
 			</details>
@@ -839,10 +839,35 @@
 		height: 28px;
 		border-radius: 8px;
 		background: var(--soft);
-		transition: rotate 0.2s;
 	}
-	details[open] .plus {
-		rotate: 45deg;
+	.plus :global(svg) {
+		transition: rotate 0.3s ease;
+	}
+	details[open] .plus :global(svg) {
+		rotate: 180deg;
+	}
+	/* Smooth open and close where the browser supports animating details content. */
+	details {
+		interpolate-size: allow-keywords;
+	}
+	details::details-content {
+		height: 0;
+		overflow: clip;
+		opacity: 0;
+		transition:
+			height 0.3s ease,
+			opacity 0.3s ease,
+			content-visibility 0.3s allow-discrete;
+	}
+	details[open]::details-content {
+		height: auto;
+		opacity: 1;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		details::details-content,
+		.plus :global(svg) {
+			transition: none;
+		}
 	}
 	details p {
 		margin-top: var(--s3);

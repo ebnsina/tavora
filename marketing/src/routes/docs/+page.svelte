@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+	import { ArrowRight02Icon } from '@hugeicons/core-free-icons';
 	import Seo from '$lib/Seo.svelte';
 	import { groups, guides } from '$lib/docs';
 
@@ -27,7 +27,7 @@
 			<div class="cards">
 				{#each guides.filter((x) => x.group === g) as x (x.slug)}
 					<a class="card" href="/docs/{x.slug}">
-						<span class="t">{x.title} <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></span>
+						<span class="t">{x.title} <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></span>
 						<span class="d">{x.summary}</span>
 					</a>
 				{/each}

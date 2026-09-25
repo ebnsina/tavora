@@ -2,8 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
-		ArrowLeft01Icon,
-		ArrowRight01Icon,
+		ArrowLeft02Icon,
+		ArrowRight02Icon,
 		ArrowUpRight01Icon,
 		Cancel01Icon,
 		Tick02Icon
@@ -58,7 +58,7 @@
 					<form method="POST" action="?/status" use:enhance class="row">
 						<input type="hidden" name="id" value={b.id} />
 						<a class="btn ghost small" href="/admin/bookings/{b.id}"
-							>Details <HugeiconsIcon icon={ArrowRight01Icon} size={16} /></a
+							>Details <HugeiconsIcon icon={ArrowRight02Icon} size={16} /></a
 						>
 						{#if b.status !== 'confirmed'}
 							<button class="btn primary small" name="status" value="confirmed"
