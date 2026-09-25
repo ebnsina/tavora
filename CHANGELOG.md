@@ -4,7 +4,7 @@
 
 ### Dashboard
 - Brand colour picker redesigned: round swatches with a tick, a rainbow swatch for any colour, a colour-code box, a live "easy to read / too light" check and a preview of buttons, badges and links. Save is disabled for colours too light to read.
-- Long pages use horizontal tabs: Hours & details (Opening hours, Details & delivery, VAT, Brand colour), Website text (its sections), and Menu (one tab per category, with dish counts). The open tab is kept in the address, so a reload stays on it; unsaved edits survive switching tabs.
+- Long pages use horizontal tabs: Hours & details (Opening hours, Details & delivery, VAT, Brand colour), Website text (its sections), Menu (one tab per category, with dish counts) and End of day (Payments, Cash drawer, By staff, Discounts & voids; the printed report still has everything). The open tab is kept in the address, so a reload stays on it; unsaved edits survive switching tabs.
 
 ### Product page polish
 - Sections, feature tiles, plans and questions rise into view as you scroll; the first screen eases in on load and its floating cards drift gently. Nothing moves for people who prefer less motion.

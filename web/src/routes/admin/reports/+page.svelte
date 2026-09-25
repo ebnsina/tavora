@@ -1,11 +1,20 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { PrinterIcon, Search01Icon } from '@hugeicons/core-free-icons';
+	import {
+		Cancel01Icon,
+		Cash01Icon,
+		PrinterIcon,
+		Search01Icon,
+		UserGroupIcon,
+		Wallet01Icon
+	} from '@hugeicons/core-free-icons';
+	import Tabs from '$lib/admin/Tabs.svelte';
 	import DatePicker from '$lib/admin/DatePicker.svelte';
 	import PageHeader from '$lib/admin/PageHeader.svelte';
 	import { price } from '$lib/api';
 
 	let { data } = $props();
+	let tab = $state('payments');
 	const r = $derived(data.report);
 
 	const names = { cash: 'Cash', card: 'Card', bkash: 'bKash', nagad: 'Nagad' };
@@ -82,87 +91,100 @@
 		</div>
 	</section>
 
-	<div class="grid">
-		<section class="card">
-			<h2>How people paid</h2>
-			<table>
-				<thead><tr><th>Method</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
-				<tbody>
-					{#each r.methods as m (m.method)}
-						<tr>
-							<td>{names[m.method]}</td>
-							<td>{m.count}</td>
-							<td>{price(m.amount)}</td>
-							<td>{price(m.tips)}</td>
-						</tr>
-					{/each}
+	<Tabs
+		label="Report"
+		bind:active={tab}
+		tabs={[
+			{ id: 'payments', label: 'Payments', icon: Wallet01Icon },
+			{ id: 'drawer', label: 'Cash drawer', icon: Cash01Icon },
+			{ id: 'staff', label: 'By staff', icon: UserGroupIcon, count: r.staff.length },
+			{ id: 'voids', label: 'Discounts & voids', icon: Cancel01Icon, count: r.voids.length }
+		]}
+	/>
+
+	<section class="card panel" id="panel-payments" hidden={tab !== 'payments'}>
+		<h2>How people paid</h2>
+		<table>
+			<thead><tr><th>Method</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
+			<tbody>
+				{#each r.methods as m (m.method)}
 					<tr>
-						<td>Online orders, cash on delivery or pickup</td>
-						<td>{r.online.count}</td>
-						<td>{price(r.online.cash)}</td>
-						<td>–</td>
+						<td>{names[m.method]}</td>
+						<td>{m.count}</td>
+						<td>{price(m.amount)}</td>
+						<td>{price(m.tips)}</td>
 					</tr>
+				{/each}
+				<tr>
+					<td>Online orders, cash on delivery or pickup</td>
+					<td>{r.online.count}</td>
+					<td>{price(r.online.cash)}</td>
+					<td>–</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+
+	<section class="card panel" id="panel-drawer" hidden={tab !== 'drawer'}>
+		<h2>Counting the drawer</h2>
+		<dl>
+			<dt>Cash taken at the till</dt>
+			<dd>{price(cash?.amount ?? 0)}</dd>
+			<dt>Cash tips</dt>
+			<dd>{price(cash?.tips ?? 0)}</dd>
+			<dt>Cash from online orders</dt>
+			<dd>{price(r.online.cash)}</dd>
+			<dt class="total">Should be in the drawer</dt>
+			<dd class="total">{price(r.drawer)}</dd>
+		</dl>
+	</section>
+
+	<section class="card panel" id="panel-staff" hidden={tab !== 'staff'}>
+		<h2>By staff</h2>
+		{#if r.staff.length}
+			<table>
+				<thead><tr><th>Name</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
+				<tbody>
+					{#each r.staff as s (s.name)}
+						<tr
+							><td>{s.name}</td><td>{s.count}</td><td>{price(s.amount)}</td><td>{price(s.tips)}</td
+							></tr
+						>
+					{/each}
 				</tbody>
 			</table>
-			<h3>Counting the drawer</h3>
-			<dl>
-				<dt>Cash taken at the till</dt>
-				<dd>{price(cash?.amount ?? 0)}</dd>
-				<dt>Cash tips</dt>
-				<dd>{price(cash?.tips ?? 0)}</dd>
-				<dt>Cash from online orders</dt>
-				<dd>{price(r.online.cash)}</dd>
-				<dt class="total">Should be in the drawer</dt>
-				<dd class="total">{price(r.drawer)}</dd>
-			</dl>
-		</section>
+		{:else}
+			<p class="muted">No payments at the till this day.</p>
+		{/if}
+	</section>
 
-		<section class="card">
-			<h2>By staff</h2>
-			{#if r.staff.length}
-				<table>
-					<thead><tr><th>Name</th><th>Payments</th><th>Amount</th><th>Tips</th></tr></thead>
-					<tbody>
-						{#each r.staff as s (s.name)}
-							<tr
-								><td>{s.name}</td><td>{s.count}</td><td>{price(s.amount)}</td><td
-									>{price(s.tips)}</td
-								></tr
-							>
-						{/each}
-					</tbody>
-				</table>
-			{:else}
-				<p class="muted">No payments at the till this day.</p>
-			{/if}
+	<section class="card panel" id="panel-voids" hidden={tab !== 'voids'}>
+		<h2>Discounts</h2>
+		<p class="muted">
+			{r.discounts.count
+				? `${price(r.discounts.amount)} off across ${r.discounts.count} bill${r.discounts.count === 1 ? '' : 's'}`
+				: 'No discounts given.'}
+		</p>
 
-			<h3>Discounts</h3>
-			<p class="muted">
-				{r.discounts.count
-					? `${price(r.discounts.amount)} off across ${r.discounts.count} bill${r.discounts.count === 1 ? '' : 's'}`
-					: 'No discounts given.'}
-			</p>
-
-			<h3>Voided tickets</h3>
-			{#if r.voids.length}
-				<table>
-					<thead><tr><th>Ticket</th><th>Time</th><th>Amount</th><th>Voided by</th></tr></thead>
-					<tbody>
-						{#each r.voids as v (v.id)}
-							<tr>
-								<td><a href="/admin/orders/{v.id}">TV-{v.number}</a></td>
-								<td>{clock.format(new Date(v.created_at))}</td>
-								<td>{price(v.total)}</td>
-								<td>{v.voided_by || 'Not recorded'}</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			{:else}
-				<p class="muted">Nothing voided.</p>
-			{/if}
-		</section>
-	</div>
+		<h3>Voided tickets</h3>
+		{#if r.voids.length}
+			<table>
+				<thead><tr><th>Ticket</th><th>Time</th><th>Amount</th><th>Voided by</th></tr></thead>
+				<tbody>
+					{#each r.voids as v (v.id)}
+						<tr>
+							<td><a href="/admin/orders/{v.id}">TV-{v.number}</a></td>
+							<td>{clock.format(new Date(v.created_at))}</td>
+							<td>{price(v.total)}</td>
+							<td>{v.voided_by || 'Not recorded'}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		{:else}
+			<p class="muted">Nothing voided.</p>
+		{/if}
+	</section>
 </div>
 
 <!-- Printed instead of the screen: a plain A4 sheet to count the drawer against and sign. -->
@@ -277,7 +299,7 @@
 	}
 	.tiles {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 		gap: 14px;
 		margin-bottom: 14px;
 	}
@@ -298,15 +320,10 @@
 	.small {
 		font-size: 0.8125rem;
 	}
-	.grid {
-		display: grid;
-		gap: 14px;
-		align-items: start;
-	}
 	@media (min-width: 1000px) {
-		.grid {
-			grid-template-columns: 1fr 1fr;
-		}
+	}
+	.panel {
+		max-width: 860px;
 	}
 	h2 {
 		margin: 0 0 12px;
