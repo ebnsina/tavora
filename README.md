@@ -1,74 +1,137 @@
 # Tavora
 
-Website, dashboard and till (POS) for restaurants in Bangladesh: online orders with cash on delivery, table bookings, an offline-capable till, staff PINs, end-of-day report and VAT invoices. API first; the web app is one client of it.
+**A website, a dashboard and a till for restaurants in Bangladesh, all in one.**
 
-- `api/` — Go + PostgreSQL + sqlc. Migrations run on boot.
-- `web/` — SvelteKit (Node adapter): the restaurant's website, the dashboard (`/admin`) and the till (`/admin/pos`).
-- `marketing/` — SvelteKit (static): a one-page product site (features and pricing) and the docs (`/docs`), with real screenshots in `static/shots/`.
+Customers order online and pay cash on delivery. Your staff take orders at the counter on a tablet, the kitchen sees every ticket on a screen, and at night you see exactly how much cash should be in the drawer. It keeps working when the internet drops.
 
-## Run locally
+![The Tavora dashboard](marketing/static/shots/overview.webp)
+
+## What you get
+
+| Part | What it does | Where it opens |
+| --- | --- | --- |
+| **Website** | Your menu, online orders (cash on delivery or pickup), table bookings, opening hours | `/` |
+| **Dashboard** | Orders, bookings, menu, staff, VAT, brand colour, end-of-day report | `/admin` |
+| **Till (POS)** | Tables and takeaway, kitchen screen, cash, card, bKash, Nagad, split bills, printing | `/admin/pos` |
+| **Product site and docs** | What Tavora is, pricing, and a how-to guide for every screen | the `marketing/` app, docs at `/docs` |
+
+Made for how Bangladesh works: cash on delivery first, bKash and Nagad at the till, Mushak-6.3 VAT invoices, prices in taka, Bangladesh time.
+
+## Try it on your computer
+
+### 1. Install these once
+
+- [Go](https://go.dev/dl/) 1.27 or newer
+- [PostgreSQL](https://www.postgresql.org/download/) 17 or newer
+- [Node.js](https://nodejs.org/) 24 or newer, with [pnpm](https://pnpm.io/installation)
+
+### 2. Start the server (the API)
 
 ```sh
 createdb tavora
-cd api && cp .env.example .env && set -a && . ./.env && set +a
-go run . create-admin you@example.com "Your Name"   # asks for a password (10+ characters)
-go run . seed-demo                                  # optional: 30 days of sample orders and bookings, all marked "(demo)"
-go run .                                            # :8080
-cd web && cp .env.example .env && pnpm install && pnpm dev   # :5173, dashboard at /admin
-cd marketing && cp .env.example .env && pnpm install && pnpm dev   # product site and help
+cd api
+cp .env.example .env          # the defaults work on your computer
+set -a && . ./.env && set +a
+go run . create-admin you@example.com "Your Name"   # asks you to choose a password
+go run . seed-demo            # optional: fills in a month of sample orders, marked "(demo)"
+go run .                      # keep this running
 ```
 
-Env vars are required; each app refuses to start (or build) without them. API: `DATABASE_URL`, `ADDR`, `CORS_ORIGIN`, `UPLOAD_DIR`. Web: `PUBLIC_API_URL`, `PUBLIC_HELP_URL`. Marketing: `PUBLIC_SITE_URL`, `PUBLIC_WHATSAPP`, `PUBLIC_EMAIL`, `PUBLIC_DEMO_URL`.
+### 3. Start the restaurant website and dashboard
 
-Marketing builds to plain files (`pnpm build` → `marketing/build`); serve them with any web server and send unknown paths to `404.html`. Prices live in `marketing/src/lib/pricing.ts`, docs in `marketing/src/lib/docs.ts` (wrap button and screen names in backticks; they render in Geist Mono).
+In a second terminal:
 
-Tests: `cd api && go test ./...`
+```sh
+cd web
+cp .env.example .env
+pnpm install
+pnpm dev
+```
 
-## Point of sale (`/admin/pos`)
+Open http://localhost:5173 for the website and http://localhost:5173/admin to sign in with the email and password from step 2.
 
-For tablets at the counter and in the kitchen. Tables on the floor screen, tap dishes onto a ticket, send new items to the kitchen, take cash, card, bKash or Nagad (split and tips allowed). Each dish can carry a note for the cook ("no onion"), printed on the kitchen ticket and shown on the kitchen display at `/admin/pos/kitchen`, which lists every ticket with a timer. Every POS write carries an id made on the device, so a retry never doubles a ticket, a kitchen send or a payment.
+### 4. Optional: the product site and docs
 
-**Offline:** the POS runs entirely in the browser. A service worker caches the app; the menu, tables and tickets are kept in the tablet's local storage; every change goes into a queue (`web/src/lib/offline.svelte.ts`) that replays in order when the API is reachable. Conflicts the server rejects (for example a table opened on two tablets while one was offline) show under the sync pill. Offline mode needs a production build (`pnpm build && node build`); the dev server doesn't cache its files.
+In a third terminal:
 
-**Staff:** the owner adds staff with a 6-digit PIN under Staff. Staff sign in on the Staff tab of the sign-in page and only reach the POS, orders and bookings (the API refuses the rest with `owner_only`). Every ticket records who opened it, each payment who took it, and each void who did it. Switch staff is blocked while the tablet still has unsynced changes, so sales are never credited to the next person. All PIN attempts share one counter (20 misses per 15 minutes), because the API only sees the web server.
+```sh
+cd marketing
+cp .env.example .env
+pnpm install
+pnpm dev
+```
 
-Printing uses the tablet's normal print dialog with 80 mm receipt layouts; pair the tablet with the receipt printer through Android's print service.
+## Everyday use
 
-## Dashboard (`/admin`)
+Every screen has a short guide in the docs (`/docs` on the product site): taking an order, splitting a bill, adding staff, setting VAT, printing, and what to do when the internet drops. The dashboard links to them from **Help** at the bottom of the sidebar.
 
-- **Overview:** revenue, orders and best sellers for any date range, compared with the previous period.
-- **Orders:** new orders highlighted, one-tap next step (accept → cooking → ready → on the way → done), a details page per order.
-- **Alerts:** every dashboard and POS screen checks for new orders and bookings every 15 s, shows the count in the menu and plays a chime (after the first tap on the page, which browsers require before sound).
-- **End of day:** takings by payment method and by staff, tips, discounts, voids, open tickets, and the cash that should be in the drawer.
-- **Table bookings:** confirm, decline or cancel; call or WhatsApp the guest; a details page with the guest's other bookings and orders.
-- **Menu:** categories and dishes, photos, labels, prices, sold-out switch.
-- **Website text:** every piece of homepage copy, reviews, ticker words and icons, story photo, sharing picture.
-- **Hours & details:** opening hours per day, contact details, delivery fee and areas, VAT (rate, prices include VAT or not, BIN) and the brand colour.
-- **Staff:** add staff with a 6-digit PIN.
+## Common questions
 
-**VAT:** off until a rate is set (basis points, 500 = 5%). VAT is on food only, not delivery. Each order stores its own `vat`, `vat_rate` and `vat_inclusive`, so changing the setting never rewrites old bills. With a BIN set, receipts print as a Mushak-6.3 VAT invoice. The rate is the owner's (their accountant's) call; nothing is hard-coded.
+**The till doesn't work offline.** Offline mode only works in the built version, not in `pnpm dev`. Run `pnpm build && node build` in `web/`. On a real server it also needs HTTPS.
 
-**Printing:** receipts and kitchen tickets (`web/src/lib/Slip.svelte`) and the customer's online receipt are moved to the end of `<body>` and printed alone, black on white; the printer's own paper setting picks the width. The end-of-day report prints a separate A4 document, not the screen.
+**No sound when an order comes in.** Tap anywhere on the dashboard once after opening it. Browsers only play sound after that.
 
-**Brand colour:** stored on the restaurant (`theme`, `#rrggbb`) and applied as `--brand` everywhere. The API refuses colours with less than 4.5:1 contrast against the cream text.
+**It says a setting is missing and won't start.** Each app needs its `.env` file. Copy `.env.example` to `.env` in that folder. See [Settings](#settings) below.
 
-The owner signs in with email and password. The API issues a session token (only its SHA-256 is stored); the web app keeps it in an http-only cookie scoped to `/admin`. Five wrong passwords lock that email for 15 minutes.
+**Where do I change prices on the product site?** `marketing/src/lib/pricing.ts`. The help guides are in `marketing/src/lib/docs.ts`.
 
-Uploaded images are saved to `UPLOAD_DIR` on the API server and served from `/uploads/`.
+**How do I add staff?** Sign in as the owner, open **Staff**, and give each person a 6-digit PIN. Staff sign in on the **Staff** tab of the sign-in page.
 
-## API
+---
 
-All amounts are integer poisha (৳1 = 100). Errors are always `{"error": {"code", "message", "details"}}`.
+## For developers
+
+### How it's built
+
+- `api/`: Go, PostgreSQL and sqlc. Database changes (migrations) run by themselves when the server starts. Tests: `cd api && go test ./...`
+- `web/`: SvelteKit on Node. The public website, the dashboard and the till.
+- `marketing/`: SvelteKit, built to plain HTML files. The one-page product site and the docs.
+
+Project conventions and gotchas are in [CLAUDE.md](CLAUDE.md); every user-facing change is in [CHANGELOG.md](CHANGELOG.md).
+
+### Settings
+
+Each app refuses to start (or build) if a setting is missing, so nothing silently falls back to a wrong value.
+
+| App | Settings |
+| --- | --- |
+| `api` | `DATABASE_URL`, `ADDR`, `CORS_ORIGIN`, `UPLOAD_DIR` |
+| `web` | `PUBLIC_API_URL`, `PUBLIC_HELP_URL` |
+| `marketing` | `PUBLIC_SITE_URL`, `PUBLIC_WHATSAPP`, `PUBLIC_EMAIL`, `PUBLIC_DEMO_URL` |
+
+The product site builds to `marketing/build`. Serve it with any web server and send unknown paths to `404.html`.
+
+### How the important parts work
+
+**Money** is stored as whole poisha (৳1 = 100), never decimals.
+
+**The till offline:** the till runs entirely in the browser. A service worker caches the app; the menu, tables and tickets are saved on the tablet; every change goes into a queue (`web/src/lib/offline.svelte.ts`) that replays in order once the API is reachable. Every till change carries an id made on the tablet, so a retry never doubles a ticket, kitchen send or payment. Changes the server rejects (for example two tablets opening the same table) show under the sync badge.
+
+**Staff:** staff sign in with a PIN and can only reach the till, orders and bookings; the API refuses everything else with `owner_only`. Tickets record who opened them, payments who took them, voids who did them. Switch staff waits until the tablet has synced. All PIN attempts share one limit (20 misses per 15 minutes) because the API only sees the web server.
+
+**Owner sign-in:** email and password. The API stores only a SHA-256 hash of each session token; the web app keeps the token in an http-only cookie scoped to `/admin`. Five wrong passwords lock that email for 15 minutes.
+
+**VAT:** off until a rate is set (in basis points, 500 = 5%). VAT applies to food, not delivery. Each order keeps its own `vat`, `vat_rate` and `vat_inclusive`, so changing the setting never rewrites old bills. With a BIN set, receipts print as a Mushak-6.3 VAT invoice. The rate is the owner's (and their accountant's) decision; nothing is hard-coded.
+
+**Printing:** receipts, kitchen tickets and the customer's online receipt print alone, black on white, at the receipt printer's own paper width (`web/src/lib/Slip.svelte`). The end-of-day report prints its own A4 page. Pair the tablet with an 80 mm printer through Android's print service.
+
+**Brand colour:** saved on the restaurant (`theme`, `#rrggbb`) and used as `--brand` everywhere. The API refuses colours too light to read cream text on (under 4.5:1 contrast).
+
+**Uploads:** images are saved to `UPLOAD_DIR` and served from `/uploads/`.
+
+### API
+
+All amounts are poisha. Errors always look like `{"error": {"code", "message", "details"}}`.
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/v1/restaurant` | Contact, delivery settings, opening hours (weekday 0 = Sunday) |
-| GET | `/v1/menu` | Categories with items |
-| POST | `/v1/orders` | Client sends `id` (UUID); retries return the same order. Prices are recomputed server-side. |
-| POST | `/v1/reservations` | `date` `YYYY-MM-DD`, `time` `HH:MM` in Asia/Dhaka |
-| GET | `/v1/site` | All homepage copy (shape: `SiteContent` in `api/content.go`) |
-| POST | `/v1/admin/login` | Returns a bearer token; everything under `/v1/admin/` needs it |
-| POST | `/v1/admin/pin` | Staff sign-in with `{"pin"}`; same token response |
-| | `/v1/admin/…` | Owner only: `site`, `restaurant`, `hours`, `categories`, `items`, `stats`, `uploads`, `tables`, `staff`, `reports/day?date=`. Owner and staff: `me`, `alerts`, `orders`, `reservations`, `/v1/pos/…`, `/v1/kitchen` |
+| GET | `/v1/restaurant` | Contact, delivery settings, opening hours (weekday 0 = Sunday), VAT, brand colour |
+| GET | `/v1/menu` | Categories with dishes |
+| POST | `/v1/orders` | The client sends an `id` (UUID); retries return the same order. Prices are worked out on the server. |
+| POST | `/v1/reservations` | `date` `YYYY-MM-DD`, `time` `HH:MM`, Bangladesh time |
+| GET | `/v1/site` | All homepage text (shape: `SiteContent` in `api/content.go`) |
+| POST | `/v1/admin/login` | Owner sign-in; returns a bearer token for everything under `/v1/admin/` |
+| POST | `/v1/admin/pin` | Staff sign-in with `{"pin"}`; same response |
+| | `/v1/admin/…` | Owner only: `site`, `restaurant`, `hours`, `vat`, `theme`, `categories`, `items`, `stats`, `uploads`, `tables`, `staff`, `reports/day?date=`. Owner and staff: `me`, `alerts`, `orders`, `reservations`, `/v1/pos/…`, `/v1/kitchen` |
 
 Error codes: `validation_failed`, `bad_request`, `item_not_found`, `item_unavailable`, `restaurant_closed`, `outside_opening_hours`, `unauthorized`, `owner_only`, `invalid_credentials`, `wrong_pin`, `too_many_attempts`, `name_taken`, `category_not_empty`, `item_has_orders`, `not_found`, `internal`.

@@ -6,7 +6,7 @@
 		DeliveryTruck01Icon,
 		Invoice03Icon,
 		MinusSignIcon,
-		Notification03Icon,
+		ShoppingBag01Icon,
 		ArrowDown01Icon,
 		SmartPhone01Icon,
 		Tick02Icon,
@@ -63,20 +63,20 @@
 <section class="wrap">
 	<div class="hero">
 		<div class="hero-copy">
-			<span class="chip"><span class="dot"></span> Made for restaurants in Bangladesh</span>
-			<h1>Run your whole restaurant from one screen</h1>
-			<p>
+			<span class="chip enter"><span class="dot"></span> Made for restaurants in Bangladesh</span>
+			<h1 class="enter" style="--i: 1">Run your whole restaurant from one screen</h1>
+			<p class="enter" style="--i: 2">
 				A website that takes orders, a dashboard for the day, and a till for the counter and
 				kitchen. On the tablets you already have.
 			</p>
-			<div class="ctas">
+			<div class="ctas enter" style="--i: 3">
 				<a class="btn primary" href="#pricing"
 					>Get started <HugeiconsIcon icon={ArrowRight02Icon} size={20} /></a
 				>
 				<a class="btn light" href={site.demo} target="_blank" rel="noopener">See the live demo</a>
 			</div>
 		</div>
-		<div class="hero-art">
+		<div class="hero-art enter" style="--i: 2">
 			<img
 				class="screen"
 				src="/shots/overview.webp"
@@ -85,7 +85,7 @@
 				height="800"
 			/>
 			<div class="float f1">
-				<span class="ic red"><HugeiconsIcon icon={Notification03Icon} size={16} /></span>
+				<span class="ic red"><HugeiconsIcon icon={ShoppingBag01Icon} size={16} /></span>
 				<div><strong>New online order</strong><small>TV-1422 · ৳1,446</small></div>
 			</div>
 			<div class="float f2">
@@ -98,19 +98,19 @@
 			</div>
 		</div>
 	</div>
-	<ul class="local" aria-label="Built for Bangladesh">
+	<ul class="local enter" style="--i: 4" aria-label="Built for Bangladesh">
 		{#each local as l (l.label)}<li><HugeiconsIcon icon={l.icon} size={20} /> {l.label}</li>{/each}
 	</ul>
 </section>
 
 <!-- Features as a bento grid: one big till tile, the rest in pairs. -->
 <section id="features" class="wrap block">
-	<div class="head">
+	<div class="head reveal">
 		<span class="eyebrow">Features</span>
 		<h2>Everything the day needs, nothing it doesn’t</h2>
 	</div>
 	<div class="bento">
-		<article class="tile t-till">
+		<article class="tile t-till reveal" style="--i: 0">
 			<div class="txt">
 				<h3>A till for tables and takeaway</h3>
 				<p>Tap dishes, add notes for the cook, send to the kitchen, split the bill.</p>
@@ -124,7 +124,7 @@
 			/>
 		</article>
 
-		<article class="tile t-offline">
+		<article class="tile t-offline reveal" style="--i: 1">
 			<h3>Keeps selling offline</h3>
 			<p>When the internet drops, nothing stops. It catches up by itself.</p>
 			<ul class="sync">
@@ -139,7 +139,7 @@
 			</ul>
 		</article>
 
-		<article class="tile t-shot">
+		<article class="tile t-shot reveal" style="--i: 2">
 			<h3>Kitchen screen</h3>
 			<p>Every ticket, with timers and the cook’s notes.</p>
 			<img
@@ -151,7 +151,7 @@
 			/>
 		</article>
 
-		<article class="tile">
+		<article class="tile reveal" style="--i: 0">
 			<h3>Every way to pay</h3>
 			<p>Change worked out for you; transaction IDs kept.</p>
 			<div class="pay">
@@ -160,7 +160,7 @@
 			</div>
 		</article>
 
-		<article class="tile t-shot">
+		<article class="tile t-shot reveal" style="--i: 1">
 			<h3>Orders and bookings</h3>
 			<p>New orders chime; one tap moves them along.</p>
 			<img
@@ -172,14 +172,14 @@
 			/>
 		</article>
 
-		<article class="tile t-drawer">
+		<article class="tile t-drawer reveal" style="--i: 2">
 			<h3>End of day in one look</h3>
 			<p>Cash that should be in the drawer</p>
 			<strong class="num big">৳3,150</strong>
 			<small>Card, bKash and Nagad · By staff · Voids · VAT</small>
 		</article>
 
-		<article class="tile">
+		<article class="tile reveal" style="--i: 0">
 			<h3>A PIN for every staff member</h3>
 			<p>They see the till; you see who took what.</p>
 			<div class="pin" aria-hidden="true">
@@ -187,7 +187,7 @@
 			</div>
 		</article>
 
-		<article class="tile t-receipt">
+		<article class="tile t-receipt reveal" style="--i: 1">
 			<h3>VAT invoices</h3>
 			<p>Add your BIN; bills print as Mushak-6.3.</p>
 			<div class="receipt mono" aria-hidden="true">
@@ -201,7 +201,7 @@
 </section>
 
 <section id="pricing" class="wrap block">
-	<div class="head center">
+	<div class="head center reveal">
 		<span class="eyebrow">Pricing</span>
 		<h2>Simple prices. No commission.</h2>
 		<p>One fixed price a month. Every taka from your orders stays yours.</p>
@@ -216,8 +216,8 @@
 	</div>
 
 	<div class="plans">
-		{#each plans as p (p.name)}
-			<article class="plan" class:featured={p.featured}>
+		{#each plans as p, i (p.name)}
+			<article class="plan reveal" class:featured={p.featured} style="--i: {i}">
 				<header>
 					<div>
 						<h3>{p.name}</h3>
@@ -250,7 +250,7 @@
 			</article>
 		{/each}
 	</div>
-	<p class="setup">
+	<p class="setup reveal">
 		Every plan starts with a one-time setup of <strong class="num">{taka(setup)}</strong>: design,
 		menu entry, tablets and training.
 	</p>
@@ -260,7 +260,7 @@
 </section>
 
 <section class="wrap block faq">
-	<div>
+	<div class="reveal">
 		<span class="eyebrow">Questions</span>
 		<h2>Good to know</h2>
 		<p class="ask">
@@ -268,10 +268,11 @@
 		</p>
 	</div>
 	<div class="qs">
-		{#each faqs as f (f.q)}
-			<details>
+		{#each faqs as f, i (f.q)}
+			<details class="reveal" style="--i: {i % 3}">
 				<summary
-					>{f.q}<span class="plus"><HugeiconsIcon icon={ArrowDown01Icon} size={16} /></span></summary
+					>{f.q}<span class="plus"><HugeiconsIcon icon={ArrowDown01Icon} size={16} /></span
+					></summary
 				>
 				<p>{f.a}</p>
 			</details>
@@ -280,7 +281,7 @@
 </section>
 
 <section class="wrap block">
-	<div class="cta">
+	<div class="cta reveal">
 		<div>
 			<h2>Open your doors online</h2>
 			<p>
@@ -391,6 +392,26 @@
 	.float small {
 		color: var(--muted);
 		font-size: var(--t-xs);
+	}
+	/* The floating cards drift slightly, out of step with each other. */
+	.float {
+		animation: drift 6s ease-in-out infinite;
+	}
+	.f2 {
+		animation-delay: -2s;
+	}
+	.f3 {
+		animation-delay: -4s;
+	}
+	@keyframes drift {
+		50% {
+			translate: 0 -8px;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.float {
+			animation: none;
+		}
 	}
 	.f1 {
 		top: 0;

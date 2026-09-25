@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Product page polish
+- Sections, feature tiles, plans and questions rise into view as you scroll; the first screen eases in on load and its floating cards drift gently. Nothing moves for people who prefer less motion.
+- The "New online order" card uses the shopping-bag icon.
+- README rewritten for newcomers: what Tavora is, what you get, how to try it, common questions; technical details moved to a developer section.
+
 ### Product page, round two
 - New look drawn from current SaaS and restaurant-POS designs: dark hero panel with the real dashboard and live-looking cards, a bento grid of features with real screens, and a red closing panel with the shopfront.
 - Three plans: Starter (website), Business (website + till, most popular) and Pro (Business plus done-for-you changes and priority help), with a Monthly/Yearly switch (yearly = 2 months free). One-time setup shown once under the plans.

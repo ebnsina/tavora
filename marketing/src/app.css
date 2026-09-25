@@ -169,3 +169,30 @@ kbd {
 	overflow: hidden;
 	clip-path: inset(50%);
 }
+
+/* Rise in as it scrolls into view (native scroll-driven animation); `--i` staggers items in a grid.
+   Browsers without support, and anyone who prefers less motion, just see the content. */
+@keyframes rise {
+	from {
+		opacity: 0;
+		translate: 0 32px;
+	}
+}
+@supports (animation-timeline: view()) {
+	.reveal {
+		animation: rise linear both;
+		animation-timeline: view();
+		animation-range: entry calc(var(--i, 0) * 6%) entry calc(45% + var(--i, 0) * 6%);
+	}
+}
+/* Page-load entrance for the first screen. */
+.enter {
+	animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+	animation-delay: calc(var(--i, 0) * 90ms);
+}
+@media (prefers-reduced-motion: reduce) {
+	.reveal,
+	.enter {
+		animation: none;
+	}
+}
